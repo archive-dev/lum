@@ -1,0 +1,40 @@
+package lum.test
+
+import lum.test.collections.List
+import lum.test.collections.Dictionary
+
+public class FeatureTest {
+    public static final version: int
+
+    public final name: str
+    public age: int
+
+    private final users: List[User] = []
+    private final users: Dictionary[str, User] = {}
+}
+
+public class User {
+    private final
+        age: int get set,
+        name: str get set,
+        height: float get set,
+        weight: float get set
+}
+
+func main() {
+    for i in range(20):
+        print(i)
+
+    for i := 0, i < 10, i++ {
+        print(i)
+    }
+
+    while true {
+        if input()=='0':
+            break
+    }
+
+    do {
+        i := input()
+    } while i != '0'
+}
