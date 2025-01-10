@@ -1,29 +1,15 @@
 package lum.core.util;
 
-import lum.core.model.Extension;
-import lum.core.parser.LumLexer;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import lum.core.parser.LumParser;
+import lum.core.parsing.antlr4.LumParser;
 
-import java.io.IOException;
 import java.lang.reflect.AccessFlag;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 public final class Utils {
     private Utils() {}
-
-    public static LumParser.ProgramContext getProgramContext(Path path) {
-        try {
-            LumLexer lx = new LumLexer(CharStreams.fromFileName(path.toAbsolutePath().toString()));
-            CommonTokenStream cts = new CommonTokenStream(lx);
-            LumParser parser = new LumParser(cts);
-            return parser.program();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static int getArrayDepth(Class<?> clazz) {
         int depth = 0;
@@ -49,7 +35,29 @@ public final class Utils {
         return clazz;
     }
 
-    public static AccessFlag[] getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
+    public static boolean fileExists(Path path) {
+        return Path.of(path+".lum").toFile().exists();
+    }
+
+    public static List<AccessFlag> getAccessFlags(int modifiers) {
+        List<AccessFlag> flags = new ArrayList<>();
+        if (Modifier.isPrivate(modifiers))
+            flags.add(AccessFlag.PRIVATE);
+        if (Modifier.isPublic(modifiers))
+            flags.add(AccessFlag.PUBLIC);
+        if (Modifier.isProtected(modifiers))
+            flags.add(AccessFlag.PROTECTED);
+        if (Modifier.isFinal(modifiers))
+            flags.add(AccessFlag.FINAL);
+        if (Modifier.isStatic(modifiers))
+            flags.add(AccessFlag.STATIC);
+        if (Modifier.isAbstract(modifiers))
+            flags.add(AccessFlag.ABSTRACT);
+
+        return flags;
+    }
+
+    public static List<AccessFlag> getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
         ArrayList<AccessFlag> accessFlags = new ArrayList<>();
         if (access!=null)
             accessFlags.add(switch (access.getChild(0)) {
@@ -65,14 +73,6 @@ public final class Utils {
             if (modifier.final_ != null) accessFlags.add(AccessFlag.FINAL);
         }
 
-        return accessFlags.toArray(AccessFlag[]::new);
-    }
-
-    public static Extension getExistingPathExtension(Path path) {
-        for (var v : Extension.values()) {
-            if (Path.of(path + v.extension).toFile().exists())
-                return v;
-        }
-        return null;
+        return accessFlags;
     }
 }

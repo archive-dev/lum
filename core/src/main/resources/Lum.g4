@@ -152,8 +152,8 @@ variableDeclaration
       (getterDeclaration | setterDeclaration)*
     ;
 
-getterDeclaration: 'get' block?;
-setterDeclaration: 'set' ((parameter) block)?;
+getterDeclaration: access? 'get' block?;
+setterDeclaration: access? 'set' ( '(' parameter ')' block)?;
 
 // Function and Constructor Declaration
 functionDeclaration
@@ -186,14 +186,14 @@ classDeclaration
 inheritance: '(' inheritanceSpec (',' inheritanceSpec)* ')';
 
 inheritanceSpec
-    : type
-    | 'extends' '=' type
+    : first=type
+    | 'extends' '=' extends=type
     | 'implements' '=' '[' type (',' type)* ']'
     ;
 
 interfaceDeclaration
     : access? modifier?
-      'interface' IDENTIFIER genericDeclaration? '{' functionSignature* '}'
+      'interface' IDENTIFIER inheritance? genericDeclaration? '{' functionSignature* '}'
     ;
 
 functionSignature
@@ -222,7 +222,7 @@ type
 genericDeclaration: '[' generic (',' generic)* ']';
 
 generic
-    : (IDENTIFIER (extends=('extends' | ':') | super='super'))?
+    : ((IDENTIFIER | '?') (extends=('extends' | ':') | super='super')?)?
       type ('&' type)*
     ;
 
