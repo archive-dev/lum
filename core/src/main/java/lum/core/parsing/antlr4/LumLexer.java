@@ -2,12 +2,9 @@
 package lum.core.parsing.antlr4;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue", "this-escape"})
 public class LumLexer extends Lexer {
@@ -61,7 +58,7 @@ public class LumLexer extends Lexer {
 			"'return'", "'switch'", "'case'", "'default'", "'if'", "'elif'", "'else'", 
 			"'while'", "'do'", "'for'", "'in'", "':='", "'='", "'get'", "'set'", 
 			"'func'", "'init'", "'operator'", "'class'", "'extends'", "'implements'", 
-			"'interface'", "'annotation'", "'@'", "'|'", "'?'", "'super'", "'&'", 
+			"'interface'", "'annotation'", "'@'", "'|'", "'&'", "'?'", "'super'", 
 			"'null'", "'true'", "'false'", "'*'", "'/'", "'//'", "'%'", "'+'", "'-'", 
 			"'>>'", "'<<'", "'^'", "'xor'", "'>'", "'<'", "'>='", "'<='", "'=='", 
 			"'!='", "'is'", "'&&'", "'and'", "'||'", "'or'", "'++'", "'--'", "'!'", 
@@ -190,7 +187,7 @@ public class LumLexer extends Lexer {
 		"$\u0001%\u0001%\u0001%\u0001%\u0001%\u0001%\u0001%\u0001%\u0001%\u0001"+
 		"%\u0001&\u0001&\u0001&\u0001&\u0001&\u0001&\u0001&\u0001&\u0001&\u0001"+
 		"&\u0001&\u0001\'\u0001\'\u0001(\u0001(\u0001)\u0001)\u0001*\u0001*\u0001"+
-		"*\u0001*\u0001*\u0001*\u0001+\u0001+\u0001,\u0001,\u0001,\u0001,\u0001"+
+		"+\u0001+\u0001+\u0001+\u0001+\u0001+\u0001,\u0001,\u0001,\u0001,\u0001"+
 		",\u0001-\u0001-\u0001-\u0001-\u0001-\u0001.\u0001.\u0001.\u0001.\u0001"+
 		".\u0001.\u0001/\u0001/\u00010\u00010\u00011\u00011\u00011\u00012\u0001"+
 		"2\u00013\u00013\u00014\u00014\u00015\u00015\u00015\u00016\u00016\u0001"+
@@ -275,7 +272,7 @@ public class LumLexer extends Lexer {
 		"\u0001\u0000\u0000\u0000G\u0142\u0001\u0000\u0000\u0000I\u014a\u0001\u0000"+
 		"\u0000\u0000K\u0155\u0001\u0000\u0000\u0000M\u015f\u0001\u0000\u0000\u0000"+
 		"O\u016a\u0001\u0000\u0000\u0000Q\u016c\u0001\u0000\u0000\u0000S\u016e"+
-		"\u0001\u0000\u0000\u0000U\u0170\u0001\u0000\u0000\u0000W\u0176\u0001\u0000"+
+		"\u0001\u0000\u0000\u0000U\u0170\u0001\u0000\u0000\u0000W\u0172\u0001\u0000"+
 		"\u0000\u0000Y\u0178\u0001\u0000\u0000\u0000[\u017d\u0001\u0000\u0000\u0000"+
 		"]\u0182\u0001\u0000\u0000\u0000_\u0188\u0001\u0000\u0000\u0000a\u018a"+
 		"\u0001\u0000\u0000\u0000c\u018c\u0001\u0000\u0000\u0000e\u018f\u0001\u0000"+
@@ -380,10 +377,10 @@ public class LumLexer extends Lexer {
 		"i\u0000\u0000\u0167\u0168\u0005o\u0000\u0000\u0168\u0169\u0005n\u0000"+
 		"\u0000\u0169N\u0001\u0000\u0000\u0000\u016a\u016b\u0005@\u0000\u0000\u016b"+
 		"P\u0001\u0000\u0000\u0000\u016c\u016d\u0005|\u0000\u0000\u016dR\u0001"+
-		"\u0000\u0000\u0000\u016e\u016f\u0005?\u0000\u0000\u016fT\u0001\u0000\u0000"+
-		"\u0000\u0170\u0171\u0005s\u0000\u0000\u0171\u0172\u0005u\u0000\u0000\u0172"+
-		"\u0173\u0005p\u0000\u0000\u0173\u0174\u0005e\u0000\u0000\u0174\u0175\u0005"+
-		"r\u0000\u0000\u0175V\u0001\u0000\u0000\u0000\u0176\u0177\u0005&\u0000"+
+		"\u0000\u0000\u0000\u016e\u016f\u0005&\u0000\u0000\u016fT\u0001\u0000\u0000"+
+		"\u0000\u0170\u0171\u0005?\u0000\u0000\u0171V\u0001\u0000\u0000\u0000\u0172"+
+		"\u0173\u0005s\u0000\u0000\u0173\u0174\u0005u\u0000\u0000\u0174\u0175\u0005"+
+		"p\u0000\u0000\u0175\u0176\u0005e\u0000\u0000\u0176\u0177\u0005r\u0000"+
 		"\u0000\u0177X\u0001\u0000\u0000\u0000\u0178\u0179\u0005n\u0000\u0000\u0179"+
 		"\u017a\u0005u\u0000\u0000\u017a\u017b\u0005l\u0000\u0000\u017b\u017c\u0005"+
 		"l\u0000\u0000\u017cZ\u0001\u0000\u0000\u0000\u017d\u017e\u0005t\u0000"+

@@ -1,0 +1,7 @@
+public class DuplicateClass {
+    public class1: str
+}
+
+public class DuplicateClass {
+    public class2: str
+}

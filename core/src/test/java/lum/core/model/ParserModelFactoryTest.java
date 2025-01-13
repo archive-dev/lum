@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ParserModelFactoryTest {
-    // Create a class model with inheritance and members from class declaration context
+    // Create a class model from class declaration context
     @Test
-    public void test_create_class_model_with_inheritance_and_members() {
+    public void test_create_class_model() {
         Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
@@ -42,7 +42,8 @@ public class ParserModelFactoryTest {
         when(ctx.IDENTIFIER().getText()).thenReturn("TestInterface");
         when(ctx.access()).thenReturn(null);
         when(ctx.modifier()).thenReturn(null);
-        when(ctx.functionSignature()).thenReturn(new ArrayList<>());
+        when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
+        when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
         ClassModel model = ParserModelFactory.createInterfaceModel(imports, ctx);
 
@@ -80,11 +81,17 @@ public class ParserModelFactoryTest {
         Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.FunctionDeclarationContext ctx = mock(LumParser.FunctionDeclarationContext.class);
-        LumParser.AccessContext access = mock(LumParser.AccessContext.class);
+        LumParser.AccessContext access = mock(LumParser.PublicContext.class);
+
+        TerminalNode returnType = mock(TerminalNode.class);
+        when(returnType.getText()).thenReturn("void");
+
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
         when(ctx.IDENTIFIER().getText()).thenReturn("testMethod");
         when(ctx.access()).thenReturn(access);
         when(ctx.type()).thenReturn(mock(LumParser.TypeContext.class));
+        when(ctx.type().IDENTIFIER()).thenReturn(new ArrayList<>(List.of(returnType)));
+        when(ctx.type().IDENTIFIER(0)).thenReturn(returnType);
 
         MethodModel model = ParserModelFactory.createMethodModel(owner, imports, ctx);
 
@@ -163,8 +170,8 @@ public class ParserModelFactoryTest {
 
         var typeCtx = mock(LumParser.TypeContext.class);
         var type = mock(TerminalNode.class);
-        when(typeCtx.IDENTIFIER()).thenReturn(type);
-        when(type.getText()).thenReturn("java.lang.String"); // TODO: Imports
+        when(typeCtx.IDENTIFIER()).thenReturn(new ArrayList<>(List.of(type)));
+        when(type.getText()).thenReturn("str");
         when(varDecl.type()).thenReturn(typeCtx);
 
         when(varDecl.getterDeclaration()).thenReturn(null);

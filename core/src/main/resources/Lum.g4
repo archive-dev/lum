@@ -21,6 +21,7 @@ declaration
     | variableDeclarationStatement
     | operatorDeclaration
     | constructorDeclaration
+    | functionSignature
     | classDeclaration
     | interfaceDeclaration
     | annotationDeclaration
@@ -70,8 +71,7 @@ keyValueList
 package: 'package' IDENTIFIER ('.' IDENTIFIER)*;
 importStatement
     : 'import'
-    ( importSimple
-    | importAs
+    ( anySimpleImport
     | importFrom
     | importMultiple)
     ;
@@ -85,11 +85,15 @@ importSimple
     ;
 
 importFrom
-    : importAs (',' importAs)* 'from' IDENTIFIER ('.' IDENTIFIER)*
+    : importMultiple 'from' IDENTIFIER ('.' IDENTIFIER)*
     ;
 
 importMultiple
-    : importSimple (',' importSimple)*
+    : anySimpleImport (',' anySimpleImport)*
+    ;
+
+anySimpleImport
+    : importSimple | importAs
     ;
 
 // Control Flow Keywords
@@ -180,7 +184,7 @@ argumentList: expression (',' expression)*;
 // Class and Interface Declaration
 classDeclaration
     : annotation* access? modifier?
-      'class' IDENTIFIER genericDeclaration? inheritance? block
+      'class' IDENTIFIER genericDeclaration? inheritance? block?
     ;
 
 inheritance: '(' inheritanceSpec (',' inheritanceSpec)* ')';
@@ -193,7 +197,7 @@ inheritanceSpec
 
 interfaceDeclaration
     : access? modifier?
-      'interface' IDENTIFIER inheritance? genericDeclaration? '{' functionSignature* '}'
+      'interface' IDENTIFIER inheritance? genericDeclaration? block?
     ;
 
 functionSignature
@@ -216,14 +220,15 @@ functionCall: IDENTIFIER genericDeclaration? '(' argumentList? ')';
 
 // Types and Generics
 type
-    : (IDENTIFIER genericDeclaration?)
-    | type ('|' type)+;
+    : ((IDENTIFIER ('.' IDENTIFIER)*) genericDeclaration?)
+    | type (union='|' type)+
+    | type (intersection='&' type)+
+    ;
 
 genericDeclaration: '[' generic (',' generic)* ']';
 
 generic
-    : ((IDENTIFIER | '?') (extends=('extends' | ':') | super='super')?)?
-      type ('&' type)*
+    : ((IDENTIFIER | '?') (extends=('extends' | ':') | super='super')?)? type
     ;
 
 // Literals and Basic Types

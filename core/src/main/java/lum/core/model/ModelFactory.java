@@ -70,10 +70,6 @@ public final class ModelFactory {
     }
 
     // Class Model Creation
-    public static ClassModel createClassModel(ClassPath path) {
-        return null;
-    }
-
     public static ClassModel createClassModel(Class<?> clazz) {
         if (ModelCache.containsClass(clazz)) {
             return ModelCache.getClass(clazz);

@@ -1,0 +1,6 @@
+import java.lang.String as str2
+import Integer, Boolean as bool from java.lang
+import java.lang.Short, java.lang.Byte
+
+public class TestClass(str2, Integer, bool, Short, Byte) {
+}

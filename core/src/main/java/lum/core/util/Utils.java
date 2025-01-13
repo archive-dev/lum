@@ -60,7 +60,7 @@ public final class Utils {
     public static List<AccessFlag> getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
         ArrayList<AccessFlag> accessFlags = new ArrayList<>();
         if (access!=null)
-            accessFlags.add(switch (access.getChild(0)) {
+            accessFlags.add(switch (access) {
                 case LumParser.PublicContext _ -> AccessFlag.PUBLIC;
                 case LumParser.PrivateContext _ -> AccessFlag.PRIVATE;
                 case LumParser.ProtectedContext _ -> AccessFlag.PROTECTED;

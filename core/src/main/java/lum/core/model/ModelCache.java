@@ -3,6 +3,7 @@ package lum.core.model;
 import lum.core.util.Utils;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -34,7 +35,9 @@ public final class ModelCache {
     public static ClassModel getClass(Class<?> clazz) {
         if (clazz == null) return null;
         clazz = Utils.getComponentType(clazz);
-        return classPool.computeIfAbsent(clazz, ModelFactory::createClassModel);
+        if (!classPool.containsKey(clazz))
+            classPool.put(clazz, ModelFactory.createClassModel(clazz));
+        return classPool.get(clazz);
     }
 
     public static TypeModel getTypeModel(Class<?> clazz) {
@@ -43,10 +46,20 @@ public final class ModelCache {
 
     public static ClassModel getClassFromPath(List<String> pathElements) {
         try {
-            ClassPath path = ModelFactory.createClassPath(pathElements);
-            return pathPool.computeIfAbsent(path, ModelFactory::createClassModel);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Failed to get class model from path", e);
+            return getClass(Class.forName(String.join(".", pathElements)));
+        } catch (ClassNotFoundException ex) {
+            try {
+                ClassPath path = ModelFactory.createClassPath(pathElements);
+                return pathPool.computeIfAbsent(path, p -> {
+                    try {
+                        return ParserModelFactory.createClassModel(p);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Failed to get class model from path", e);
+            }
         }
     }
 
@@ -80,7 +93,9 @@ public final class ModelCache {
     }
 
     public static MethodModel getMethod(Method method) {
-        return methodPool.computeIfAbsent(method, ModelFactory::createMethodModel);
+        if (!methodPool.containsKey(method))
+            methodPool.put(method, ModelFactory.createMethodModel(method));
+        return methodPool.get(method);
     }
 
     // Constructor caching methods
@@ -89,7 +104,9 @@ public final class ModelCache {
     }
 
     public static MethodModel getConstructor(Constructor<?> constructor) {
-        return constructorPool.computeIfAbsent(constructor, ModelFactory::createMethodModel);
+        if (!constructorPool.containsKey(constructor))
+            constructorPool.put(constructor, ModelFactory.createMethodModel(constructor));
+        return constructorPool.get(constructor);
     }
 
     // Field caching methods
@@ -98,7 +115,9 @@ public final class ModelCache {
     }
 
     public static FieldModel getField(Field field) {
-        return fieldPool.computeIfAbsent(field, ModelFactory::createFieldModel);
+        if (!fieldPool.containsKey(field))
+            fieldPool.put(field, ModelFactory.createFieldModel(field));
+        return fieldPool.get(field);
     }
 
     public static void cacheField(FieldModel field) {
