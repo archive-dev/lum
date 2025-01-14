@@ -220,9 +220,9 @@ functionCall: IDENTIFIER genericDeclaration? '(' argumentList? ')';
 
 // Types and Generics
 type
-    : ((IDENTIFIER ('.' IDENTIFIER)*) genericDeclaration?)
-    | type (union='|' type)+
-    | type (intersection='&' type)+
+    : ((IDENTIFIER ('.' IDENTIFIER)*) genericDeclaration?) # PlainType
+    | type (union='|' type)+ # UnionType
+    | type (intersection='&' type)+ # IntersectionType
     ;
 
 genericDeclaration: '[' generic (',' generic)* ']';

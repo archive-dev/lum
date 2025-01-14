@@ -86,10 +86,10 @@ public final class ModelFactory {
     }
 
     private static ClassModel buildInitialClassModel(Class<?> clazz) {
-        return new ClassModel(
+        return new ClassModelImpl(
                 clazz.getName(),
                 null,
-                new ClassModel[clazz.getInterfaces().length],
+                new ClassModelImpl[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
                 EMPTY_GENERIC_PARAMETERS,
                 clazz.isInterface()
@@ -101,7 +101,7 @@ public final class ModelFactory {
                 .map(ModelCache::getClass)
                 .toArray(ClassModel[]::new);
         System.arraycopy(interfaces, 0, model.interfaces(), 0, interfaces.length);
-        model.superClass = ModelCache.getClass(clazz.getSuperclass());
+        model.setSuperClass(ModelCache.getClass(clazz.getSuperclass()));
     }
 
     private static void cacheClassMembers(Class<?> clazz) {
@@ -111,7 +111,7 @@ public final class ModelFactory {
 
     // Method Model Creation
     public static MethodModel createMethodModel(Method method) {
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 ModelCache.getClass(method.getDeclaringClass()),
                 method.getName(),
                 ModelCache.getTypeModel(method.getReturnType()),
@@ -125,7 +125,7 @@ public final class ModelFactory {
     }
 
     public static MethodModel createMethodModel(Constructor<?> constructor) {
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 ModelCache.getClass(constructor.getDeclaringClass()),
                 "<init>",
                 ModelCache.getTypeModel(void.class),
@@ -140,7 +140,7 @@ public final class ModelFactory {
 
     // Field Model Creation
     public static FieldModel createFieldModel(Field field) {
-        var model = new FieldModel(
+        var model = new FieldModelImpl(
                 ModelCache.getClass(field.getDeclaringClass()),
                 field.getName(),
                 ModelCache.getTypeModel(field.getType()),
@@ -154,7 +154,7 @@ public final class ModelFactory {
     // Parameter Model Creation
     private static ParameterModel[] createParameterModels(Parameter[] parameters) {
         return Arrays.stream(parameters)
-                .map(p -> new ParameterModel(
+                .map(p -> new ParameterModelImpl(
                         p.getName(),
                         ModelCache.getTypeModel(p.getType()),
                         EMPTY_GENERIC_PARAMETERS

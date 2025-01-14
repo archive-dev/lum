@@ -58,7 +58,7 @@ public final class ModelCache {
                     }
                 });
             } catch (FileNotFoundException e) {
-                throw new RuntimeException("Failed to get class model from path", e);
+                throw new RuntimeException("Failed to getType class model from path", e);
             }
         }
     }

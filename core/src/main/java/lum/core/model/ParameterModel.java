@@ -1,8 +1,9 @@
 package lum.core.model;
 
-public record ParameterModel (
-        String name,
-        TypeModel type,
-        GenericParameter[] genericParameters
-) implements GenericTyped {
+public interface ParameterModel extends GenericTyped {
+    String name();
+
+    TypeModel type();
+
+    GenericParameter[] genericParameters();
 }

@@ -15,7 +15,7 @@ public class ParserModelFactoryTest {
     // Create a class model from class declaration context
     @Test
     public void test_create_class_model() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
@@ -35,7 +35,7 @@ public class ParserModelFactoryTest {
     // Create an interface model with methods from interface declaration context
     @Test
     public void test_create_interface_model_with_methods() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.InterfaceDeclarationContext ctx = mock(LumParser.InterfaceDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
@@ -55,7 +55,7 @@ public class ParserModelFactoryTest {
     // Process class members including variables, functions, operators and constructors
     @Test
     public void test_process_class_members() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         LumParser.BlockContext block = mock(LumParser.BlockContext.class);
@@ -77,8 +77,8 @@ public class ParserModelFactoryTest {
     // Create method models with correct access flags and parameters
     @Test
     public void test_create_method_model_with_access_flags() {
-        ClassModel owner = mock(ClassModel.class);
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        ClassModel owner = mock(ClassModelImpl.class);
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.FunctionDeclarationContext ctx = mock(LumParser.FunctionDeclarationContext.class);
         LumParser.AccessContext access = mock(LumParser.PublicContext.class);
@@ -89,9 +89,9 @@ public class ParserModelFactoryTest {
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
         when(ctx.IDENTIFIER().getText()).thenReturn("testMethod");
         when(ctx.access()).thenReturn(access);
-        when(ctx.type()).thenReturn(mock(LumParser.TypeContext.class));
-        when(ctx.type().IDENTIFIER()).thenReturn(new ArrayList<>(List.of(returnType)));
-        when(ctx.type().IDENTIFIER(0)).thenReturn(returnType);
+        when(ctx.type()).thenReturn(mock(LumParser.PlainTypeContext.class));
+        when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER()).thenReturn(new ArrayList<>(List.of(returnType)));
+        when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER(0)).thenReturn(returnType);
 
         MethodModel model = ParserModelFactory.createMethodModel(owner, imports, ctx);
 
@@ -103,7 +103,7 @@ public class ParserModelFactoryTest {
     // Handle null or empty inheritance specifications
     @Test
     public void test_handle_null_inheritance() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
@@ -122,7 +122,7 @@ public class ParserModelFactoryTest {
     // Process class/interface declarations without any members
     @Test
     public void test_empty_class_declaration() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
@@ -139,7 +139,7 @@ public class ParserModelFactoryTest {
     // Handle missing access modifiers and use defaults
     @Test
     public void test_default_access_modifiers() {
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
@@ -158,8 +158,8 @@ public class ParserModelFactoryTest {
     // Process fields without getter/setter declarations
     @Test
     public void test_field_without_accessors() {
-        ClassModel owner = mock(ClassModel.class);
-        Imports imports = new Imports(new HashMap<>(), new HashMap<>(), new HashMap<>());
+        ClassModel owner = mock(ClassModelImpl.class);
+        Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
         LumParser.VariableDeclarationStatementContext ctx = mock(LumParser.VariableDeclarationStatementContext.class);
         LumParser.VariableDeclarationContext varDecl = mock(LumParser.VariableDeclarationContext.class);
@@ -168,7 +168,7 @@ public class ParserModelFactoryTest {
         when(varDecl.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
         when(varDecl.IDENTIFIER().getText()).thenReturn("testField");
 
-        var typeCtx = mock(LumParser.TypeContext.class);
+        var typeCtx = mock(LumParser.PlainTypeContext.class);
         var type = mock(TerminalNode.class);
         when(typeCtx.IDENTIFIER()).thenReturn(new ArrayList<>(List.of(type)));
         when(type.getText()).thenReturn("str");

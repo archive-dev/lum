@@ -3,8 +3,11 @@ package lum.core.parsing.antlr4;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.*;
 import org.antlr.v4.runtime.tree.*;
 import java.util.List;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue", "this-escape"})
 public class LumParser extends Parser {
@@ -3972,8 +3975,40 @@ public class LumParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class TypeContext extends ParserRuleContext {
+		public TypeContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_type; }
+	 
+		public TypeContext() { }
+		public void copyFrom(TypeContext ctx) {
+			super.copyFrom(ctx);
+		}
+	}
+	@SuppressWarnings("CheckReturnValue")
+	public static class UnionTypeContext extends TypeContext {
 		public Token union;
+		public List<TypeContext> type() {
+			return getRuleContexts(TypeContext.class);
+		}
+		public TypeContext type(int i) {
+			return getRuleContext(TypeContext.class,i);
+		}
+		public UnionTypeContext(TypeContext ctx) { copyFrom(ctx); }
+	}
+	@SuppressWarnings("CheckReturnValue")
+	public static class IntersectionTypeContext extends TypeContext {
 		public Token intersection;
+		public List<TypeContext> type() {
+			return getRuleContexts(TypeContext.class);
+		}
+		public TypeContext type(int i) {
+			return getRuleContext(TypeContext.class,i);
+		}
+		public IntersectionTypeContext(TypeContext ctx) { copyFrom(ctx); }
+	}
+	@SuppressWarnings("CheckReturnValue")
+	public static class PlainTypeContext extends TypeContext {
 		public List<TerminalNode> IDENTIFIER() { return getTokens(LumParser.IDENTIFIER); }
 		public TerminalNode IDENTIFIER(int i) {
 			return getToken(LumParser.IDENTIFIER, i);
@@ -3981,16 +4016,7 @@ public class LumParser extends Parser {
 		public GenericDeclarationContext genericDeclaration() {
 			return getRuleContext(GenericDeclarationContext.class,0);
 		}
-		public List<TypeContext> type() {
-			return getRuleContexts(TypeContext.class);
-		}
-		public TypeContext type(int i) {
-			return getRuleContext(TypeContext.class,i);
-		}
-		public TypeContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_type; }
+		public PlainTypeContext(TypeContext ctx) { copyFrom(ctx); }
 	}
 
 	public final TypeContext type() throws RecognitionException {
@@ -4009,6 +4035,10 @@ public class LumParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			{
+			_localctx = new PlainTypeContext(_localctx);
+			_ctx = _localctx;
+			_prevctx = _localctx;
+
 			{
 			{
 			setState(698);
@@ -4058,7 +4088,7 @@ public class LumParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,98,_ctx) ) {
 					case 1:
 						{
-						_localctx = new TypeContext(_parentctx, _parentState);
+						_localctx = new UnionTypeContext(new TypeContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_type);
 						setState(709);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
@@ -4071,7 +4101,7 @@ public class LumParser extends Parser {
 								{
 								{
 								setState(710);
-								((TypeContext)_localctx).union = match(T__40);
+								((UnionTypeContext)_localctx).union = match(T__40);
 								setState(711);
 								type(0);
 								}
@@ -4088,7 +4118,7 @@ public class LumParser extends Parser {
 						break;
 					case 2:
 						{
-						_localctx = new TypeContext(_parentctx, _parentState);
+						_localctx = new IntersectionTypeContext(new TypeContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_type);
 						setState(716);
 						if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
@@ -4101,7 +4131,7 @@ public class LumParser extends Parser {
 								{
 								{
 								setState(717);
-								((TypeContext)_localctx).intersection = match(T__41);
+								((IntersectionTypeContext)_localctx).intersection = match(T__41);
 								setState(718);
 								type(0);
 								}

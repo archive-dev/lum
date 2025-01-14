@@ -33,7 +33,7 @@ public final class ParserModelFactory {
             }
         }
 
-        return new Imports(
+        return new ImportsImpl(
                 classes,
                 new HashMap<>(),
                 new HashMap<>()
@@ -138,7 +138,7 @@ public final class ParserModelFactory {
         var name = ctx.IDENTIFIER().getText();
         var inheritance = processInheritance(imports, ctx.inheritance());
 
-        return new ClassModel(
+        return new ClassModelImpl(
                 name,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
@@ -153,7 +153,7 @@ public final class ParserModelFactory {
         var name = ctx.IDENTIFIER().getText();
         var inheritance = processInheritance(imports, ctx.inheritance());
 
-        return new ClassModel(
+        return new ClassModelImpl(
                 name,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
@@ -211,13 +211,13 @@ public final class ParserModelFactory {
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
 
         for (var decl : ctx.variableDeclaration()) {
-            var type = imports.get(decl.type());
+            var type = imports.getType(decl.type());
             var name = decl.IDENTIFIER().getText();
 
             String firstLetter = String.valueOf(name.charAt(0)).toUpperCase();
-            var getter = new MethodModel(
+            var getter = new MethodModelImpl(
                     owner,
-                    "get"+ firstLetter + name.substring(1),
+                    "getType"+ firstLetter + name.substring(1),
                     type,
                     EMPTY_PARAMETERS,
                     EMPTY_TYPE_MODELS,
@@ -225,7 +225,7 @@ public final class ParserModelFactory {
                     EMPTY_GENERIC_PARAMETERS
             );
 
-            var setter = new MethodModel(
+            var setter = new MethodModelImpl(
                     owner,
                     "set"+ firstLetter + name.substring(1),
                     type,
@@ -271,7 +271,7 @@ public final class ParserModelFactory {
 
                 inheritance.b().addAll(
                         spec.type().stream()
-                                .map(imports::get)
+                                .map(imports::getType)
                                 .map(TypeModel::model)
                                 .toList()
                 );
@@ -284,7 +284,7 @@ public final class ParserModelFactory {
     }
 
     private static ClassModel resolveClassModel(Imports imports, LumParser.TypeContext type) throws FileNotFoundException {
-        return imports.get(type).model();
+        return imports.getType(type).model();
     }
 
     public static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.FunctionDeclarationContext ctx) {
@@ -292,10 +292,10 @@ public final class ParserModelFactory {
         var name = ctx.IDENTIFIER().getText();
         var parameters = createParameterModels(imports, ctx.parameterList());
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
                 name,
-                imports.get(ctx.type()),
+                imports.getType(ctx.type()),
                 parameters,
                 EMPTY_TYPE_MODELS,
                 accessFlags,
@@ -311,10 +311,10 @@ public final class ParserModelFactory {
         var name = ctx.IDENTIFIER().getText();
         var parameters = createParameterModels(imports, ctx.parameterList());
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
                 name,
-                imports.get(ctx.type()),
+                imports.getType(ctx.type()),
                 parameters,
                 EMPTY_TYPE_MODELS,
                 accessFlags,
@@ -330,10 +330,10 @@ public final class ParserModelFactory {
         var name = ctx.operator().getText();
         var parameters = createParameterModels(imports, ctx.parameterList());
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
                 name,
-                imports.get(ctx.type()),
+                imports.getType(ctx.type()),
                 parameters,
                 EMPTY_TYPE_MODELS,
                 accessFlags,
@@ -349,7 +349,7 @@ public final class ParserModelFactory {
         var name = "<init>";
         var parameters = createParameterModels(imports, ctx.parameterList());
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
                 name,
                 ModelCache.getTypeModel(void.class),
@@ -373,9 +373,9 @@ public final class ParserModelFactory {
     }
 
     private static ParameterModel createParameterModel(Imports imports, LumParser.ParameterContext ctx) {
-        return new ParameterModel(
+        return new ParameterModelImpl(
                 ctx.IDENTIFIER().getText(),
-                imports.get(ctx.type()),
+                imports.getType(ctx.type()),
                 EMPTY_GENERIC_PARAMETERS
         );
     }
@@ -385,10 +385,10 @@ public final class ParserModelFactory {
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
 
         for (var decl : ctx.variableDeclaration()) {
-            var type = imports.get(decl.type());
+            var type = imports.getType(decl.type());
             var name = decl.IDENTIFIER().getText();
 
-            var field = new FieldModel(
+            var field = new FieldModelImpl(
                     owner,
                     name,
                     type,
@@ -421,9 +421,9 @@ public final class ParserModelFactory {
             accessFlags = Utils.getAccessFlags(ctx.access(), null);
         }
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
-                "get" + String.valueOf(field.name().charAt(0)).toUpperCase() + field.name().substring(1),
+                "getType" + String.valueOf(field.name().charAt(0)).toUpperCase() + field.name().substring(1),
                 field.type(),
                 EMPTY_PARAMETERS,
                 EMPTY_TYPE_MODELS,
@@ -442,7 +442,7 @@ public final class ParserModelFactory {
 
         var parameters = new ParameterModel[]{createParameterModel(imports, ctx.parameter())};
 
-        var model = new MethodModel(
+        var model = new MethodModelImpl(
                 owner,
                 "set" + String.valueOf(field.name().charAt(0)).toUpperCase() + field.name().substring(1),
                 ModelCache.getTypeModel(void.class),
