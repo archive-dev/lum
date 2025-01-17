@@ -12,22 +12,22 @@ import java.util.List;
  * @param methods map that contains models of methods mapped by their short names
  * @param fields map that contains models of fields mapped by their short names
  */
-public record ImportsImpl(
+record ImportsImpl(
         HashMap<String, ClassModel> classes,
         HashMap<String, MethodModel> methods,
         HashMap<String, FieldModel> fields
 ) implements Imports {
     private static HashMap<String, ClassModel> defaultClasses = new HashMap<>();
     static {
-        defaultClasses.put("str", ModelCache.getClass(String.class));
-        defaultClasses.put("int", ModelCache.getClass(int.class));
-        defaultClasses.put("long", ModelCache.getClass(long.class));
-        defaultClasses.put("float", ModelCache.getClass(float.class));
-        defaultClasses.put("double", ModelCache.getClass(double.class));
-        defaultClasses.put("short", ModelCache.getClass(short.class));
-        defaultClasses.put("bool", ModelCache.getClass(boolean.class));
-        defaultClasses.put("byte", ModelCache.getClass(byte.class));
-        defaultClasses.put("void", ModelCache.getClass(void.class));
+        defaultClasses.put("str", ClassModel.of(String.class));
+        defaultClasses.put("int", ClassModel.of(int.class));
+        defaultClasses.put("long", ClassModel.of(long.class));
+        defaultClasses.put("float", ClassModel.of(float.class));
+        defaultClasses.put("double", ClassModel.of(double.class));
+        defaultClasses.put("short", ClassModel.of(short.class));
+        defaultClasses.put("bool", ClassModel.of(boolean.class));
+        defaultClasses.put("byte", ClassModel.of(byte.class));
+        defaultClasses.put("void", ClassModel.of(void.class));
     }
 
     public ImportsImpl(HashMap<String, ClassModel> classes,

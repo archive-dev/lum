@@ -7,19 +7,17 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public final class ModelCache {
+final class ModelCache {
     private static final HashMap<Class<?>, ClassModel> classPool = new HashMap<>();
     private static final HashMap<ClassPath, ClassModel> pathPool = new HashMap<>();
-    private static final HashMap<Method, MethodModel> methodPool = new HashMap<>();
-    private static final HashMap<Constructor<?>, MethodModel> constructorPool = new HashMap<>();
-    private static final HashMap<Field, FieldModel> fieldPool = new HashMap<>();
 
-    private static final HashMap<ClassModel, HashMap<String, HashMap<TypeModel[], MethodModel>>> classModelMethods = new HashMap<>();
-    private static final HashMap<ClassModel, HashMap<String, FieldModel>> classModelFields = new HashMap<>();
+    static final HashMap<ClassModel, HashMap<String, HashMap<List<TypeModel>, MethodModel>>> classModelMethods = new HashMap<>();
+    static final HashMap<ClassModel, HashMap<String, FieldModel>> classModelFields = new HashMap<>();
 
     private ModelCache() {}
 
@@ -73,7 +71,21 @@ public final class ModelCache {
 
     // Method caching methods
     public static boolean containsMethod(Method method) {
-        return methodPool.containsKey(method);
+        if (!classModelMethods.containsKey(ClassModel.of(method.getDeclaringClass()))) {
+            classModelMethods.put(ClassModel.of(method.getDeclaringClass()), new HashMap<>());
+            return false;
+        }
+
+        if (!classModelMethods.get(ClassModel.of(method.getDeclaringClass())).containsKey(method.getName())) {
+            classModelMethods.get(ClassModel.of(method.getDeclaringClass())).put(method.getName(), new HashMap<>());
+            return false;
+        }
+
+        return classModelMethods.get(ClassModel.of(method.getDeclaringClass())).get(method.getName()).containsKey(
+                Arrays.stream(method.getParameters())
+                        .map(p -> TypeModel.of(p.getType()))
+                        .toList()
+        );
     }
 
     public static void cacheMethod(MethodModel method) {
@@ -83,54 +95,104 @@ public final class ModelCache {
                 .put(
                         Arrays.stream(method.parameters())
                                 .map(ParameterModel::type)
-                                .toArray(TypeModel[]::new),
+                                .toList(),
                         method
                 );
     }
 
     public static MethodModel getMethod(ClassModel owner, String name, TypeModel... arguments) {
-        return classModelMethods.get(owner).get(name).get(arguments);
+        if (!containsMethod(owner, name, arguments)) return null;
+        return classModelMethods.get(owner).get(name).get(List.of(arguments));
     }
 
     public static MethodModel getMethod(Method method) {
-        if (!methodPool.containsKey(method))
-            methodPool.put(method, ModelFactory.createMethodModel(method));
-        return methodPool.get(method);
+        if (!containsMethod(method))
+            cacheMethod(ModelFactory.createMethodModel(method));
+
+        return classModelMethods
+                .get(ClassModel.of(method.getDeclaringClass()))
+                .get(method.getName())
+                .get(
+                        Arrays.stream(method.getParameterTypes())
+                                .map(TypeModel::of)
+                                .toList()
+                );
     }
 
     // Constructor caching methods
-    public static boolean containsConstructor(Constructor<?> constructor) {
-        return constructorPool.containsKey(constructor);
+    public static boolean containsMethod(ClassModel owner, String name, TypeModel... arguments) {
+        return classModelMethods.containsKey(owner) &&
+               classModelMethods.get(owner).containsKey(name) &&
+               classModelMethods.get(owner).get(name).containsKey(List.of(arguments));
     }
 
-    public static MethodModel getConstructor(Constructor<?> constructor) {
-        if (!constructorPool.containsKey(constructor))
-            constructorPool.put(constructor, ModelFactory.createMethodModel(constructor));
-        return constructorPool.get(constructor);
+    public static boolean containsMethod(Constructor<?> constructor) {
+        if (!classModelMethods.containsKey(ClassModel.of(constructor.getDeclaringClass()))) {
+            classModelMethods.put(ClassModel.of(constructor.getDeclaringClass()), new HashMap<>());
+            return false;
+        }
+
+        if (!classModelMethods.get(ClassModel.of(constructor.getDeclaringClass())).containsKey("<init>")) {
+            classModelMethods.get(ClassModel.of(constructor.getDeclaringClass())).put("<init>", new HashMap<>());
+            return false;
+        }
+
+        return classModelMethods.get(ClassModel.of(constructor.getDeclaringClass())).get("<init>").containsKey(
+                Arrays.stream(constructor.getParameters())
+                        .map(p -> TypeModel.of(p.getType()))
+                        .toList()
+        );
+    }
+
+    public static MethodModel getMethod(Constructor<?> constructor) {
+        if (!containsMethod(constructor))
+            cacheMethod(ModelFactory.createMethodModel(constructor));
+
+        return classModelMethods
+                .get(ClassModel.of(constructor.getDeclaringClass()))
+                .get("<init>")
+                .get(
+                        Arrays.stream(constructor.getParameterTypes())
+                                .map(TypeModel::of)
+                                .toList()
+                );
     }
 
     // Field caching methods
+    public static boolean containsField(ClassModel owner, String name) {
+        return classModelFields.containsKey(owner) &&
+                classModelFields.get(owner).containsKey(name);
+    }
+
     public static boolean containsField(Field field) {
-        return fieldPool.containsKey(field);
+        if (!classModelFields.containsKey(ClassModel.of(field.getDeclaringClass()))) {
+            classModelFields.put(ClassModel.of(field.getDeclaringClass()), new HashMap<>());
+            return false;
+        }
+
+        return classModelFields.get(ClassModel.of(field.getDeclaringClass())).containsKey(field.getName());
     }
 
     public static FieldModel getField(Field field) {
-        if (!fieldPool.containsKey(field))
-            fieldPool.put(field, ModelFactory.createFieldModel(field));
-        return fieldPool.get(field);
+        if (!containsField(field))
+            cacheField(ModelFactory.createFieldModel(field));
+
+        return classModelFields.get(ClassModel.of(field.getDeclaringClass())).get(field.getName());
+    }
+
+    public static FieldModel getField(ClassModel owner, String fieldName) {
+        return classModelFields.get(owner).get(fieldName);
+    }
+
+    public static List<FieldModel> getFields(ClassModel owner) {
+        if (classModelFields.containsKey(owner))
+            return List.of();
+
+        return new ArrayList<>(classModelFields.get(owner).values());
     }
 
     public static void cacheField(FieldModel field) {
         classModelFields.computeIfAbsent(field.owner(), _ -> new HashMap<>())
                 .put(field.name(), field);
-    }
-
-    // Clear all caches
-    public static void clearAll() {
-        classPool.clear();
-        pathPool.clear();
-        methodPool.clear();
-        constructorPool.clear();
-        fieldPool.clear();
     }
 }

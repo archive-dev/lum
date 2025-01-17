@@ -98,6 +98,8 @@ final class ClassModelImpl extends ClassModel {
                 "superClass=" + superClass + ", " +
                 "interfaces=" + Arrays.toString(interfaces) + ", " +
                 "accessFlags=" + accessFlags + ", " +
-                "genericParameters=" + Arrays.toString(genericParameters) + ']';
+                "genericParameters=" + Arrays.toString(genericParameters) + ", " +
+                "methods=" + Arrays.toString(methods()) + ", " +
+                "fields=" + Arrays.toString(fields()) + ']';
     }
 }

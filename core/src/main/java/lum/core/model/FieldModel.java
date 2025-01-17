@@ -1,16 +1,24 @@
 package lum.core.model;
 
+import lum.core.util.Utils;
+
 import java.lang.reflect.AccessFlag;
 import java.util.List;
 
 public interface FieldModel extends Accessible, GenericTyped, Member {
-    ClassModel owner();
-
     String name();
 
     TypeModel type();
 
     List<AccessFlag> accessFlags();
 
-    GenericParameter[] genericParameters();
+    String toString();
+
+    default MethodModel getGetter() {
+        return owner().getMethod("get"+ Utils.toTitled(name()));
+    }
+
+    default MethodModel getSetter(TypeModel parameterType) {
+        return owner().getMethod("set"+Utils.toTitled(name()), parameterType);
+    }
 }

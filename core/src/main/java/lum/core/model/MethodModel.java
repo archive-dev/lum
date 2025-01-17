@@ -4,8 +4,6 @@ import java.lang.reflect.AccessFlag;
 import java.util.List;
 
 public interface MethodModel extends Accessible, GenericTyped, Member {
-    ClassModel owner();
-
     String name();
 
     TypeModel returnType();
@@ -15,6 +13,4 @@ public interface MethodModel extends Accessible, GenericTyped, Member {
     TypeModel[] exceptions();
 
     List<AccessFlag> accessFlags();
-
-    GenericParameter[] genericParameters();
 }

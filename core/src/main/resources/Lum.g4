@@ -46,15 +46,15 @@ expression
     : primary                                       # PrimaryExpression
     | lambda                                        # LambdaExpression
     | functionCall                                  # FunctionCallExpr
-    | expression '[' expression ']'                 # ArrayAccess
+    | expression '[' argumentList ']'               # ArrayAccess
     | expression '.' (IDENTIFIER | functionCall)    # MemberAccess
-    | expression after=unaryOperator                # PostUnary
-    | before=unaryOperator expression               # PreUnary
+    | expression after=unaryOperator~ArrayAccessOp  # PostUnary
+    | before=unaryOperator~ArrayAccessOp expression # PreUnary
     | expression binaryOperator expression          # Binary
     ;
 
 primary
-    : literal                                        # LiteralExpr
+    : literal                                       # LiteralExpr
     | IDENTIFIER                                    # IdentifierExpr
     | IDENTIFIER assignment                         # AssignmentExpr
     | '[' argumentList? ']'                         # ListLiteral
@@ -148,7 +148,7 @@ forEachLoop: 'for' variableDeclaration 'in' expression block;
 keyValue: (STRING | IDENTIFIER) ':' expression;
 
 variableDeclarationStatement
-    : access? modifier? (variableDeclaration) (',' variableDeclaration)*
+    : annotation* access? modifier? (variableDeclaration) (',' variableDeclaration)*
     ;
 
 variableDeclaration
@@ -172,7 +172,7 @@ constructorDeclaration
 
 // Operator Declaration
 operatorDeclaration
-    : access? modifier? 'operator' operator genericDeclaration?
+    : annotation* access? modifier? 'operator' operator genericDeclaration?
       '(' parameterList? ')' (':' type)? block
     ;
 
@@ -196,12 +196,12 @@ inheritanceSpec
     ;
 
 interfaceDeclaration
-    : access? modifier?
+    : annotation* access? modifier?
       'interface' IDENTIFIER inheritance? genericDeclaration? block?
     ;
 
 functionSignature
-    : access? modifier?
+    : annotation* access? modifier?
       'func' genericDeclaration? IDENTIFIER '(' parameterList? ')' (':' type)
     ;
 
@@ -272,6 +272,7 @@ binaryOperator
     | '=='  # EQ
     | '!='  # NEQ
     | 'is'  # IsInstance
+    | 'in'  # In
 
     // Level 8-9: Logical operations
     | '&&'  # CAND
@@ -281,10 +282,11 @@ binaryOperator
     ;
 
 unaryOperator
-    : '++'  # Increment
-    | '--'  # Decrement
-    | '!'   # Not
-    | 'not' # Not
+    : '++'    # Increment
+    | '--'    # Decrement
+    | '!'     # Not
+    | 'not'   # Not
+    | '[' ']' # ArrayAccessOp
     ;
 
 // Assignments and Modifiers

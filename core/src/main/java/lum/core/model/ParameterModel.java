@@ -1,9 +1,7 @@
 package lum.core.model;
 
-public interface ParameterModel extends GenericTyped {
+public interface ParameterModel {
     String name();
 
     TypeModel type();
-
-    GenericParameter[] genericParameters();
 }

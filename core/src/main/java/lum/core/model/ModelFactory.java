@@ -10,9 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-public final class ModelFactory {
-    private static final GenericParameter[] EMPTY_GENERIC_PARAMETERS = new GenericParameter[0];
+import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
 
+final class ModelFactory {
     private ModelFactory() {}
 
     // Class Path creation
@@ -72,7 +72,7 @@ public final class ModelFactory {
     // Class Model Creation
     public static ClassModel createClassModel(Class<?> clazz) {
         if (ModelCache.containsClass(clazz)) {
-            return ModelCache.getClass(clazz);
+            return ClassModel.of(clazz);
         }
 
         clazz = Utils.getComponentType(clazz);
@@ -98,23 +98,25 @@ public final class ModelFactory {
 
     private static void populateClassModel(ClassModel model, Class<?> clazz) {
         var interfaces = Arrays.stream(clazz.getInterfaces())
-                .map(ModelCache::getClass)
+                .map(ClassModel::of)
                 .toArray(ClassModel[]::new);
         System.arraycopy(interfaces, 0, model.interfaces(), 0, interfaces.length);
-        model.setSuperClass(ModelCache.getClass(clazz.getSuperclass()));
+        model.setSuperClass(ClassModel.of(clazz.getSuperclass()));
     }
 
     private static void cacheClassMembers(Class<?> clazz) {
-        Arrays.stream(clazz.getDeclaredMethods()).forEach(ModelCache::getMethod);
-        Arrays.stream(clazz.getDeclaredConstructors()).forEach(ModelCache::getConstructor);
+        Arrays.stream(clazz.getDeclaredMethods()).forEach(ModelFactory::createMethodModel);
+        Arrays.stream(clazz.getDeclaredConstructors()).forEach(ModelFactory::createMethodModel);
+
+        Arrays.stream(clazz.getDeclaredFields()).forEach(ModelFactory::createFieldModel);
     }
 
     // Method Model Creation
     public static MethodModel createMethodModel(Method method) {
         var model = new MethodModelImpl(
-                ModelCache.getClass(method.getDeclaringClass()),
+                ClassModel.of(method.getDeclaringClass()),
                 method.getName(),
-                ModelCache.getTypeModel(method.getReturnType()),
+                TypeModel.of(method.getReturnType()),
                 createParameterModels(method.getParameters()),
                 createExceptionModels(method.getExceptionTypes()),
                 Utils.getAccessFlags(method.getModifiers()),
@@ -126,9 +128,9 @@ public final class ModelFactory {
 
     public static MethodModel createMethodModel(Constructor<?> constructor) {
         var model = new MethodModelImpl(
-                ModelCache.getClass(constructor.getDeclaringClass()),
+                ClassModel.of(constructor.getDeclaringClass()),
                 "<init>",
-                ModelCache.getTypeModel(void.class),
+                TypeModel.of(void.class),
                 createParameterModels(constructor.getParameters()),
                 createExceptionModels(constructor.getExceptionTypes()),
                 Utils.getAccessFlags(constructor.getModifiers()),
@@ -141,9 +143,9 @@ public final class ModelFactory {
     // Field Model Creation
     public static FieldModel createFieldModel(Field field) {
         var model = new FieldModelImpl(
-                ModelCache.getClass(field.getDeclaringClass()),
+                ClassModel.of(field.getDeclaringClass()),
                 field.getName(),
-                ModelCache.getTypeModel(field.getType()),
+                TypeModel.of(field.getType()),
                 Utils.getAccessFlags(field.getModifiers()),
                 EMPTY_GENERIC_PARAMETERS
         );
@@ -156,15 +158,14 @@ public final class ModelFactory {
         return Arrays.stream(parameters)
                 .map(p -> new ParameterModelImpl(
                         p.getName(),
-                        ModelCache.getTypeModel(p.getType()),
-                        EMPTY_GENERIC_PARAMETERS
+                        TypeModel.of(p.getType())
                 ))
                 .toArray(ParameterModel[]::new);
     }
 
     private static TypeModel[] createExceptionModels(Class<?>[] exceptionTypes) {
         return Arrays.stream(exceptionTypes)
-                .map(ModelCache::getTypeModel)
+                .map(TypeModel::of)
                 .toArray(TypeModel[]::new);
     }
 }

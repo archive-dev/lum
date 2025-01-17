@@ -10,4 +10,12 @@ record FieldModelImpl(
         List<AccessFlag> accessFlags,
         GenericParameter[] genericParameters
 ) implements FieldModel {
+    @Override
+    public String toString() {
+        return "FieldModelImpl[" +
+                "name=" + name + ", " +
+                "type=" + type + ", " +
+                "accessFlags=" + accessFlags + ", " +
+                "genericParameters=" + GenericParameter.toString(genericParameters) + ']';
+    }
 }
