@@ -1,5 +1,6 @@
 package lum.core.model;
 
+import java.lang.classfile.TypeKind;
 import java.lang.constant.ClassDesc;
 
 import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
@@ -22,6 +23,11 @@ record TypeModelImpl(
     public ClassDesc classDesc() {
         ClassDesc classDesc = ClassDesc.of(model().name());
         return classDesc.arrayType(arrayDimensions());
+    }
+
+    @Override
+    public TypeKind typeKind() {
+        return TypeKind.fromDescriptor(classDesc().descriptorString());
     }
 
     @Override

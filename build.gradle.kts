@@ -14,7 +14,12 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
-tasks.create("printCompileClasspath") {
+java {
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
+}
+
+tasks.register("printCompileClasspath") {
     val runtimeClasspath = sourceSets["main"].compileClasspath
     inputs.files( runtimeClasspath )
     doLast {

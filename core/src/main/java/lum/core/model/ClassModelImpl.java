@@ -1,5 +1,6 @@
 package lum.core.model;
 
+import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
 import java.util.List;
@@ -60,18 +61,28 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
-    public TypeModel typeModel() {
-        return new TypeModelImpl(this, 0);
-    }
-
-    @Override
     public boolean isInterface() {
         return isInterface;
     }
 
     @Override
+    public TypeModel typeModel() {
+        return new TypeModelImpl(this, 0);
+    }
+
+    @Override
     public TypeModel typeModel(int arrayDimensions) {
         return new TypeModelImpl(this, arrayDimensions);
+    }
+
+    @Override
+    public ClassDesc classDesc() {
+        return typeModel().classDesc();
+    }
+
+    @Override
+    public ClassDesc classDesc(int arrayDimensions) {
+        return typeModel(arrayDimensions).classDesc();
     }
 
     @Override

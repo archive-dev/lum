@@ -233,8 +233,8 @@ generic
 
 // Literals and Basic Types
 literal
-    : NUMBER
-    | STRING
+    : NUMBER    # Num
+    | STRING    # Str
     | 'null'    # Null
     | 'true'    # True
     | 'false'   # False

@@ -1,5 +1,6 @@
 package lum.core.model;
 
+import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,11 +25,15 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     @Override
     public abstract GenericParameter[] genericParameters();
 
-    public abstract TypeModel typeModel();
-
     public abstract boolean isInterface();
 
+    public abstract TypeModel typeModel();
+
     public abstract TypeModel typeModel(int arrayDimensions);
+
+    public abstract ClassDesc classDesc();
+
+    public abstract ClassDesc classDesc(int arrayDimensions);
 
     @Override
     public abstract boolean equals(Object obj);

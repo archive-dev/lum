@@ -1,5 +1,6 @@
 package lum.core.model;
 
+import java.lang.constant.MethodTypeDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,14 @@ record MethodModelImpl(
         List<AccessFlag> accessFlags,
         GenericParameter[] genericParameters
 ) implements MethodModel {
+    @Override
+    public MethodTypeDesc methodTypeDesc() {
+        return MethodTypeDesc.of(
+                returnType().classDesc(),
+                Arrays.stream(parameters()).map(ParameterModel::type).map(TypeModel::classDesc).toList()
+        );
+    }
+
     @Override
     public String toString() {
         return "MethodModelImpl[" +
