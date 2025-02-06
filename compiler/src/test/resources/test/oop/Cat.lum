@@ -1,0 +1,12 @@
+# Derived class Cat extending Animal.
+class Cat (Animal) {
+    # Constructor for Cat.
+    init(name: String) {
+        super(name);
+    }
+
+    # Override the speak method to provide a cat-specific sound.
+    func speak(): String {
+        return "Meow!";
+    }
+}

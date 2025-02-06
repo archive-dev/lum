@@ -1,0 +1,31 @@
+# Define an interface for speakable behavior
+# Using an interface declaration with an abstract method signature.
+interface Speakable {
+    # Abstract method; note: no implementation provided.
+    func speak(): String
+}
+
+# Base class Animal implementing the Speakable interface.
+# The inheritance declaration uses the "implements" key as defined in the grammar.
+class Animal (implements = [Speakable]) {
+    # Private field to store the animal's name.
+    private name: String
+    # Getter to access the animal's name.
+    # Demonstrates use of getter declaration.
+    get {
+        return this.name
+    }
+
+    # Constructor to initialize the animal with a name.
+    init(name: String) {
+        # Assign constructor parameter to the private field.
+        # "this" is used to disambiguate field from parameter.
+        this.name := name
+    }
+
+    # Default implementation of speak.
+    # Subclasses are expected to override this method.
+    func speak(): String {
+        return "Animal sound"
+    }
+}

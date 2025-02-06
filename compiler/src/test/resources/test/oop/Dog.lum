@@ -1,0 +1,14 @@
+# Derived class Dog extending Animal.
+class Dog (Animal) {
+    # Constructor for Dog.
+    # Calls the base class (Animal) constructor with the provided name.
+    init(name: String) {
+        # Call base class constructor.
+        super(name)
+    }
+
+    # Override the speak method to provide a dog-specific sound.
+    func speak(): String {
+        return "Woof!";
+    }
+}

@@ -37,7 +37,7 @@ controlStatement
 // Basic Blocks
 block
     : ('{' statement* '}')
-    | (':' statement)
+//    | (':' statement)
     | '=>' statement
     ;
 
@@ -47,16 +47,17 @@ expression
     | lambda                                        # LambdaExpression
     | functionCall                                  # FunctionCallExpr
     | expression '[' argumentList ']'               # ArrayAccess
-    | expression '.' (IDENTIFIER | functionCall)    # MemberAccess
+    | expression '.' (functionCall | IDENTIFIER)    # MemberAccess
     | expression after=unaryOperator~ArrayAccessOp  # PostUnary
     | before=unaryOperator~ArrayAccessOp expression # PreUnary
     | expression binaryOperator expression          # Binary
+    | expression assignment                         # AssignmentExpr
     ;
 
 primary
     : literal                                       # LiteralExpr
     | IDENTIFIER                                    # IdentifierExpr
-    | IDENTIFIER assignment                         # AssignmentExpr
+    | 'super'                                       # SuperAccess
     | '[' argumentList? ']'                         # ListLiteral
     | '[' keyValueList? ']'                         # DictLiteral
     | '(' expression ')'                            # ParenExpr
@@ -103,9 +104,8 @@ return: 'return' expression?;
 
 // Lambda Expression
 lambda
-    : ((IDENTIFIER (',' IDENTIFIER)*)
-    | '(' IDENTIFIER (',' IDENTIFIER)* ')')
-    '=>' ('{' statement* '}' | statement)
+    : ((parameterList) | '(' parameterList ')')
+    block
     ;
 
 // Switch Statement
@@ -162,7 +162,7 @@ setterDeclaration: access? 'set' ( '(' parameter ')' block)?;
 // Function and Constructor Declaration
 functionDeclaration
     : annotation* access? modifier?
-    'func' IDENTIFIER genericDeclaration? '(' parameterList? ')' (':' type)? (block)?
+    'func' IDENTIFIER genericDeclaration? '(' parameterList? ')' (':' type)? block?
     ;
 
 constructorDeclaration
@@ -290,7 +290,7 @@ unaryOperator
     ;
 
 // Assignments and Modifiers
-assignment: operator? '=' expression;
+assignment: operator? (eq='=' | typeEq=':=') expression;
 
 access
     : 'public'    # Public
@@ -303,7 +303,7 @@ modifier: (static='static' | abstract='abstract')? (final='final')?;
 // Lexer Rules
 fragment IDENTIFIER0: [a-zA-Z_][a-zA-Z0-9_]*;
 IDENTIFIER: IDENTIFIER0;
-NUMBER: [0-9]+ ('.' [0-9]+)?;
+NUMBER: [0-9]+ ('.' [0-9]+)? ('f' | 'F' | 'd' | 'D' | 'l' | 'L')?;
 STRING: '\'' .*? '\'' | '"' .*? '"';
-WS: [ \t\r\n]+ -> skip;
-COMMENT: '#' .*? '\n' -> skip;
+WS: [ \t\r\n;]+ -> skip;
+COMMENT: ('#' .*? ('\n' | EOF)) -> skip;

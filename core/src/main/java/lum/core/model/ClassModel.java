@@ -14,7 +14,7 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     
     public abstract String name();
 
-    abstract ClassModel superClass();
+    public abstract ClassModel superClass();
     public abstract void setSuperClass(ClassModel value);
 
     public abstract ClassModel[] interfaces();
@@ -26,6 +26,8 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     public abstract GenericParameter[] genericParameters();
 
     public abstract boolean isInterface();
+
+    public abstract boolean isSubclassOf(ClassModel other);
 
     public abstract TypeModel typeModel();
 

@@ -1,0 +1,15 @@
+# Main function to test polymorphism.
+func main() {
+    # Create a list of Speakable objects demonstrating polymorphism.
+    var animals: [Speakable] = [
+        Dog("Buddy"),
+        Cat("Whiskers"),
+        Animal("Generic")
+    ];
+
+    # Iterate over each animal and print the sound it makes.
+    # The "for ... in" loop demonstrates iteration over a list.
+    for animal in animals {
+        print(animal.speak());
+    }
+}

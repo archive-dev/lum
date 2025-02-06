@@ -3,6 +3,7 @@ package lum.core.model;
 import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,6 +64,26 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public boolean isInterface() {
         return isInterface;
+    }
+
+    private final HashMap<ClassModel, Boolean> subclassCheckCache = new HashMap<>();
+
+    @Override
+    public boolean isSubclassOf(ClassModel other) {
+        if (subclassCheckCache.containsKey(other))
+            return subclassCheckCache.get(other);
+
+        ClassModel superClass = superClass();
+        while (superClass != ClassModel.of(Object.class) || superClass != null) {
+            if (other.equals(superClass)) {
+                subclassCheckCache.put(other, true);
+                return true;
+            }
+            superClass = superClass();
+        }
+
+        subclassCheckCache.put(other, false);
+        return false;
     }
 
     @Override
