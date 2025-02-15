@@ -14,6 +14,7 @@ final class ClassModelImpl extends ClassModel {
     private final List<AccessFlag> accessFlags;
     private final GenericParameter[] genericParameters;
     private final boolean isInterface;
+    private final boolean isPrimitive;
 
     public ClassModelImpl(
             String name,
@@ -21,7 +22,7 @@ final class ClassModelImpl extends ClassModel {
             ClassModel[] interfaces,
             List<AccessFlag> accessFlags,
             GenericParameter[] genericParameters,
-            boolean isInterface
+            boolean isInterface, boolean isPrimitive
     ) {
         this.name = name;
         this.superClass = superClass;
@@ -29,6 +30,7 @@ final class ClassModelImpl extends ClassModel {
         this.accessFlags = accessFlags;
         this.genericParameters = genericParameters;
         this.isInterface = isInterface;
+        this.isPrimitive = isPrimitive;
     }
 
     @Override
@@ -49,6 +51,26 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public ClassModel[] interfaces() {
         return interfaces;
+    }
+
+    private final HashMap<ClassModel, Boolean> subclassCheckCache = new HashMap<>();
+
+    @Override
+    public boolean isSubclassOf(ClassModel other) {
+        if (subclassCheckCache.containsKey(other))
+            return subclassCheckCache.get(other);
+
+        ClassModel superClass = superClass();
+        while (superClass != ClassModel.of(Object.class) || superClass != null) {
+            if (other.equals(superClass)) {
+                subclassCheckCache.put(other, true);
+                return true;
+            }
+            superClass = superClass();
+        }
+
+        subclassCheckCache.put(other, false);
+        return false;
     }
 
     @Override
@@ -87,13 +109,20 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
+    public boolean isPrimitive() {
+        return isPrimitive;
+    }
+
+    @Override
     public TypeModel typeModel() {
-        return new TypeModelImpl(this, 0);
+        return typeModel(0);
     }
 
     @Override
     public TypeModel typeModel(int arrayDimensions) {
-        return new TypeModelImpl(this, arrayDimensions);
+        if (!isPrimitive())
+            return new TypeModelImpl(this, arrayDimensions);
+        return new PrimitiveTypeModelImpl(this, arrayDimensions);
     }
 
     @Override

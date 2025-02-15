@@ -22,7 +22,9 @@ record TypeModelImpl(
     @Override
     public ClassDesc classDesc() {
         ClassDesc classDesc = ClassDesc.of(model().name());
-        return classDesc.arrayType(arrayDimensions());
+        if (arrayDimensions() > 0)
+            return classDesc.arrayType(arrayDimensions());
+        return classDesc;
     }
 
     @Override
