@@ -1,4 +1,4 @@
-package lum.compiler.bytecode;
+package lum.compiler.codegen;
 
 import lum.core.model.ClassModel;
 

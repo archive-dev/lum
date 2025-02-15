@@ -7,6 +7,7 @@ import java.lang.reflect.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -92,7 +93,8 @@ final class ModelFactory {
                 new ClassModelImpl[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
                 EMPTY_GENERIC_PARAMETERS,
-                clazz.isInterface()
+                clazz.isInterface(),
+                clazz.isPrimitive()
         );
     }
 

@@ -142,6 +142,7 @@ final class ParserModelFactory {
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
                 EMPTY_GENERIC_PARAMETERS,
+                false,
                 false
         );
     }
@@ -157,7 +158,8 @@ final class ParserModelFactory {
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
                 EMPTY_GENERIC_PARAMETERS,
-                true
+                true,
+                false
         );
     }
 

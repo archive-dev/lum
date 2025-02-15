@@ -15,14 +15,6 @@ record MethodModelImpl(
         GenericParameter[] genericParameters
 ) implements MethodModel {
     @Override
-    public MethodTypeDesc methodTypeDesc() {
-        return MethodTypeDesc.of(
-                returnType().classDesc(),
-                Arrays.stream(parameters()).map(ParameterModel::type).map(TypeModel::classDesc).toList()
-        );
-    }
-
-    @Override
     public String toString() {
         return "MethodModelImpl[" +
                 "name=" + name + ", " +

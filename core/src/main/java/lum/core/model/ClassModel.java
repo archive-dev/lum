@@ -25,7 +25,11 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     @Override
     public abstract GenericParameter[] genericParameters();
 
+    public abstract boolean isSubclassOf(ClassModel other);
+
     public abstract boolean isInterface();
+
+    public abstract boolean isPrimitive();
 
     public abstract TypeModel typeModel();
 

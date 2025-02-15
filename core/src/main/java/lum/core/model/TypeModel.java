@@ -17,4 +17,12 @@ public interface TypeModel extends GenericTyped {
     static TypeModel of(Class<?> clazz) {
         return ModelCache.getTypeModel(clazz);
     }
+
+    default boolean isArray() {
+        return arrayDimensions()!=0;
+    }
+
+    default boolean isPrimitive() {
+        return false;
+    }
 }
