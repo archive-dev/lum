@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 
 class JVMVariable implements Variable {
     private static final HashMap<String, String> operatorNames = new HashMap<>();
+
     static {
         operatorNames.put("+", "add");
         operatorNames.put("-", "sub");
@@ -45,7 +46,6 @@ class JVMVariable implements Variable {
     }
 
     protected final int slot;
-
     protected TypeModel type = TypeModel.of(Object.class);
     private final CodeMaker codeMaker;
 
@@ -91,47 +91,31 @@ class JVMVariable implements Variable {
     }
 
     @Override
-    public Variable set(ConstantDesc value) {
+    public Variable set(TypeModel newType, ConstantDesc value) {
         codeMaker().load(value);
-        store(TypeModel.of(value.getClass()));
+        store(newType);
         return this;
     }
 
     @Override
-    public Variable set(Variable value) {
-        value.load();
-        store(value.getType());
-
+    public Variable set(TypeModel newType, Variable value) {
+        value.load(codeMaker());
+        store(newType);
         return this;
     }
 
     @Override
-    public Variable set(Consumer<CodeMaker> expression) {
+    public Variable set(TypeModel newType, Consumer<CodeMaker> expression) {
         expression.accept(codeMaker());
+        store(newType);
         return this;
     }
 
     @Override
     public Field field(String fieldName) {
         var field = getType().model().getField(fieldName);
-
         Field jvmField = new JVMField(codeMaker(), this, field.owner(), field);
-        jvmField.set((_) -> {
-            if (!field.isStatic()) {
-                codeMaker().codeBuilder().getfield(
-                        getType().classDesc(),
-                        fieldName,
-                        field.type().classDesc()
-                );
-            } else {
-                codeMaker().codeBuilder().getstatic(
-                        getType().classDesc(),
-                        fieldName,
-                        field.type().classDesc()
-                );
-            }
-        });
-        return jvmField; // todo
+        return jvmField;
     }
 
     private Opcode getInvokeOpcode(MethodModel method) {
@@ -163,8 +147,22 @@ class JVMVariable implements Variable {
 
             cm.codeBuilder().invoke(opcode, getType().classDesc(), method.name(), method.methodTypeDesc(), getType().model().isInterface());
         });
+        v.setType(method.returnType());
 
         return v.build();
+    }
+
+    private MethodModel getOperatorMethod(String operatorName, Variable... arguments) {
+        var args = Arrays.stream(arguments).map(Variable::getType).toList();
+        var model = getType().model();
+
+        if (model.getMethod(operatorName, args) != null) {
+            return model.getMethod(operatorName, args);
+        } else if (model.getMethod(operatorNames.get(operatorName), args) != null) {
+            return model.getMethod(operatorNames.get(operatorName), args);
+        }
+
+        return null;
     }
 
     private Variable invokeOperator(String operatorName, Variable... arguments) {
@@ -197,6 +195,7 @@ class JVMVariable implements Variable {
 
             cm.codeBuilder().invoke(opcode, getType().classDesc(), method.name(), method.methodTypeDesc(), getType().model().isInterface());
         });
+        v.setType(method.returnType());
 
         return v.build();
     }
@@ -216,6 +215,7 @@ class JVMVariable implements Variable {
 
             cm.codeBuilder().invoke(opcode, getType().classDesc(), method.name(), method.methodTypeDesc(), getType().model().isInterface());
         });
+        v.setType(method.returnType());
 
         return v.build();
     }
@@ -243,6 +243,7 @@ class JVMVariable implements Variable {
 
             cm.codeBuilder().invoke(opcode, getType().classDesc(), method.name(), method.methodTypeDesc(), getType().model().isInterface());
         });
+        v.setType(method.returnType());
 
         return v.build();
     }
@@ -252,16 +253,20 @@ class JVMVariable implements Variable {
         if (!getType().isArray()) return null;
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
-                this.load(cm);
-                cm.codeBuilder().arraylength();
-            }
-        );
+            this.load(cm);
+            cm.codeBuilder().arraylength();
+        }).setType(TypeModel.INT).setCodeMaker(codeMaker());
 
         return v.build();
     }
 
     @Override
     public Variable arrayAccess(Variable[] arguments) {
+        if (getType().isArray()) {
+            if (arguments.length != 1) throw new IllegalStateException();
+            return new JVMArrayElement(cm -> cm.load(arguments[0]), this);
+        }
+
         MethodModel model = getType().model().getMethod("[]", Arrays.stream(arguments).map(Variable::getType).toList());
         if (model == null) {
             model = getType().model().getMethod("get", Arrays.stream(arguments).map(Variable::getType).toList());
@@ -271,56 +276,54 @@ class JVMVariable implements Variable {
     }
 
     @Override
-    public Variable arrayAccess(Variable value, Variable[] at) {
-        Variable[] arguments = new Variable[at.length+1];
-        arguments[0] = value;
-        System.arraycopy(at, 1, arguments, 1, at.length);
-
-        MethodModel model = getType().model().getMethod("[]", Arrays.stream(arguments).map(Variable::getType).toList());
-        if (model == null) {
-            model = getType().model().getMethod("set", Arrays.stream(arguments).map(Variable::getType).toList());
-        }
-
-        return invoke(model, arguments);
+    public void arrayAccess(Variable value, Variable[] at) {
+        arrayAccess(at).set(value);
     }
 
-    private Variable arithmeticOperation(Variable other, Opcode opcode, String operatorName) {
+    private Variable handleArithmeticOrBitwiseOperation(Variable other, Opcode opcode, String operatorName) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
-            if (getType().isPrimitive()) {
+            if (opcode != null || getType().isPrimitive()) {
                 load();
-                other.load();
+                other.load(cm);
                 var cb = cm.codeBuilder();
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
                 cb.with(OperatorInstruction.of(opcode));
             } else {
-                invokeOperator(operatorName, other);
+                invokeOperator(operatorName, other).load(cm);
             }
         });
+
+        if (opcode != null) {
+            v.setType(TypeModel.of(opcode.primaryTypeKind()));
+        } else {
+            v.setType(getOperatorMethod(operatorName, other).returnType());
+        }
+        v.setCodeMaker(codeMaker());
 
         return v.build();
     }
 
     @Override
     public Variable multiply(Variable other) {
-        return arithmeticOperation(other, switch (getType().typeKind()) {
+        return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
             case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IMUL;
             case LongType -> Opcode.LMUL;
             case FloatType -> Opcode.FMUL;
             case DoubleType -> Opcode.DMUL;
-            case ReferenceType, VoidType -> throw new IllegalStateException();
+            case ReferenceType, VoidType -> null;
         }, "*");
     }
 
     @Override
     public Variable divide(Variable other) {
-        return arithmeticOperation(other, switch (getType().typeKind()) {
+        return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
             case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IDIV;
             case LongType -> Opcode.LDIV;
             case FloatType -> Opcode.FDIV;
             case DoubleType -> Opcode.DDIV;
-            case ReferenceType, VoidType -> throw new IllegalStateException();
+            case ReferenceType, VoidType -> null;
         }, "/");
     }
 
@@ -331,7 +334,6 @@ class JVMVariable implements Variable {
             if (getType().isPrimitive()) {
                 load(cm);
                 other.load(cm);
-
                 sub(mod(other));
             } else {
                 invokeOperator("//", other);
@@ -343,98 +345,88 @@ class JVMVariable implements Variable {
 
     @Override
     public Variable mod(Variable other) {
-        return arithmeticOperation(other, switch (getType().typeKind()) {
+        return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
             case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IREM;
             case LongType -> Opcode.LREM;
             case FloatType -> Opcode.FREM;
             case DoubleType -> Opcode.DREM;
-            case ReferenceType, VoidType -> throw new IllegalStateException();
+            case ReferenceType, VoidType -> null;
         }, "%");
     }
 
     @Override
     public Variable add(Variable other) {
-        return arithmeticOperation(other, switch (getType().typeKind()) {
+        return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
             case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IADD;
             case LongType -> Opcode.LADD;
             case FloatType -> Opcode.FADD;
             case DoubleType -> Opcode.DADD;
-            case ReferenceType, VoidType -> throw new IllegalStateException();
+            case ReferenceType, VoidType -> null;
         }, "+");
     }
 
     @Override
     public Variable sub(Variable other) {
-        return arithmeticOperation(other, switch (getType().typeKind()) {
+        return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
             case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.ISUB;
             case LongType -> Opcode.LSUB;
             case FloatType -> Opcode.FSUB;
             case DoubleType -> Opcode.DSUB;
-            case ReferenceType, VoidType -> throw new IllegalStateException();
+            case ReferenceType, VoidType -> null;
         }, "-");
     }
 
-
     @Override
     public Variable shr(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            load();
-            other.load();
-
-            if (getType().isPrimitive()) {
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                type = getType();
-                if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                    cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
-                    type = TypeModel.of(long.class);
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                }
-
-                cb.with(OperatorInstruction.of(switch (type.typeKind().asLoadable()) {
-                    case IntType -> Opcode.ISHR;
-                    case LongType -> Opcode.LSHR;
-                    default -> throw new IllegalStateException();
-                }));
-            } else {
-                invokeOperator(">>", other);
-            }
-        });
-
-        return v.build();
+        return handleShiftOperation(other, Opcode.ISHR, Opcode.LSHR, ">>");
     }
 
     @Override
     public Variable shl(Variable other) {
+        return handleShiftOperation(other, Opcode.ISHL, Opcode.LSHL, "<<");
+    }
+
+    private Variable handleShiftOperation(Variable other, Opcode intOpcode, Opcode longOpcode, String operatorName) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
+        final TypeModel[] type = new TypeModel[1];
         v.addCode(cm -> {
             load();
-            other.load();
+            other.load(cm);
 
             if (getType().isPrimitive()) {
                 var cb = cm.codeBuilder();
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                type = getType();
+                TypeModel currentType = getType();
                 if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
                     cb.with(StackInstruction.of(Opcode.SWAP));
                     cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
-                    type = TypeModel.of(long.class);
+                    currentType = TypeModel.of(long.class);
                     cb.with(StackInstruction.of(Opcode.SWAP));
                 }
 
-                cb.with(OperatorInstruction.of(switch (type.typeKind().asLoadable()) {
-                    case IntType -> Opcode.ISHL;
-                    case LongType -> Opcode.LSHL;
+                cb.with(OperatorInstruction.of(switch (currentType.typeKind().asLoadable()) {
+                    case IntType -> {
+                        type[0] = TypeModel.INT;
+                        yield intOpcode;
+                    }
+                    case LongType -> {
+                        type[0] = TypeModel.LONG;
+                        yield longOpcode;
+                    }
                     default -> throw new IllegalStateException();
                 }));
             } else {
-                invokeOperator("<<", other);
+                invokeOperator(operatorName, other);
             }
         });
+
+        if (type[0] != null) {
+            v.setType(type[0]);
+        } else {
+            v.setType(getOperatorMethod(operatorName, other).returnType());
+        }
+        v.setCodeMaker(codeMaker());
 
         return v.build();
     }
@@ -446,33 +438,7 @@ class JVMVariable implements Variable {
 
     @Override
     public Variable xor(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            if (getType().isPrimitive()) {
-                load();
-                other.load();
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                type = getType();
-                if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                    cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
-                    type = TypeModel.of(long.class);
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                }
-
-                cb.with(OperatorInstruction.of(switch (type.typeKind().asLoadable()) {
-                    case IntType -> Opcode.IXOR;
-                    case LongType -> Opcode.LXOR;
-                    default -> throw new IllegalStateException();
-                }));
-            } else {
-                invokeOperator("^", other);
-            }
-        });
-
-        return v.build();
+        return handleBitwiseOperation(other, Opcode.IXOR, Opcode.LXOR, "^");
     }
 
     @Override
@@ -480,218 +446,102 @@ class JVMVariable implements Variable {
         return or(other);
     }
 
-    @Override
-    public Variable gt(Variable other) {
+    private Variable handleBitwiseOperation(Variable other, Opcode intOpcode, Opcode longOpcode, String operatorName) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
-            int cmp = 1;
-
             if (getType().isPrimitive()) {
                 load();
-                other.load();
+                other.load(cm);
                 var cb = cm.codeBuilder();
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPGT, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
-                        cb.lcmp();
-                        cb.ldc(cmp);
-                    }
-                    case FloatType -> {
-                        cb.fcmpg();
-                        cb.ldc(cmp);
-                    }
-                    case DoubleType -> {
-                        cb.dcmpg();
-                        cb.ldc(cmp);
-                    }
+                TypeModel currentType = getType();
+                if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
+                    cb.with(StackInstruction.of(Opcode.SWAP));
+                    cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
+                    currentType = TypeModel.of(long.class);
+                    cb.with(StackInstruction.of(Opcode.SWAP));
                 }
-                cb.ifThenElse(Opcode.IFEQ, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
+
+                cb.with(OperatorInstruction.of(switch (currentType.typeKind().asLoadable()) {
+                    case IntType -> intOpcode;
+                    case LongType -> longOpcode;
+                    default -> throw new IllegalStateException();
+                }));
             } else {
-                invokeOperator(">", other);
+                invokeOperator(operatorName, other);
             }
         });
 
         return v.build();
+    }
+
+    @Override
+    public Variable gt(Variable other) {
+        return handleComparisonOperation(other, Opcode.IF_ICMPGT, 1, ">");
     }
 
     @Override
     public Variable lt(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            int cmp = -1;
-
-            if (getType().isPrimitive()) {
-                load();
-                other.load();
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPLT, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
-                        cb.lcmp();
-                        cb.ldc(cmp);
-                    }
-                    case FloatType -> {
-                        cb.fcmpg();
-                        cb.ldc(cmp);
-                    }
-                    case DoubleType -> {
-                        cb.dcmpg();
-                        cb.ldc(cmp);
-                    }
-                }
-                cb.ifThenElse(Opcode.IFEQ, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-            } else {
-                invokeOperator("<", other);
-            }
-        });
-
-        return v.build();
+        return handleComparisonOperation(other, Opcode.IF_ICMPLT, -1, "<");
     }
 
     @Override
     public Variable ge(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            int cmp = 0;
-
-            if (getType().isPrimitive()) {
-                load();
-                other.load();
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPGE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
-                        cb.lcmp();
-                        cb.ldc(cmp);
-                    }
-                    case FloatType -> {
-                        cb.fcmpg();
-                        cb.ldc(cmp);
-                    }
-                    case DoubleType -> {
-                        cb.dcmpg();
-                        cb.ldc(cmp);
-                    }
-                }
-                cb.ifThenElse(Opcode.IF_ICMPGE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-            } else {
-                invokeOperator(">=", other);
-            }
-        });
-
-        return v.build();
+        return handleComparisonOperation(other, Opcode.IF_ICMPGE, 0, ">=");
     }
 
     @Override
     public Variable le(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            int cmp = 0;
-
-            if (getType().isPrimitive()) {
-                load();
-                other.load();
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPLE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
-                        cb.lcmp();
-                        cb.ldc(cmp);
-                    }
-                    case FloatType -> {
-                        cb.fcmpg();
-                        cb.ldc(cmp);
-                    }
-                    case DoubleType -> {
-                        cb.dcmpg();
-                        cb.ldc(cmp);
-                    }
-                }
-                cb.ifThenElse(Opcode.IF_ICMPLE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-            } else {
-                invokeOperator("<=", other);
-            }
-        });
-
-        return v.build();
+        return handleComparisonOperation(other, Opcode.IF_ICMPLE, 0, "<=");
     }
 
     @Override
     public Variable eq(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            int cmp = 0;
-
-            if (getType().isPrimitive()) {
-                load();
-                other.load();
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPEQ, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
-                        cb.lcmp();
-                        cb.ldc(cmp);
-                    }
-                    case FloatType -> {
-                        cb.fcmpg();
-                        cb.ldc(cmp);
-                    }
-                    case DoubleType -> {
-                        cb.dcmpg();
-                        cb.ldc(cmp);
-                    }
-                }
-                cb.ifThenElse(Opcode.IF_ICMPEQ, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-            } else {
-                invokeOperator("==", other);
-            }
-        });
-
-        return v.build();
+        return handleComparisonOperation(other, Opcode.IF_ICMPEQ, 0, "==");
     }
 
     @Override
     public Variable neq(Variable other) {
+        return handleComparisonOperation(other, Opcode.IF_ICMPNE, 0, "!=");
+    }
+
+    private Variable handleComparisonOperation(Variable other, Opcode opcode, int cmpValue, String operatorName) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
-            int cmp = 0;
-
             if (getType().isPrimitive()) {
                 load();
-                other.load();
+                other.load(cm);
                 var cb = cm.codeBuilder();
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
                 switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(Opcode.IF_ICMPNE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
+                    case IntType -> cb.ifThenElse(opcode, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
                     case LongType -> {
                         cb.lcmp();
-                        cb.ldc(cmp);
+                        cb.loadConstant(cmpValue);
                     }
                     case FloatType -> {
                         cb.fcmpg();
-                        cb.ldc(cmp);
+                        cb.loadConstant(cmpValue);
                     }
                     case DoubleType -> {
                         cb.dcmpg();
-                        cb.ldc(cmp);
+                        cb.loadConstant(cmpValue);
                     }
                 }
-                cb.ifThenElse(Opcode.IF_ICMPNE, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
+                cb.ifThenElse(Opcode.IFEQ, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
             } else {
-                invokeOperator("!=", other);
+                invokeOperator(operatorName, other);
             }
         });
+
+        if (opcode != null) {
+            v.setType(TypeModel.of(opcode.primaryTypeKind()));
+        } else {
+            v.setType(getOperatorMethod(operatorName, other).returnType());
+        }
+        v.setCodeMaker(codeMaker());
 
         return v.build();
     }
@@ -728,62 +578,39 @@ class JVMVariable implements Variable {
 
     @Override
     public Variable and(Variable other) {
-        JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
-            load();
-            other.load();
-
-            if (getType().isPrimitive()) {
-                var cb = cm.codeBuilder();
-                if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
-                    cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                type = getType();
-                if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                    cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
-                    type = TypeModel.of(long.class);
-                    cb.with(StackInstruction.of(Opcode.SWAP));
-                }
-
-                cb.with(OperatorInstruction.of(switch (type.typeKind()) {
-                    case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IAND;
-                    case LongType -> Opcode.LAND;
-                    case FloatType, DoubleType, ReferenceType, VoidType -> throw new IllegalStateException();
-                }));
-            } else {
-                invokeOperator("&&", other);
-            }
-        });
-
-        return v.build();
+        return handleLogicalOperation(other, Opcode.IAND, Opcode.LAND, "&&");
     }
 
     @Override
     public Variable or(Variable other) {
+        return handleLogicalOperation(other, Opcode.IOR, Opcode.LOR, "||");
+    }
+
+    private Variable handleLogicalOperation(Variable other, Opcode intOpcode, Opcode longOpcode, String operatorName) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
             load();
-            other.load();
+            other.load(cm);
 
             if (getType().isPrimitive()) {
                 var cb = cm.codeBuilder();
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
-                type = getType();
+                TypeModel currentType = getType();
                 if (getType().equals(TypeModel.of(float.class)) || getType().equals(TypeModel.of(double.class))) {
                     cb.with(StackInstruction.of(Opcode.SWAP));
                     cb.with(ConvertInstruction.of(getType().typeKind(), TypeModel.of(long.class).typeKind()));
-                    type = TypeModel.of(long.class);
+                    currentType = TypeModel.of(long.class);
                     cb.with(StackInstruction.of(Opcode.SWAP));
                 }
 
-                cb.with(OperatorInstruction.of(switch (type.typeKind()) {
-                    case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IOR;
-                    case LongType -> Opcode.LOR;
+                cb.with(OperatorInstruction.of(switch (currentType.typeKind()) {
+                    case IntType, BooleanType, CharType, ByteType, ShortType -> intOpcode;
+                    case LongType -> longOpcode;
                     case FloatType, DoubleType, ReferenceType, VoidType -> throw new IllegalStateException();
                 }));
             } else {
-                invokeOperator("||", other);
+                invokeOperator(operatorName, other);
             }
         });
 
@@ -792,33 +619,21 @@ class JVMVariable implements Variable {
 
     @Override
     public Variable increment(Variable other) {
-        if (getType().isPrimitive()) {
-            load();
-
-            if (other == null) {
-                return set(add(codeMaker().var(1)));
-            }
-
-            other.load();
-            return set(add(other));
-        } else {
-            return new JVMInlinedVariableBuilder(List.of(_ -> invokeOperator("++", other))).build();
-        }
+        return handleIncrementDecrement(other, this::add, "++");
     }
 
     @Override
     public Variable decrement(Variable other) {
+        return handleIncrementDecrement(other, this::sub, "--");
+    }
+
+    private Variable handleIncrementDecrement(Variable other, Operation operation, String operatorName) {
         if (getType().isPrimitive()) {
-            load();
-
-            if (other == null) {
-                return set(sub(codeMaker().var(1)));
-            }
-
-            other.load();
-            return set(sub(other));
+            Variable incrementValue = (other == null) ? codeMaker().var(1) : other;
+            return set(operation.apply(incrementValue));
         } else {
-            return new JVMInlinedVariableBuilder(List.of(_ -> invokeOperator("--", other))).build();
+            return new JVMInlinedVariableBuilder(List.of(_ -> invokeOperator(operatorName, other)))
+                    .setType(getOperatorMethod(operatorName, other).returnType()).build();
         }
     }
 
@@ -829,5 +644,10 @@ class JVMVariable implements Variable {
         }
 
         return new JVMInlinedVariableBuilder(List.of((_) -> invokeOperator("!"))).build();
+    }
+
+    @FunctionalInterface
+    private interface Operation {
+        Variable apply(Variable variable);
     }
 }

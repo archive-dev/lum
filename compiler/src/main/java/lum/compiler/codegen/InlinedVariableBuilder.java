@@ -13,6 +13,10 @@ public interface InlinedVariableBuilder {
 
     InlinedVariableBuilder addCode(Consumer<CodeMaker> code);
 
+    InlinedVariableBuilder setType(TypeModel type);
+
+    InlinedVariableBuilder setCodeMaker(CodeMaker codeMaker);
+
     InlinedVariable build();
 
     InlinedVariableBuilder ifThen(Variable value, Consumer<CodeMaker> ifHandler);
@@ -67,9 +71,9 @@ public interface InlinedVariableBuilder {
 
     InlinedVariableBuilder var(Variable value);
 
-    InlinedVariableBuilder for_(Variable i, Consumer<CodeMaker> condition, BiConsumer<CodeMaker, Variable> update, Consumer<CodeMaker> block);
+    InlinedVariableBuilder for_(Variable i, BiConsumer<CodeMaker, Variable> condition, BiConsumer<CodeMaker, Variable> update, BiConsumer<CodeMaker, Variable> block);
 
-    InlinedVariableBuilder foreach(Variable i, Variable iterator, Consumer<CodeMaker> block);
+    InlinedVariableBuilder foreach(Variable iterable, BiConsumer<CodeMaker, Variable> block);
 
     InlinedVariableBuilder load(Variable variable);
 }

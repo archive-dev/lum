@@ -15,11 +15,11 @@ import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 class JVMClassMaker implements ClassMaker {
-    private final List<Consumer<ClassBuilder>> builder = new ArrayList<>();
+    private final List<Consumer<ClassBuilder>> classBuilderActions = new ArrayList<>();
     private final ClassModel model;
-
     private final Set<MethodMaker> methods = new HashSet<>();
     private final Set<FieldMaker> fields = new HashSet<>();
 
@@ -29,88 +29,104 @@ class JVMClassMaker implements ClassMaker {
 
     @Override
     public ClassMaker extend(ClassModel model) {
-        builder.add(cb -> {
-            cb.withSuperclass(model.classDesc());
-        });
-
+        addClassBuilderAction(cb -> cb.withSuperclass(model.classDesc()));
         return this;
     }
 
     @Override
     public ClassMaker extend(ClassMaker maker) {
-        builder.add(cb -> cb.withSuperclass(((JVMClassMaker) maker).model.classDesc()));
-        return this;
+        return extend(((JVMClassMaker) maker).model);
     }
 
     @Override
     public ClassMaker implement(ClassModel model) {
-        builder.add(cb -> cb.withInterfaceSymbols(model.classDesc()));
+        addClassBuilderAction(cb -> cb.withInterfaceSymbols(model.classDesc()));
         return this;
     }
 
     @Override
     public ClassMaker implement(ClassModel... models) {
-        builder.add(cb -> cb.withInterfaceSymbols(Arrays.stream(models).map(ClassModel::classDesc).toList()));
+        addClassBuilderAction(cb -> cb.withInterfaceSymbols(Stream.of(models).map(ClassModel::classDesc).toList()));
         return this;
     }
 
     @Override
     public ClassMaker implement(ClassMaker maker) {
-        implement(((JVMClassMaker) maker).model);
-        return this;
+        return implement(((JVMClassMaker) maker).model);
     }
 
     @Override
     public ClassMaker implement(ClassMaker... makers) {
-        implement(Arrays.stream(makers).map(m -> ((JVMClassMaker) m).model).toArray(ClassModel[]::new));
+        implement(Stream.of(makers).map(m -> ((JVMClassMaker) m).model).toArray(ClassModel[]::new));
         return this;
     }
 
     @Override
     public MethodMaker createMethod(MethodModel method) {
-        return new JVMMethodMaker(method);
+        JVMMethodMaker methodMaker = new JVMMethodMaker(method);
+        methods.add(methodMaker);
+        return methodMaker;
     }
 
     @Override
     public FieldMaker createField(FieldModel model) {
-        return new JVMFieldMaker(model);
+        JVMFieldMaker fieldMaker = new JVMFieldMaker(model);
+        fields.add(fieldMaker);
+        return fieldMaker;
     }
 
     @Override
     public void finishTo(Path path) throws IOException {
-        ClassFile.of().buildTo(path, this.model.classDesc(), cb -> {
-            this.builder.forEach(b -> b.accept(cb));
-            for (var method : methods) {
-                JVMMethodMaker m = ((JVMMethodMaker) method);
-                var model = m.model;
-                cb.withMethod(
-                        model.name(),
-                        model.methodTypeDesc(),
-                        model.intAccessFlags(),
-                        mb -> {
-                            for (var c : m.finish()) {
-                                c.accept(mb);
-                            }
-                        });
-            }
-
-            for (var field : fields) {
-                JVMFieldMaker f = ((JVMFieldMaker) field);
-                FieldModel model = f.model;
-                cb.withField(model.name(),
-                        model.type().classDesc(),
-                        fb -> {
-                            for (var c : f.finish()) {
-                                c.accept(fb);
-                            }
-                        });
-            }
+        buildClassFile(path, (cb) -> {
+            methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
+            fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
         });
+    }
+
+    private void buildClassFile(Path path, Consumer<ClassBuilder> extraActions) throws IOException {
+        ClassFile.of().buildTo(path, this.model.classDesc(), cb -> {
+            this.classBuilderActions.forEach(b -> b.accept(cb));
+            extraActions.accept(cb);
+        });
+    }
+
+    private void addMethodToClassBuilder(ClassBuilder cb, JVMMethodMaker methodMaker) {
+        MethodModel model = methodMaker.model;
+        cb.withMethod(
+                model.name(),
+                model.methodTypeDesc(),
+                model.intAccessFlags(),
+                mb -> methodMaker.finish().forEach(c -> c.accept(mb))
+        );
+    }
+
+    private void addFieldToClassBuilder(ClassBuilder cb, JVMFieldMaker fieldMaker) {
+        FieldModel model = fieldMaker.model;
+        cb.withField(
+                model.name(),
+                model.type().classDesc(),
+                fb -> fieldMaker.finish().forEach(c -> c.accept(fb))
+        );
     }
 
     @Override
     public void finishToFile() throws IOException {
         finishTo(Path.of(model.name()));
+    }
+
+    @Override
+    public byte[] finish() {
+        return buildClassFile((cb) -> {
+            methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
+            fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
+        });
+    }
+
+    private byte[] buildClassFile(Consumer<ClassBuilder> extraActions) {
+        return ClassFile.of().build(this.model.classDesc(), cb -> {
+            this.classBuilderActions.forEach(b -> b.accept(cb));
+            extraActions.accept(cb);
+        });
     }
 
     @Override
@@ -121,5 +137,9 @@ class JVMClassMaker implements ClassMaker {
     @Override
     public Accessible access(AccessFlag... flags) {
         return this;
+    }
+
+    private void addClassBuilderAction(Consumer<ClassBuilder> action) {
+        this.classBuilderActions.add(action);
     }
 }

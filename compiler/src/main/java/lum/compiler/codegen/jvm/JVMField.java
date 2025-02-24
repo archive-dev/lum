@@ -5,6 +5,7 @@ import lum.compiler.codegen.Field;
 import lum.compiler.codegen.Variable;
 import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
+import lum.core.model.TypeModel;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.Opcode;
@@ -21,6 +22,7 @@ class JVMField extends JVMVariable implements Field {
         this.accessor = accessor;
         this.owner = owner;
         this.field = field;
+        this.type = field.type();
     }
 
     /// Assumes that stack has value to put in field via PUTSTATIC or PUTFIELD
@@ -30,7 +32,7 @@ class JVMField extends JVMVariable implements Field {
         if (field.isStatic())
             cb.putstatic(owner.classDesc(), field.name(), field.type().classDesc());
         else {
-            accessor.load();
+            accessor.load(codeMaker());
             cb.swap();
             cb.putfield(owner.classDesc(), field.name(), field.type().classDesc());
         }
@@ -42,15 +44,15 @@ class JVMField extends JVMVariable implements Field {
         if (field.isStatic())
             cb.getstatic(owner.classDesc(), field.name(), field.type().classDesc());
         else {
-            accessor.load();
+            accessor.load(codeMaker());
             cb.getfield(owner.classDesc(), field.name(), field.type().classDesc());
         }
     }
 
     @Override
-    public Variable set(ConstantDesc value) {
+    public Variable set(TypeModel newType, ConstantDesc value) {
         if (!field.isStatic())
-            accessor.load();
+            accessor.load(codeMaker());
         codeMaker().load(value);
         Opcode opcode = field.isStatic() ? Opcode.PUTSTATIC : Opcode.PUTFIELD;
 
@@ -60,9 +62,9 @@ class JVMField extends JVMVariable implements Field {
     }
 
     @Override
-    public Variable set(Variable value) {
+    public Variable set(TypeModel newType, Variable value) {
         if (!field.isStatic())
-            accessor.load();
+            accessor.load(codeMaker());
         codeMaker().load(value);
         Opcode opcode = field.isStatic() ? Opcode.PUTSTATIC : Opcode.PUTFIELD;
 
@@ -72,9 +74,9 @@ class JVMField extends JVMVariable implements Field {
     }
 
     @Override
-    public Variable set(Consumer<CodeMaker> expression) {
+    public Variable set(TypeModel newType, Consumer<CodeMaker> expression) {
         if (!field.isStatic())
-            accessor.load();
+            accessor.load(codeMaker());
         expression.accept(codeMaker());
         Opcode opcode = field.isStatic() ? Opcode.PUTSTATIC : Opcode.PUTFIELD;
 

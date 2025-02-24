@@ -7,6 +7,8 @@ import java.lang.constant.ConstantDesc;
 import java.util.function.Consumer;
 
 public interface Variable {
+    Variable[] EMPTY_VARIABLES = new Variable[0];
+
     int getSlot();
     TypeModel getType();
     CodeMaker codeMaker();
@@ -17,9 +19,19 @@ public interface Variable {
     void load(CodeMaker to);
     void store();
 
-    Variable set(ConstantDesc value);
-    Variable set(Variable value);
-    Variable set(Consumer<CodeMaker> expression);
+    default Variable set(ConstantDesc value) {
+        return set(getType(), value);
+    }
+    default Variable set(Variable value) {
+        return set(getType(), value);
+    }
+    default Variable set(Consumer<CodeMaker> expression) {
+        return set(getType(), expression);
+    }
+
+    Variable set(TypeModel newType, ConstantDesc value);
+    Variable set(TypeModel newType, Variable value);
+    Variable set(TypeModel newType, Consumer<CodeMaker> expression);
 
     Field field(String fieldName);
 
@@ -27,10 +39,16 @@ public interface Variable {
     Variable invoke(String methodName, Variable... arguments);
     Variable invoke(MethodModel method, ConstantDesc... arguments);
     Variable invoke(String methodName, ConstantDesc... arguments);
+    default Variable invoke(String methodName) {
+        return invoke(methodName, EMPTY_VARIABLES);
+    }
+    default Variable invoke(MethodModel method) {
+        return invoke(method, EMPTY_VARIABLES);
+    }
 
     Variable arrayLength();
     Variable arrayAccess(Variable[] arguments);
-    Variable arrayAccess(Variable value, Variable[] at);
+    void arrayAccess(Variable value, Variable[] at);
 
     Variable multiply(Variable other);
     Variable divide(Variable other);

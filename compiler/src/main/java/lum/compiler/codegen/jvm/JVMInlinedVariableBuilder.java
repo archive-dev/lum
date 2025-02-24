@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 
 class JVMInlinedVariableBuilder implements InlinedVariableBuilder {
     private ArrayList<Consumer<CodeMaker>> code = new ArrayList<>();
+    private TypeModel type = TypeModel.of(Object.class);
+    private CodeMaker cm = null;
 
 	public JVMInlinedVariableBuilder() {}
 
@@ -25,13 +27,26 @@ class JVMInlinedVariableBuilder implements InlinedVariableBuilder {
     }
 
     @Override
+    public InlinedVariableBuilder setType(TypeModel type) {
+        this.type = type;
+        return this;
+    }
+
+    @Override
+    public InlinedVariableBuilder setCodeMaker(CodeMaker codeMaker) {
+        this.cm = codeMaker;
+        return this;
+    }
+
+    @Override
 	public JVMInlinedVariableBuilder addCode(Consumer<CodeMaker> code) {
         this.code.add(code);
         return this;
     }
 
+    @Override
     public JVMInlinedVariable build() {
-        return new JVMInlinedVariable(code);
+        return new JVMInlinedVariable(this.type, this.cm, code);
     }
 
     @Override
@@ -165,13 +180,13 @@ class JVMInlinedVariableBuilder implements InlinedVariableBuilder {
     }
 
     @Override
-	public JVMInlinedVariableBuilder for_(Variable i, Consumer<CodeMaker> condition, BiConsumer<CodeMaker, Variable> update, Consumer<CodeMaker> block) {
+	public JVMInlinedVariableBuilder for_(Variable i, BiConsumer<CodeMaker, Variable> condition, BiConsumer<CodeMaker, Variable> update, BiConsumer<CodeMaker, Variable> block) {
         return addCode((c) -> c.for_(i, condition, update, block));
     }
 
     @Override
-	public JVMInlinedVariableBuilder foreach(Variable i, Variable iterator, Consumer<CodeMaker> block) {
-        return addCode((c) -> c.foreach(i, iterator, block));
+	public JVMInlinedVariableBuilder foreach(Variable iterable, BiConsumer<CodeMaker, Variable> block) {
+        return addCode((c) -> c.foreach(iterable, block));
     }
 
     @Override

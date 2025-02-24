@@ -31,6 +31,8 @@ public interface ClassMaker extends Accessible {
 
     void finishToFile() throws IOException;
 
+    byte[] finish();
+
     class Utils {
         private final static HashMap<Option.SourceOption, Function<ClassModel, ClassMaker>> suppliers = new HashMap();
         static {
