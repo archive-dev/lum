@@ -6,10 +6,10 @@ program: statement* EOF;
 // Statements
 statement
     : package
+    | expression
     | importStatement
     | declaration
     | controlStatement
-    | expression
     | break
     | continue
     | return
@@ -43,15 +43,16 @@ block
 
 // Expressions
 expression
-    : primary                                       # PrimaryExpression
+    : functionCall                                  # FunctionCallExpr
+    | superCall                                     # SuperCallExpr
     | lambda                                        # LambdaExpression
-    | functionCall                                  # FunctionCallExpr
     | expression '[' argumentList ']'               # ArrayAccess
     | expression '.' (functionCall | IDENTIFIER)    # MemberAccess
-    | expression after=unaryOperator~ArrayAccessOp  # PostUnary
-    | before=unaryOperator~ArrayAccessOp expression # PreUnary
+    | expression postUnaryOperator                  # PostUnary
+    | preUnaryOperator expression                   # PreUnary
     | expression binaryOperator expression          # Binary
     | expression assignment                         # AssignmentExpr
+    | primary                                       # PrimaryExpression
     ;
 
 primary
@@ -67,6 +68,7 @@ keyValueList
     : keyValue (',' keyValue)*
     ;
 
+keyValue: expression ':' expression;
 
 // Package and Import
 package: 'package' IDENTIFIER ('.' IDENTIFIER)*;
@@ -141,18 +143,16 @@ forLoopStatement
     | forEachLoop
     ;
 
-forILoop: 'for' variableDeclarationStatement ',' expression ',' expression block;
+forILoop: 'for' variableDeclaration? ',' condition=expression? ',' iter=expression? block;
 forEachLoop: 'for' variableDeclaration 'in' expression block;
 
 // Variable Declaration
-keyValue: (STRING | IDENTIFIER) ':' expression;
-
 variableDeclarationStatement
     : annotation* access? modifier? (variableDeclaration) (',' variableDeclaration)*
     ;
 
 variableDeclaration
-    : IDENTIFIER (':' type)? ((':=' | '=') expression)?
+    : IDENTIFIER (':' type)? ((typeEq=':=' | eq='=') expression)?
       (getterDeclaration | setterDeclaration)*
     ;
 
@@ -216,19 +216,21 @@ annotationArgs: annotationArg (',' annotationArg)*;
 annotationArg: IDENTIFIER '=' STRING;
 
 // Function Call
-functionCall: IDENTIFIER genericDeclaration? '(' argumentList? ')';
+functionCall: (IDENTIFIER | NEW) genericDeclaration? '(' argumentList? ')';
+superCall: 'super' '.' NEW '(' argumentList? ')';
 
 // Types and Generics
 type
     : ((IDENTIFIER ('.' IDENTIFIER)*) genericDeclaration?) # PlainType
     | type (union='|' type)+ # UnionType
     | type (intersection='&' type)+ # IntersectionType
+    | type ARRAY+ # ArrayType
     ;
 
 genericDeclaration: '[' generic (',' generic)* ']';
 
 generic
-    : ((IDENTIFIER | '?') (extends=('extends' | ':') | super='super')?)? type
+    : ((IDENTIFIER | '?') ((extends=('extends' | ':') | super='super') type)? )?
     ;
 
 // Literals and Basic Types
@@ -241,7 +243,10 @@ literal
     ;
 
 // Operators
-operator: binaryOperator | unaryOperator;
+operator
+    : binaryOperator # BinaryOp
+    | unaryOperator  # UnaryOp
+    | '[]'           # ArrayAccessOp;
 
 binaryOperator
     // Level 1: Multiplicative
@@ -282,15 +287,23 @@ binaryOperator
     ;
 
 unaryOperator
-    : '++'    # Increment
-    | '--'    # Decrement
+    : preUnaryOperator  # PreUnaryOp
+    | postUnaryOperator # PostUnaryOp
+    ;
+
+preUnaryOperator
+    : postUnaryOperator # AnyUnary
     | '!'     # Not
     | 'not'   # Not
-    | '[' ']' # ArrayAccessOp
+    ;
+
+postUnaryOperator
+    : '++'    # Increment
+    | '--'    # Decrement
     ;
 
 // Assignments and Modifiers
-assignment: operator? (eq='=' | typeEq=':=') expression;
+assignment: binaryOperator? (eq='=' | typeEq=':=') expression;
 
 access
     : 'public'    # Public
@@ -302,6 +315,8 @@ modifier: (static='static' | abstract='abstract')? (final='final')?;
 
 // Lexer Rules
 fragment IDENTIFIER0: [a-zA-Z_][a-zA-Z0-9_]*;
+NEW: 'new';
+ARRAY: '[]';
 IDENTIFIER: IDENTIFIER0;
 NUMBER: [0-9]+ ('.' [0-9]+)? ('f' | 'F' | 'd' | 'D' | 'l' | 'L')?;
 STRING: '\'' .*? '\'' | '"' .*? '"';
