@@ -4,6 +4,4 @@ public interface Option {
     enum SourceOption implements Option {
         JVM
     }
-
-
 }

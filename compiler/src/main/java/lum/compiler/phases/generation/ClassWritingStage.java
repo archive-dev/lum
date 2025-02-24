@@ -13,15 +13,15 @@ import java.util.Map;
 public class ClassWritingStage implements CompilerStage<CompilationInfo, GeneratedClassesResult, ClassWritingResult> {
     @Override
     public ClassWritingResult execute(CompilationInfo context, GeneratedClassesResult result) throws CompilationException {
-        CompilationException error = null;
+        Exception error = null;
 
         for (Map.Entry<Path, byte[]> entry : result.intermediateResult().entrySet()) {
             Path path = entry.getKey();
             byte[] bytes = entry.getValue();
             try {
-                Files.write(path, bytes, StandardOpenOption.CREATE);
+                Files.write(path, bytes);
             } catch (IOException e) {
-                error = new CompilationException(e.getMessage());
+                error = e;
                 break;
             }
         }

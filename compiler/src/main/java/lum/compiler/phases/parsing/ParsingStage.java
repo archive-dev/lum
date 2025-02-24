@@ -13,11 +13,11 @@ public class ParsingStage implements CompilerStage<CompilationInfo, CompilationR
     @Override
     public ProgramContextResult execute(CompilationInfo context, CompilationResult<Object> __) throws CompilationException {
         LumParser.ProgramContext program = null;
-        CompilationException error = null;
+        Exception error = null;
         try {
             program = ParserFactory.createProgramContext(context.file());
         } catch (IOException e) {
-            error = new CompilationException(e.getMessage());
+            error = e;
         }
         return new ProgramContextResult(program, error, error == null);
     }

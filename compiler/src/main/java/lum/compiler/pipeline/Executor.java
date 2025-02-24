@@ -7,6 +7,7 @@ import lum.compiler.phases.CompilerStage;
 
 import java.util.List;
 
+@SuppressWarnings("rawtypes")
 public class Executor {
 
     private final List<CompilerStage> stages;
@@ -19,7 +20,8 @@ public class Executor {
         this.stages = stages;
     }
 
-    public CompilationResult<?> execute(CompilationContext context) {
+    @SuppressWarnings("unchecked")
+    public CompilationContext execute(CompilationContext context) {
         CompilationResult<?> result = null;
         for (var stage : stages) {
             try {
@@ -27,11 +29,11 @@ public class Executor {
                 if (!result.successful()) {
                     throw result.error();
                 }
-            } catch (CompilationException e) {
+            } catch (Exception e) {
                 context.errors().add(e);
             }
         }
 
-        return result;
+        return context;
     }
 }

@@ -4,7 +4,7 @@ import lum.compiler.phases.CompilationException;
 import lum.compiler.phases.CompilationResult;
 
 public class ClassWritingResult extends CompilationResult<Boolean> {
-    public ClassWritingResult(CompilationException error, boolean successful) {
+    public ClassWritingResult(Exception error, boolean successful) {
         super(error, successful);
     }
 

@@ -1,20 +1,22 @@
 package lum.compiler.phases.generation;
 
-import lum.core.model.ClassModel;
+import lum.compiler.codegen.Variable;
 import lum.core.parsing.antlr4.LumParser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public interface CodeHandler {
     void handleBlock(LumParser.BlockContext ctx);
 
-    default Optional<ClassModel> handleStatement(LumParser.StatementContext context) {
+    default Optional<List<Variable>> handleStatement(LumParser.StatementContext context) {
         switch (context.getChild(0)) {
             case LumParser.DeclarationContext ctx_ -> {
                 return handleDeclaration(ctx_);
             }
             case LumParser.ExpressionContext ctx_ -> {
-                return Optional.of(handleExpression(ctx_));
+                return Optional.of(List.of(handleExpression(ctx_)));
             }
             case LumParser.ControlStatementContext ctx_ -> handleControlStatement(ctx_);
             case LumParser.BreakContext ctx_ -> handleBreak(ctx_);
@@ -74,11 +76,11 @@ public interface CodeHandler {
     void handleReturn(LumParser.ReturnContext ctx);
 
 
-    default Optional<ClassModel> handleDeclaration(LumParser.DeclarationContext ctx) {
+    default Optional<List<Variable>> handleDeclaration(LumParser.DeclarationContext ctx) {
         switch (ctx.getChild(0)) {
             case LumParser.FunctionDeclarationContext ctx_ -> handleFunctionDeclaration(ctx_);
             case LumParser.VariableDeclarationStatementContext ctx_ -> {
-                return Optional.of(handleVariableDeclarationStatement(ctx_));
+                return Optional.ofNullable(handleVariableDeclarationStatement(ctx_));
             }
             case LumParser.OperatorDeclarationContext ctx_ -> handleOperatorDeclaration(ctx_);
             case LumParser.ConstructorDeclarationContext ctx_ -> handleConstructorDeclaration(ctx_);
@@ -94,7 +96,16 @@ public interface CodeHandler {
     }
 
     void handleFunctionDeclaration(LumParser.FunctionDeclarationContext ctx);
-    ClassModel handleVariableDeclarationStatement(LumParser.VariableDeclarationStatementContext ctx);
+    default List<Variable> handleVariableDeclarationStatement(LumParser.VariableDeclarationStatementContext ctx) {
+        List<Variable> variables = new ArrayList<>();
+
+        for (var declaration : ctx.variableDeclaration()) {
+            variables.add(handleVariableDeclaration(declaration));
+        }
+
+        return variables;
+    }
+    Variable handleVariableDeclaration(LumParser.VariableDeclarationContext ctx);
     void handleOperatorDeclaration(LumParser.OperatorDeclarationContext ctx);
     void handleConstructorDeclaration(LumParser.ConstructorDeclarationContext ctx);
     void handleFunctionSignature(LumParser.FunctionSignatureContext ctx);
@@ -103,11 +114,13 @@ public interface CodeHandler {
     void handleAnnotationDeclaration(LumParser.AnnotationDeclarationContext ctx);
 
 
-    default ClassModel handleExpression(LumParser.ExpressionContext ctx) {
+    default Variable handleExpression(LumParser.ExpressionContext ctx) {
         return switch (ctx) {
             case LumParser.PrimaryExpressionContext primary -> handlePrimaryExpression(primary);
+            case LumParser.AssignmentExprContext ctx_ -> handleAssignmentExpr(ctx_);
             case LumParser.LambdaExpressionContext lambda -> handleLambdaExpression(lambda);
             case LumParser.FunctionCallExprContext functionCall -> handleFunctionCallExpr(functionCall);
+            case LumParser.SuperCallExprContext superCall -> handleSuperCallExpr(superCall);
             case LumParser.ArrayAccessContext arrayAccess -> handleArrayAccess(arrayAccess);
             case LumParser.MemberAccessContext memberAccess -> handleMemberAccess(memberAccess);
             case LumParser.PostUnaryContext postUnary -> handlePostUnary(postUnary);
@@ -117,19 +130,19 @@ public interface CodeHandler {
         };
     }
 
-    default ClassModel handlePrimaryExpression(LumParser.PrimaryExpressionContext ctx) {
+    default Variable handlePrimaryExpression(LumParser.PrimaryExpressionContext ctx) {
         return switch (ctx.primary()) {
             case LumParser.LiteralExprContext ctx_ -> handleLiteralExpr(ctx_);
             case LumParser.IdentifierExprContext ctx_ -> handleIdentifierExpr(ctx_);
-            case LumParser.AssignmentExprContext ctx_ -> handleAssignmentExpr(ctx_);
             case LumParser.ListLiteralContext ctx_ -> handleListLiteral(ctx_);
             case LumParser.DictLiteralContext ctx_ -> handleDictLiteral(ctx_);
             case LumParser.ParenExprContext ctx_ -> handleParenExpr(ctx_);
+            case LumParser.SuperAccessContext ctx_ -> handleSuperAccess(ctx_);
             case null, default -> throw new IllegalStateException("Unexpected value: " + ctx.primary());
         };
     }
 
-    default ClassModel handleLiteralExpr(LumParser.LiteralExprContext ctx) {
+    default Variable handleLiteralExpr(LumParser.LiteralExprContext ctx) {
         return switch (ctx.literal()) {
             case LumParser.NumContext num -> handleNumberLiteral(num);
             case LumParser.StrContext str -> handleStringLiteral(str);
@@ -140,24 +153,26 @@ public interface CodeHandler {
         };
     }
 
-    ClassModel handleFalseLiteral();
-    ClassModel handleTrueLiteral();
-    ClassModel handleNullLiteral();
+    Variable handleFalseLiteral();
+    Variable handleTrueLiteral();
+    Variable handleNullLiteral();
 
-    ClassModel handleNumberLiteral(LumParser.NumContext number);
-    ClassModel handleStringLiteral(LumParser.StrContext string);
+    Variable handleNumberLiteral(LumParser.NumContext number);
+    Variable handleStringLiteral(LumParser.StrContext string);
 
-    ClassModel handleIdentifierExpr(LumParser.IdentifierExprContext ctx);
-    ClassModel handleAssignmentExpr(LumParser.AssignmentExprContext ctx);
-    ClassModel handleListLiteral(LumParser.ListLiteralContext ctx);
-    ClassModel handleDictLiteral(LumParser.DictLiteralContext ctx);
-    ClassModel handleParenExpr(LumParser.ParenExprContext ctx);
+    Variable handleIdentifierExpr(LumParser.IdentifierExprContext ctx);
+    Variable handleAssignmentExpr(LumParser.AssignmentExprContext ctx);
+    Variable handleListLiteral(LumParser.ListLiteralContext ctx);
+    Variable handleDictLiteral(LumParser.DictLiteralContext ctx);
+    Variable handleParenExpr(LumParser.ParenExprContext ctx);
+    Variable handleSuperAccess(LumParser.SuperAccessContext ctx);
 
-    ClassModel handleLambdaExpression(LumParser.LambdaExpressionContext ctx);
-    ClassModel handleFunctionCallExpr(LumParser.FunctionCallExprContext ctx);
-    ClassModel handleArrayAccess(LumParser.ArrayAccessContext ctx);
-    ClassModel handleMemberAccess(LumParser.MemberAccessContext ctx);
-    ClassModel handlePostUnary(LumParser.PostUnaryContext ctx);
-    ClassModel handlePreUnary(LumParser.PreUnaryContext ctx);
-    ClassModel handleBinary(LumParser.BinaryContext ctx);
+    Variable handleLambdaExpression(LumParser.LambdaExpressionContext ctx);
+    Variable handleFunctionCallExpr(LumParser.FunctionCallExprContext ctx);
+    Variable handleSuperCallExpr(LumParser.SuperCallExprContext superCall);
+    Variable handleArrayAccess(LumParser.ArrayAccessContext ctx);
+    Variable handleMemberAccess(LumParser.MemberAccessContext ctx);
+    Variable handlePostUnary(LumParser.PostUnaryContext ctx);
+    Variable handlePreUnary(LumParser.PreUnaryContext ctx);
+    Variable handleBinary(LumParser.BinaryContext ctx);
 }

@@ -1,5 +1,6 @@
 package lum.compiler.phases;
 
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class CompilationContext {
@@ -17,5 +18,17 @@ public abstract class CompilationContext {
 
     public List<Exception> errors() {
         return errors;
+    }
+
+    public void print() {
+        System.out.println("Errors: ");
+        for (var err : errors()) {
+            err.printStackTrace(System.out);
+        }
+
+        System.out.println("Warnings: ");
+        for (var warn : warnings) {
+            System.out.println(warn);
+        }
     }
 }
