@@ -2,17 +2,25 @@ package lum.core.model;
 
 import lum.core.parsing.antlr4.LumParser;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface Imports {
     TypeModel getType(LumParser.TypeContext t);
 
-    TypeModel getType(List<String> pathElements);
+    default TypeModel getType(List<String> pathElements) {
+        return getType(String.join(".", pathElements));
+    }
 
-    HashMap<String, ClassModel> classes();
+    TypeModel getType(String typeName);
 
-    HashMap<String, MethodModel> methods();
+    MethodModel getMethod(String methodName);
 
-    HashMap<String, FieldModel> fields();
+    MethodModel getMethod(String methodName, List<TypeModel> args);
+
+    Map<String, ClassModel> classes();
+
+    Map<String, Map<List<TypeModel>, MethodModel>> methods();
+
+    Map<String, FieldModel> fields();
 }

@@ -115,7 +115,7 @@ public class ParserModelFactoryTest {
         ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
-        assertNull(model.superClass());
+        assertEquals(ClassModel.of(Object.class), model.superClass());
         assertEquals(0, model.interfaces().length);
     }
 

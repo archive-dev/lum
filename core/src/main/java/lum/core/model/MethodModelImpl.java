@@ -1,9 +1,9 @@
 package lum.core.model;
 
-import java.lang.constant.MethodTypeDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 record MethodModelImpl(
         ClassModel owner,
@@ -11,7 +11,7 @@ record MethodModelImpl(
         TypeModel returnType,
         ParameterModel[] parameters,
         TypeModel[] exceptions,
-        List<AccessFlag> accessFlags,
+        Set<AccessFlag> accessFlags,
         GenericParameter[] genericParameters
 ) implements MethodModel {
     @Override

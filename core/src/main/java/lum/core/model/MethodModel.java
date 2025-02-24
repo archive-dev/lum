@@ -3,7 +3,7 @@ package lum.core.model;
 import java.lang.constant.MethodTypeDesc;
 import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 public interface MethodModel extends Accessible, GenericTyped, Member {
     String name();
@@ -13,8 +13,6 @@ public interface MethodModel extends Accessible, GenericTyped, Member {
     ParameterModel[] parameters();
 
     TypeModel[] exceptions();
-
-    List<AccessFlag> accessFlags();
 
     default MethodTypeDesc methodTypeDesc() {
         return MethodTypeDesc.of(

@@ -20,6 +20,13 @@ record TypeModelImpl(
     }
 
     @Override
+    public TypeModel asComponent() {
+        if (!isArray())
+            return this;
+        return new TypeModelImpl(model(), arrayDimensions()-1);
+    }
+
+    @Override
     public ClassDesc classDesc() {
         ClassDesc classDesc = ClassDesc.of(model().name());
         if (arrayDimensions() > 0)

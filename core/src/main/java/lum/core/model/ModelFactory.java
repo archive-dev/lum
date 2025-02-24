@@ -72,14 +72,13 @@ final class ModelFactory {
 
     // Class Model Creation
     public static ClassModel createClassModel(Class<?> clazz) {
+        clazz = Utils.getComponentType(clazz);
         if (ModelCache.containsClass(clazz)) {
             return ClassModel.of(clazz);
         }
 
-        clazz = Utils.getComponentType(clazz);
         var model = buildInitialClassModel(clazz);
         ModelCache.cacheClass(clazz, model);
-
         populateClassModel(model, clazz);
         cacheClassMembers(clazz);
 
@@ -90,7 +89,7 @@ final class ModelFactory {
         return new ClassModelImpl(
                 clazz.getName(),
                 null,
-                new ClassModelImpl[clazz.getInterfaces().length],
+                new ClassModel[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
                 EMPTY_GENERIC_PARAMETERS,
                 clazz.isInterface(),
@@ -103,14 +102,16 @@ final class ModelFactory {
                 .map(ClassModel::of)
                 .toArray(ClassModel[]::new);
         System.arraycopy(interfaces, 0, model.interfaces(), 0, interfaces.length);
-        model.setSuperClass(ClassModel.of(clazz.getSuperclass()));
+        if (!clazz.isPrimitive() && clazz != Object.class) {
+            model.setSuperClass(ClassModel.of(clazz.getSuperclass() == null ? Object.class : clazz.getSuperclass()));
+        }
     }
 
     private static void cacheClassMembers(Class<?> clazz) {
-        Arrays.stream(clazz.getDeclaredMethods()).forEach(ModelFactory::createMethodModel);
-        Arrays.stream(clazz.getDeclaredConstructors()).forEach(ModelFactory::createMethodModel);
+        Arrays.stream(clazz.getMethods()).forEach(ModelFactory::createMethodModel);
+        Arrays.stream(clazz.getConstructors()).forEach(ModelFactory::createMethodModel);
 
-        Arrays.stream(clazz.getDeclaredFields()).forEach(ModelFactory::createFieldModel);
+        Arrays.stream(clazz.getFields()).forEach(ModelFactory::createFieldModel);
     }
 
     // Method Model Creation

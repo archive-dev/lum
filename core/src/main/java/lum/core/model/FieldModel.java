@@ -3,14 +3,12 @@ package lum.core.model;
 import lum.core.util.Utils;
 
 import java.lang.reflect.AccessFlag;
-import java.util.List;
+import java.util.Set;
 
 public interface FieldModel extends Accessible, GenericTyped, Member {
     String name();
 
     TypeModel type();
-
-    List<AccessFlag> accessFlags();
 
     String toString();
 

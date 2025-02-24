@@ -12,17 +12,17 @@ public record PrimitiveTypeModelImpl(
         int arrayDimensions,
         GenericParameter[] genericParameters
 ) implements TypeModel {
-    private static final HashMap<String, ClassDesc> primitiveDescriptors = new HashMap<>();
+    private static final HashMap<ClassModel, ClassDesc> primitiveDescriptors = new HashMap<>();
     static {
-        primitiveDescriptors.put("void", ConstantDescs.CD_void);
-        primitiveDescriptors.put("byte", ConstantDescs.CD_byte);
-        primitiveDescriptors.put("boolean", ConstantDescs.CD_boolean);
-        primitiveDescriptors.put("int", ConstantDescs.CD_int);
-        primitiveDescriptors.put("long", ConstantDescs.CD_long);
-        primitiveDescriptors.put("short", ConstantDescs.CD_short);
-        primitiveDescriptors.put("float", ConstantDescs.CD_float);
-        primitiveDescriptors.put("double", ConstantDescs.CD_double);
-        primitiveDescriptors.put("char", ConstantDescs.CD_char);
+        primitiveDescriptors.put(ClassModel.of(void.class), ConstantDescs.CD_void);
+        primitiveDescriptors.put(ClassModel.of(byte.class), ConstantDescs.CD_byte);
+        primitiveDescriptors.put(ClassModel.of(boolean.class), ConstantDescs.CD_boolean);
+        primitiveDescriptors.put(ClassModel.of(int.class), ConstantDescs.CD_int);
+        primitiveDescriptors.put(ClassModel.of(long.class), ConstantDescs.CD_long);
+        primitiveDescriptors.put(ClassModel.of(short.class), ConstantDescs.CD_short);
+        primitiveDescriptors.put(ClassModel.of(float.class), ConstantDescs.CD_float);
+        primitiveDescriptors.put(ClassModel.of(double.class), ConstantDescs.CD_double);
+        primitiveDescriptors.put(ClassModel.of(char.class), ConstantDescs.CD_char);
 //        primitiveDescriptors.put("void", "V");
 //        primitiveDescriptors.put("void", "V");
     }
@@ -33,12 +33,19 @@ public record PrimitiveTypeModelImpl(
 
     @Override
     public TypeModel asArray(int dimensions) {
-        return new TypeModelImpl(model(), arrayDimensions()+dimensions);
+        return new PrimitiveTypeModelImpl(model(), arrayDimensions()+dimensions);
+    }
+
+    @Override
+    public TypeModel asComponent() {
+        if (!isArray())
+            return this;
+        return new PrimitiveTypeModelImpl(model(), arrayDimensions()-1);
     }
 
     @Override
     public ClassDesc classDesc() {
-        ClassDesc classDesc = primitiveDescriptors.get(model().name());
+        ClassDesc classDesc = primitiveDescriptors.get(model());
         if (arrayDimensions() > 0)
             return classDesc.arrayType(arrayDimensions());
         return classDesc;
@@ -46,7 +53,7 @@ public record PrimitiveTypeModelImpl(
 
     @Override
     public TypeKind typeKind() {
-        return TypeKind.fromDescriptor(classDesc().descriptorString());
+        return TypeKind.fromDescriptor(classDesc().descriptorString()).asLoadable();
     }
 
     @Override

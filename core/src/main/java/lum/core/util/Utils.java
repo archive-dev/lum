@@ -1,5 +1,6 @@
 package lum.core.util;
 
+import lum.core.model.ClassModel;
 import lum.core.model.GenericParameter;
 import lum.core.model.ParameterModel;
 import lum.core.model.TypeModel;
@@ -9,9 +10,13 @@ import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class Utils {
+    public static final ClassModel[] EMPTY_CLASS_MODELS = new ClassModel[0];
+
     private Utils() {}
 
     public static final GenericParameter[] EMPTY_GENERIC_PARAMETERS = new GenericParameter[0];
@@ -46,8 +51,8 @@ public final class Utils {
         return Path.of(path+".lum").toFile().exists();
     }
 
-    public static List<AccessFlag> getAccessFlags(int modifiers) {
-        List<AccessFlag> flags = new ArrayList<>();
+    public static Set<AccessFlag> getAccessFlags(int modifiers) {
+        Set<AccessFlag> flags = new HashSet<>();
         if (Modifier.isPrivate(modifiers))
             flags.add(AccessFlag.PRIVATE);
         if (Modifier.isPublic(modifiers))
@@ -68,8 +73,8 @@ public final class Utils {
         return flags;
     }
 
-    public static List<AccessFlag> getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
-        ArrayList<AccessFlag> accessFlags = new ArrayList<>();
+    public static Set<AccessFlag> getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
+        Set<AccessFlag> accessFlags = new HashSet<>();
         if (access!=null)
             accessFlags.add(switch (access) {
                 case LumParser.PublicContext _ -> AccessFlag.PUBLIC;

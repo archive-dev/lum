@@ -2,25 +2,22 @@ package lum.core.model;
 
 import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 // This one is abstract because superClass must be accessible only inside lum.core.model
-public abstract class ClassModel implements Accessible, GenericTyped {
+public abstract class ClassModel implements Accessible, GenericTyped { // разобратсья почему cacheClassMembers не вызывается (на ArrayList)
     private HashSet<MethodModel> methods = null;
     private HashSet<FieldModel> fields = null;
     
     public abstract String name();
 
-    abstract ClassModel superClass();
-    public abstract void setSuperClass(ClassModel value);
+    public abstract ClassModel superClass();
+    abstract void setSuperClass(ClassModel value);
 
     public abstract ClassModel[] interfaces();
-
-    @Override
-    public abstract List<AccessFlag> accessFlags();
 
     @Override
     public abstract GenericParameter[] genericParameters();
@@ -46,21 +43,35 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     public abstract int hashCode();
 
     public MethodModel getMethod(String name, TypeModel... parameters) {
-        ClassModel owner = this;
+        MethodModel candidate = getMethodFromClassHierarchy(this, name, parameters);
+        if (candidate != null) {
+            return candidate;
+        }
+
+        candidate = getMethodFromInterfaces(name, parameters);
+        return candidate;
+    }
+
+    private MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters) {
+        ClassModel owner = startClass;
         MethodModel candidate = ModelCache.getMethod(owner, name, parameters);
+
         while (candidate == null && owner.superClass() != null) {
             owner = owner.superClass();
             candidate = ModelCache.getMethod(owner, name, parameters);
         }
 
-        if (candidate != null) return candidate;
-
-        for (ClassModel interfaceModel : interfaces()) {
-            candidate = interfaceModel.getMethod(name, parameters);
-            if (candidate != null) break;
-        }
-
         return candidate;
+    }
+
+    private MethodModel getMethodFromInterfaces(String name, TypeModel... parameters) {
+        for (ClassModel interfaceModel : interfaces()) {
+            MethodModel candidate = interfaceModel.getMethod(name, parameters);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     public MethodModel getMethod(String name, List<TypeModel> parameters) {
@@ -69,11 +80,11 @@ public abstract class ClassModel implements Accessible, GenericTyped {
 
     public MethodModel[] methods() {
         if (methods != null) return methods.toArray(MethodModel[]::new);
-        if (!ModelCache.classModelMethods.containsKey(this)) return new MethodModel[0];
+        if (!ModelCache.modelContainsMethods(this)) return new MethodModel[0];
 
         methods = new HashSet<>();
 
-        for (var entry : ModelCache.classModelMethods.get(this).entrySet()) {
+        for (var entry : ModelCache.getModelMethods(this).entrySet()) {
             methods.addAll(entry.getValue().values());
         }
 
@@ -93,11 +104,11 @@ public abstract class ClassModel implements Accessible, GenericTyped {
 
     public FieldModel[] fields() {
         if (fields != null) return fields.toArray(FieldModel[]::new);
-        if (!ModelCache.classModelFields.containsKey(this)) return new FieldModel[0];
+        if (!ModelCache.modelContainsFields(this)) return new FieldModel[0];
 
         fields = new HashSet<>();
 
-        for (Map.Entry<String, FieldModel> entry : ModelCache.classModelFields.get(this).entrySet()) {
+        for (Map.Entry<String, FieldModel> entry : ModelCache.getModelFields(this).entrySet()) {
             fields.add(entry.getValue());
         }
 
@@ -105,6 +116,6 @@ public abstract class ClassModel implements Accessible, GenericTyped {
     }
 
     public static ClassModel of(Class<?> clazz) {
-        return ModelCache.getClass(clazz);
+        return ModelCache.cacheClass(ModelCache.getClass(clazz));
     }
 }

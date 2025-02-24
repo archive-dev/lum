@@ -31,6 +31,9 @@ final class ParserModelFactory {
             }
         }
 
+        if (classes.containsValue(null))
+            throw new RuntimeException(new ClassNotFoundException());
+
         return new ImportsImpl(
                 classes,
                 new HashMap<>(),
@@ -71,7 +74,6 @@ final class ParserModelFactory {
         } else {
             path = importAs.importSimple().IDENTIFIER().stream().map(TerminalNode::getText).toList();
         }
-
         classes.put(
                 importAs.IDENTIFIER().getText(),
                 ModelCache.getClassFromPath(path)
@@ -111,8 +113,16 @@ final class ParserModelFactory {
         );
 
         return switch (ParserFactory.getClassContext(program, path.className())) {
-            case LumParser.ClassDeclarationContext clazz -> createClassModel(imports, clazz);
-            case LumParser.InterfaceDeclarationContext interface_ -> createInterfaceModel(imports, interface_);
+            case LumParser.ClassDeclarationContext clazz -> {
+                var m = createClassModel(imports, clazz);
+                imports.classes().put(m.name(), m);
+                yield m;
+            }
+            case LumParser.InterfaceDeclarationContext interface_ -> {
+                var m = createInterfaceModel(imports, interface_);
+                imports.classes().put(m.name(), m);
+                yield m;
+            }
             case null, default -> null;
         };
     }
@@ -246,7 +256,7 @@ final class ParserModelFactory {
 
     private static Pair<ClassModel, List<ClassModel>> processInheritance(Imports imports, LumParser.InheritanceContext ctx) {
         if (ctx == null || ctx.inheritanceSpec() == null) {
-            return new Pair<>(null, new ArrayList<>());
+            return new Pair<>(ClassModel.of(Object.class), new ArrayList<>());
         }
 
         var inheritance = new Pair<ClassModel, List<ClassModel>>(null, new ArrayList<>());
@@ -287,7 +297,39 @@ final class ParserModelFactory {
         return imports.getType(type).model();
     }
 
+    private static final HashMap<Integer, MethodModel> methodModelCache = new HashMap<>();
+
     public static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.FunctionDeclarationContext ctx) {
+        if (methodModelCache.containsKey(Objects.hash(ctx)))
+            return methodModelCache.get(Objects.hash(ctx));
+
+        var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
+        var name = ctx.IDENTIFIER().getText();
+        var parameters = createParameterModels(imports, ctx.parameterList());
+
+        var type = TypeModel.VOID;
+        if (ctx.type() != null)
+            type = imports.getType(ctx.type());
+
+        var model = new MethodModelImpl(
+                owner,
+                name,
+                type,
+                parameters,
+                EMPTY_TYPE_MODELS,
+                accessFlags,
+                EMPTY_GENERIC_PARAMETERS
+        );
+        methodModelCache.put(Objects.hash(ctx), model);
+
+        ModelCache.cacheMethod(model);
+        return model;
+    }
+
+    public static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.FunctionSignatureContext ctx) {
+        if (methodModelCache.containsKey(Objects.hash(ctx)))
+            return methodModelCache.get(Objects.hash(ctx));
+
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
         var name = ctx.IDENTIFIER().getText();
         var parameters = createParameterModels(imports, ctx.parameterList());
@@ -301,31 +343,16 @@ final class ParserModelFactory {
                 accessFlags,
                 EMPTY_GENERIC_PARAMETERS
         );
+        methodModelCache.put(Objects.hash(ctx), model);
 
         ModelCache.cacheMethod(model);
         return model;
     }
 
-    private static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.FunctionSignatureContext ctx) {
-        var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
-        var name = ctx.IDENTIFIER().getText();
-        var parameters = createParameterModels(imports, ctx.parameterList());
+    public static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.OperatorDeclarationContext ctx) {
+        if (methodModelCache.containsKey(Objects.hash(ctx)))
+            return methodModelCache.get(Objects.hash(ctx));
 
-        var model = new MethodModelImpl(
-                owner,
-                name,
-                imports.getType(ctx.type()),
-                parameters,
-                EMPTY_TYPE_MODELS,
-                accessFlags,
-                EMPTY_GENERIC_PARAMETERS
-        );
-
-        ModelCache.cacheMethod(model);
-        return model;
-    }
-
-    private static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.OperatorDeclarationContext ctx) {
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
         var name = ctx.operator().getText();
         var parameters = createParameterModels(imports, ctx.parameterList());
@@ -339,12 +366,16 @@ final class ParserModelFactory {
                 accessFlags,
                 EMPTY_GENERIC_PARAMETERS
         );
+        methodModelCache.put(Objects.hash(ctx), model);
 
         ModelCache.cacheMethod(model);
         return model;
     }
 
-    private static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.ConstructorDeclarationContext ctx) {
+    public static MethodModel createMethodModel(ClassModel owner, Imports imports, LumParser.ConstructorDeclarationContext ctx) {
+        if (methodModelCache.containsKey(Objects.hash(ctx)))
+            return methodModelCache.get(Objects.hash(ctx));
+
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
         var name = "<init>";
         var parameters = createParameterModels(imports, ctx.parameterList());
@@ -358,6 +389,7 @@ final class ParserModelFactory {
                 accessFlags,
                 EMPTY_GENERIC_PARAMETERS
         );
+        methodModelCache.put(Objects.hash(ctx), model);
 
         ModelCache.cacheMethod(model);
         return model;

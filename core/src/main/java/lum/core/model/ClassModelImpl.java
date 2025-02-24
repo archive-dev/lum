@@ -2,16 +2,13 @@ package lum.core.model;
 
 import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 final class ClassModelImpl extends ClassModel {
     private final String name;
     ClassModel superClass;
     private final ClassModel[] interfaces;
-    private final List<AccessFlag> accessFlags;
+    private final Set<AccessFlag> accessFlags;
     private final GenericParameter[] genericParameters;
     private final boolean isInterface;
     private final boolean isPrimitive;
@@ -20,7 +17,7 @@ final class ClassModelImpl extends ClassModel {
             String name,
             ClassModel superClass,
             ClassModel[] interfaces,
-            List<AccessFlag> accessFlags,
+            Set<AccessFlag> accessFlags,
             GenericParameter[] genericParameters,
             boolean isInterface, boolean isPrimitive
     ) {
@@ -44,7 +41,7 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
-    public void setSuperClass(ClassModel value) {
+    void setSuperClass(ClassModel value) {
         superClass = value;
     }
 
@@ -60,21 +57,29 @@ final class ClassModelImpl extends ClassModel {
         if (subclassCheckCache.containsKey(other))
             return subclassCheckCache.get(other);
 
-        ClassModel superClass = superClass();
-        while (superClass != ClassModel.of(Object.class) || superClass != null) {
-            if (other.equals(superClass)) {
+        if (this.equals(other)) {
+            subclassCheckCache.put(other, true);
+            return true;
+        }
+
+        if (superClass() != null)
+            if (superClass().isSubclassOf(other)) {
                 subclassCheckCache.put(other, true);
                 return true;
             }
-            superClass = superClass();
-        }
 
+        for (var inter : interfaces()) {
+            if (inter.isSubclassOf(other)) {
+                subclassCheckCache.put(other, true);
+                return true;
+            }
+        }
         subclassCheckCache.put(other, false);
         return false;
     }
 
     @Override
-    public List<AccessFlag> accessFlags() {
+    public Set<AccessFlag> accessFlags() {
         return accessFlags;
     }
 
@@ -86,26 +91,6 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public boolean isInterface() {
         return isInterface;
-    }
-
-    private final HashMap<ClassModel, Boolean> subclassCheckCache = new HashMap<>();
-
-    @Override
-    public boolean isSubclassOf(ClassModel other) {
-        if (subclassCheckCache.containsKey(other))
-            return subclassCheckCache.get(other);
-
-        ClassModel superClass = superClass();
-        while (superClass != ClassModel.of(Object.class) || superClass != null) {
-            if (other.equals(superClass)) {
-                subclassCheckCache.put(other, true);
-                return true;
-            }
-            superClass = superClass();
-        }
-
-        subclassCheckCache.put(other, false);
-        return false;
     }
 
     @Override
@@ -120,9 +105,17 @@ final class ClassModelImpl extends ClassModel {
 
     @Override
     public TypeModel typeModel(int arrayDimensions) {
+        if (ModelCache.containsTypeModel(this, arrayDimensions))
+            return ModelCache.getTypeModel(this, arrayDimensions);
+
+        TypeModel model;
         if (!isPrimitive())
-            return new TypeModelImpl(this, arrayDimensions);
-        return new PrimitiveTypeModelImpl(this, arrayDimensions);
+            model = new TypeModelImpl(this, arrayDimensions);
+        else
+            model = new PrimitiveTypeModelImpl(this, arrayDimensions);
+
+        ModelCache.cacheTypeModel(model);
+        return model;
     }
 
     @Override
