@@ -1,42 +1,42 @@
 # Lum Full Feature Demonstration
 # This file demonstrates all major features of the Lum language as defined by the Lum.g4 grammar.
 
-package test;
+package test
 
 # Import statements with alias and from keywords
-import std.io from lum.std;
-import std.math as math;
+import std.io from lum.std
+import std.math as math
 
 # Annotation Declaration Example
-annotation deprecated(message: string);
+annotation deprecated(message: string)
 
 # Function Declaration with Annotation and return statement
 @deprecated("Use newFunction instead")
 func oldFunction(x: int, y: int): int {
     # Simple addition (this operator can be overloaded later)
-    return x + y;
+    return x + y
 }
 
 # Function Declaration with block body and if-elif-else control flow
 func newFunction(x: int, y: int): int {
     if x > y {
-        return x - y;
+        return x - y
     } elif x == y {
-        return x * y;
+        return x * y
     } else {
-        return y - x;
+        return y - x
     }
 }
 
 # Recursive Function Example: Factorial Calculation
 func factorial(n: int): int {
     if n == 0 {
-        return 1;
+        return 1
     } elif n > 0 {
-        return n * factorial(n - 1);
+        return n * factorial(n - 1)
     } else {
         # Handling unexpected negative numbers
-        return 0;
+        return 0
     }
 }
 
@@ -44,89 +44,89 @@ func factorial(n: int): int {
 class Person {
     # Variable with explicit type, default initialization, and accessor methods
     name: string := "Unknown" 
-        get { return name; } 
-        set (value: string) { name = value; };
+        get { return name } 
+        set (value: string) { name = value }
 
-    age: int;
+    age: int
 
     # Constructor Declaration using 'init'
     init(name: string, age: int) {
-        this.name = name;
-        this.age = age;
+        this.name = name
+        this.age = age
     }
 
     # Member function to greet
     func greet(): void {
-        std.io.print("Hello, I am " + name + " and I am " + age + " years old.");
+        println("Hello, I am " + name + " and I am " + age + " years old.")
     }
 }
 
 # Interface Declaration
 interface Greeter {
-    func greet(): void;
+    func greet(): void
 }
 
 # Operator Declaration Overloading the '+' Operator for demonstration
 operator + (a: int, b: int): int {
-    return a + b;
+    return a + b
 }
 
 # Function Signature (abstract declaration, no body)
-func functionSignatureExample(param: string): bool;
+func functionSignatureExample(param: string): bool
 
 # Main function using various language features
 func main(): void {
     # Variable Declaration and Initialization
-    result: int = newFunction(10, 5);
-    std.io.print("Result of newFunction(10, 5): " + result);
+    result: int = newFunction(10, 5)
+    println("Result of newFunction(10, 5): " + result)
 
-    fact: int = factorial(5);
-    std.io.print("Factorial of 5: " + fact);
+    fact: int = factorial(5)
+    println("Factorial of 5: " + fact)
 
     # Lambda Expression Example: Anonymous addition function
-    add = (x: int, y: int) => x + y;
-    std.io.print("Lambda add 2 + 3: " + add(2, 3));
+    add = (x: int, y: int) => x + y
+    println("Lambda add 2 + 3: " + add(2, 3))
 
     # List Literal Example and Dictionary Literal Example
-    numbers = [1, 2, 3, 4, 5];
-    mapping = [ "one": 1, "two": 2, "three": 3 ];
+    numbers = [1, 2, 3, 4, 5]
+    mapping = [ "one": 1, "two": 2, "three": 3 ]
 
     # For loop (C-style) using forILoop
     # Syntax: for <variableDeclaration>, <condition>, <update> block
 
     for i: int = 0, i < math.length(numbers), i = i + 1 {
-        std.io.print("For-loop index " + i + " => " + numbers[i]);
+        println("For-loop index " + i + " => " + numbers[i])
     }
 
     # For-each loop over list elements (forEachLoop)
     for num in numbers {
-        std.io.print("For-each loop value: " + num);
+        println("For-each loop value: " + num)
     }
 
     # While loop demonstration
-    count: int = 0;
+    count: int = 0
     while count < 3 {
-        std.io.print("While-loop count: " + count);
-        count = count + 1;
+        println("While-loop count: " + count)
+        count = count + 1
     }
 
     # Do-while loop demonstration
     do {
-        std.io.print("Do-while loop count: " + count);
-        count = count - 1;
-    } while count > 0;
+        println("Do-while loop count: " + count)
+        count = count - 1
+    } while count > 0
 
     # Switch Statement demonstration
-    value: int = 2;
+    value: int = 2
     switch value {
         case 1 {
-            std.io.print("Switch-case: Value is one");
+            println("Switch-case: Value is one")
         }
         case 2 {
-            std.io.print("Switch-case: Value is two");
+            println("Switch-case: Value is two")
         }
         default {
-            std.io.print("Switch-case: Value is unknown");
+            println("Switch-case: Value is unknown")
         }
     }
 
@@ -134,18 +134,18 @@ func main(): void {
     for j: int = 0, j < 10, j = j + 1 {
         if j == 5 {
             # Break out of the loop when j equals 5
-            break;
+            break
         } elif j % 2 == 0 {
             # Skip even numbers
-            continue;
+            continue
         }
-        std.io.print("Loop with break/continue, j: " + j);
+        println("Loop with break/continue, j: " + j);
     }
 
     # Using a lambda expression within an expression context (e.g., passing as argument)
-    # std.io.print("Result from inline lambda: " + ((x: int) => x * x)(3));
+    # println("Result from inline lambda: " + ((x: int) => x * x)(3))
 
-    return;
+    return
 }
 
 # Example of a constructor declaration and usage within a class is shown in the Person class above.
