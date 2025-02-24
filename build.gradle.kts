@@ -10,6 +10,9 @@ repositories {
 }
 
 dependencies {
+    implementation(":core")
+    implementation(":compiler")
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
@@ -17,14 +20,6 @@ dependencies {
 java {
     sourceCompatibility = JavaVersion.VERSION_23
     targetCompatibility = JavaVersion.VERSION_23
-}
-
-tasks.register("printCompileClasspath") {
-    val runtimeClasspath = sourceSets["main"].compileClasspath
-    inputs.files( runtimeClasspath )
-    doLast {
-        println(runtimeClasspath.asPath)
-    }
 }
 
 tasks.test {
