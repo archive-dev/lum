@@ -1,16 +1,16 @@
 package lum.compiler.codegen.jvm;
 
-import lum.compiler.codegen.Accessible;
-import lum.compiler.codegen.ClassMaker;
-import lum.compiler.codegen.FieldMaker;
-import lum.compiler.codegen.MethodMaker;
+import lum.compiler.codegen.*;
 import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
 import lum.core.model.MethodModel;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Target;
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
+import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
@@ -19,9 +19,10 @@ import java.util.stream.Stream;
 
 class JVMClassMaker implements ClassMaker {
     private final List<Consumer<ClassBuilder>> classBuilderActions = new ArrayList<>();
-    private final ClassModel model;
+    final ClassModel model;
     private final Set<MethodMaker> methods = new HashSet<>();
     private final Set<FieldMaker> fields = new HashSet<>();
+    private final Set<AccessFlag> accessFlags = new HashSet<>();
 
     public JVMClassMaker(ClassModel model) {
         this.model = model;
@@ -119,6 +120,7 @@ class JVMClassMaker implements ClassMaker {
         return buildClassFile((cb) -> {
             methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
             fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
+            cb.withFlags(accessFlags.toArray(AccessFlag[]::new));
         });
     }
 
@@ -131,12 +133,41 @@ class JVMClassMaker implements ClassMaker {
 
     @Override
     public Accessible access(AccessFlag flag) {
+        this.accessFlags.add(flag);
         return this;
     }
 
     @Override
     public Accessible access(AccessFlag... flags) {
+        this.accessFlags.addAll(List.of(flags));
         return this;
+    }
+
+    @Override
+    public AnnotationMaker annotateWith(ClassModel annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
+        addClassBuilderAction(cb -> {
+            cb.with(maker.finish());
+        });
+        return maker;
+    }
+
+    @Override
+    public AnnotationMaker annotateWith(ClassMaker annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
+        addClassBuilderAction(cb -> {
+            cb.with(maker.finish());
+        });
+        return maker;
+    }
+
+    @Override
+    public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
+        addClassBuilderAction(cb -> {
+            cb.with(maker.finish());
+        });
+        return maker;
     }
 
     private void addClassBuilderAction(Consumer<ClassBuilder> action) {

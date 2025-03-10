@@ -11,7 +11,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ParserModelFactoryTest {
+public class ImportsModelFactoryTest {
     // Create a class model from class declaration context
     @Test
     public void test_create_class_model() {
@@ -25,7 +25,7 @@ public class ParserModelFactoryTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
         assertEquals("TestClass", model.name());
@@ -45,7 +45,7 @@ public class ParserModelFactoryTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ParserModelFactory.createInterfaceModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createInterfaceModel(imports, ctx);
 
         assertNotNull(model);
         assertEquals("TestInterface", model.name());
@@ -68,7 +68,7 @@ public class ParserModelFactoryTest {
         when(block.statement()).thenReturn(List.of(stmt));
         when(stmt.declaration()).thenReturn(decl);
 
-        ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
         assertTrue(imports.classes().containsKey("TestClass"));
@@ -93,7 +93,7 @@ public class ParserModelFactoryTest {
         when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER()).thenReturn(new ArrayList<>(List.of(returnType)));
         when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER(0)).thenReturn(returnType);
 
-        MethodModel model = ParserModelFactory.createMethodModel(owner, imports, ctx);
+        MethodModel model = ImportsModelFactory.createMethodModel(owner, imports, ctx);
 
         assertNotNull(model);
         assertEquals("testMethod", model.name());
@@ -112,7 +112,7 @@ public class ParserModelFactoryTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
         assertEquals(ClassModel.of(Object.class), model.superClass());
@@ -130,7 +130,7 @@ public class ParserModelFactoryTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
         assertEquals("EmptyClass", model.name());
@@ -149,7 +149,7 @@ public class ParserModelFactoryTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ParserModelFactory.createClassModel(imports, ctx);
+        ClassModel model = ImportsModelFactory.createClassModel(imports, ctx);
 
         assertNotNull(model);
         assertTrue(model.accessFlags().isEmpty());
@@ -177,7 +177,7 @@ public class ParserModelFactoryTest {
         when(varDecl.getterDeclaration()).thenReturn(null);
         when(varDecl.setterDeclaration()).thenReturn(null);
 
-        List<FieldModel> fields = ParserModelFactory.createFieldModels(owner, imports, ctx);
+        List<FieldModel> fields = ImportsModelFactory.createFieldModels(owner, imports, ctx);
 
         assertNotNull(fields);
         assertEquals(1, fields.size());

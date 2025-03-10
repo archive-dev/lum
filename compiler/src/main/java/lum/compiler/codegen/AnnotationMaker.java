@@ -1,7 +1,7 @@
 package lum.compiler.codegen;
 
-import java.lang.constant.Constable;
+public interface AnnotationMaker {
+    AnnotationMaker setProperty(String name, Object value);
 
-public interface AnnotationMaker extends Annotatable {
-    Annotatable setProperty(String name, Constable value);
+    AnnotationMaker setRuntimeVisibility(boolean visibility);
 }

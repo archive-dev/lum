@@ -13,17 +13,14 @@ import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.Instruction;
 import java.lang.classfile.instruction.NewPrimitiveArrayInstruction;
 import java.lang.classfile.instruction.NewReferenceArrayInstruction;
+import java.lang.classfile.instruction.SwitchCase;
 import java.lang.constant.ConstantDesc;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 class JVMCodeMaker implements CodeMaker {
-    private static final ConstantDesc[] EMPTY_ARGS = new ConstantDesc[0];
-
     private final HashMap<String, Variable> locals = new HashMap<>();
     private final HashMap<Integer, Variable> parameters = new HashMap<>();
 
@@ -103,6 +100,82 @@ class JVMCodeMaker implements CodeMaker {
                 (b) -> ifHandler.accept(new JVMCodeMaker(b, this)),
                 (b) -> elseHandler.accept(new JVMCodeMaker(b, this))
         );
+        return this;
+    }
+
+    @Override
+    public CodeMaker switch_(Variable value, Map<Function<CodeMaker, Object>, Consumer<CodeMaker>> cases) {
+        // Create labels for each case and the end of the switch
+        var defaultLabel = codeBuilder().newLabel();
+        var endLabel = codeBuilder().newLabel();
+
+        // Collect all case labels and their handlers
+        List<SwitchCase> switchCases = new ArrayList<>();
+        Map<SwitchCase, Consumer<CodeMaker>> caseHandlers = new HashMap<>();
+
+        // Process each case
+        for (var entry : cases.entrySet()) {
+            var caseLabel = codeBuilder().newLabel();
+
+            // Create a temporary CodeMaker to capture the case value
+
+            // Get the case value directly using the Function
+            Object caseValue = entry.getKey().apply(this);
+
+            // If the case value is a constant, add it as a switch case
+            if (caseValue != null) {
+                if (caseValue instanceof Integer intValue) {
+                    SwitchCase switchCase = SwitchCase.of(intValue, caseLabel);
+                    switchCases.add(switchCase);
+                    caseHandlers.put(switchCase, entry.getValue());
+                }
+//                else if (caseValue instanceof Variable var && var.isConstant() && var.getConstantValue() instanceof Integer intValue) {
+//                    SwitchCase switchCase = SwitchCase.of(intValue, caseLabel);
+//                    switchCases.add(switchCase);
+//                    caseHandlers.put(switchCase, entry.getValue());
+//                }
+                else {
+                    // For non-integer constants, use if-else comparison
+                    codeBuilder().dup();
+                    if (caseValue instanceof Variable var) {
+                        var.load(this);
+                    } else if (caseValue instanceof ConstantDesc constant) {
+                        codeBuilder().loadConstant(constant);
+                    }
+                    codeBuilder().if_icmpeq(caseLabel);
+                    caseHandlers.put(null, entry.getValue()); // Use null as key for non-switch cases
+                }
+            } else {
+                // For non-constant cases, use default case
+                caseHandlers.put(null, entry.getValue());
+            }
+        }
+
+        // If we have integer cases, generate a tableswitch or lookupswitch
+        if (!switchCases.isEmpty()) {
+            codeBuilder().tableswitch(defaultLabel, switchCases);
+
+            // Generate code for each case
+            for (var switchCase : switchCases) {
+                codeBuilder().labelBinding(switchCase.target());
+                Consumer<CodeMaker> handler = caseHandlers.get(switchCase);
+                if (handler != null) {
+                    handler.accept(this);
+                }
+                codeBuilder().goto_(endLabel);
+            }
+        }
+
+        // Default case handling
+        codeBuilder().labelBinding(defaultLabel);
+        Consumer<CodeMaker> defaultHandler = caseHandlers.get(null);
+        if (defaultHandler != null) {
+            defaultHandler.accept(this);
+        }
+
+        // End of switch
+        codeBuilder().labelBinding(endLabel);
+
         return this;
     }
 
@@ -189,11 +262,12 @@ class JVMCodeMaker implements CodeMaker {
     @Override
     public CodeMaker foreach(Variable i, Variable iterable, BiConsumer<CodeMaker, Variable> block) {
         if (iterable.getType().model().isSubclassOf(ClassModel.of(Iterable.class))) {
-            Variable iterator = var("it"+iterable.hashCode()).set(iterable.invoke("iterator"));
+            Variable iterator = var("it"+iterable.hashCode()).setTyped(iterable.invoke("iterator"));
             cb.block(b -> {
                 var cm = new JVMCodeMaker(b, this);
                 iterator.invoke("hasNext").load(cm);
                 b.ifne(b.breakLabel());
+                i.set(iterator.invoke("next"));
 
                 block.accept(cm, i);
 
@@ -206,6 +280,8 @@ class JVMCodeMaker implements CodeMaker {
                     (cm, i_) -> i_.increment(cm.var(1)),
                     block
             );
+        } else if (iterable.getType().model().isSubclassOf(ClassModel.of(Map.class))) {
+            return foreach(i, iterable.invoke("entrySet"), block);
         } else
             throw new IllegalStateException();
 
@@ -217,7 +293,7 @@ class JVMCodeMaker implements CodeMaker {
         cb.block(b -> {
             var maker = new JVMCodeMaker(b, this);
             condition.accept(maker);
-            b.ifne(b.breakLabel());
+            b.ifeq(b.breakLabel());
             block.accept(maker);
             b.goto_(b.startLabel());
         });

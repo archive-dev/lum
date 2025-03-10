@@ -10,8 +10,13 @@ final class ClassModelImpl extends ClassModel {
     private final ClassModel[] interfaces;
     private final Set<AccessFlag> accessFlags;
     private final GenericParameter[] genericParameters;
+    private final ClassModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
+    private HashSet<MethodModel> methods = null;
+
+    private Map<String, FieldModel> fieldCache = null;
+    private boolean fieldCacheInitialized = false;
 
     public ClassModelImpl(
             String name,
@@ -19,6 +24,7 @@ final class ClassModelImpl extends ClassModel {
             ClassModel[] interfaces,
             Set<AccessFlag> accessFlags,
             GenericParameter[] genericParameters,
+            ClassModel[] annotations,
             boolean isInterface, boolean isPrimitive
     ) {
         this.name = name;
@@ -26,6 +32,7 @@ final class ClassModelImpl extends ClassModel {
         this.interfaces = interfaces;
         this.accessFlags = accessFlags;
         this.genericParameters = genericParameters;
+        this.annotations = annotations;
         this.isInterface = isInterface;
         this.isPrimitive = isPrimitive;
     }
@@ -155,5 +162,93 @@ final class ClassModelImpl extends ClassModel {
                 "genericParameters=" + Arrays.toString(genericParameters) + ", " +
                 "methods=" + Arrays.toString(methods()) + ", " +
                 "fields=" + Arrays.toString(fields()) + ']';
+    }
+
+    @Override
+    public MethodModel getMethod(String name, TypeModel... parameters) {
+        MethodModel candidate = getMethodFromClassHierarchy(this, name, parameters);
+        if (candidate != null) {
+            return candidate;
+        }
+
+        candidate = getMethodFromInterfaces(name, parameters);
+        return candidate;
+    }
+
+    @Override
+    protected MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters) {
+        ClassModel owner = startClass;
+        MethodModel candidate = ModelCache.getMethod(owner, name, parameters);
+
+        while (candidate == null && owner.superClass() != null) {
+            owner = owner.superClass();
+            candidate = ModelCache.getMethod(owner, name, parameters);
+        }
+
+        return candidate;
+    }
+
+    @Override
+    protected MethodModel getMethodFromInterfaces(String name, TypeModel... parameters) {
+        for (ClassModel interfaceModel : interfaces()) {
+            MethodModel candidate = interfaceModel.getMethod(name, parameters);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public MethodModel getMethod(String name, List<TypeModel> parameters) {
+        return getMethod(name, parameters.toArray(TypeModel[]::new));
+    }
+
+    private void addSuperclassMethods(Set<MethodModel> methods) {
+        var sup = superClass();
+        if (sup == null) return;
+
+        methods.addAll(List.of(sup.methods()));
+    }
+
+    private void addInterfaceMethods(ClassModel inter, Set<MethodModel> methods) {
+        if (inter != null)
+            methods.addAll(List.of(inter.methods()));
+    }
+
+    @Override
+    public MethodModel[] methods() {
+        Set<MethodModel> models = new HashSet<>();
+        if (ModelCache.getModelMethods(this) != null) {
+            for (var entry : ModelCache.getModelMethods(this).entrySet()) {
+                for (var entry2 : entry.getValue().entrySet()) {
+                    models.add(entry2.getValue());
+                }
+            }
+        }
+        addSuperclassMethods(models);
+        for (var inter : interfaces()) {
+            addInterfaceMethods(inter, models);
+        }
+        return models.toArray(MethodModel[]::new);
+    }
+
+    @Override
+    public FieldModel getField(String name) {
+        return ModelCache.getField(this, name);
+    }
+
+    private static final FieldModel[] EMPTY_FIELDS = new FieldModel[0];
+
+    @Override
+    public FieldModel[] fields() {
+        var fields = ModelCache.getModelFields(this);
+        if (fields == null) return EMPTY_FIELDS;
+        return fields.values().toArray(FieldModel[]::new);
+    }
+
+    @Override
+    public ClassModel[] annotations() {
+        return new ClassModel[0];
     }
 }

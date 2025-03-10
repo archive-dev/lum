@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.function.Function;
 
-public interface ClassMaker extends Accessible {
+public interface ClassMaker extends Accessible, Annotatable {
     ClassMaker extend(ClassModel model);
 
     ClassMaker extend(ClassMaker maker);

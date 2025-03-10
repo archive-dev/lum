@@ -1,0 +1,42 @@
+package lum.compiler.phases.parsing;
+
+import lum.compiler.phases.CompilationException;
+import lum.compiler.phases.CompilationInfo;
+import lum.compiler.phases.CompilerStage;
+import lum.core.model.ClassModel;
+import lum.core.model.ClassModelProcessor;
+import lum.core.model.ModelsParser;
+import lum.core.parsing.antlr4.LumParser;
+import lum.lang.struct.Pair;
+import org.antlr.v4.runtime.ParserRuleContext;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class CompletingClassDefinitionsStage implements CompilerStage<CompilationInfo, ProgramContextResult, ClassDefinitionsResult> {
+    @Override
+    public ClassDefinitionsResult execute(CompilationInfo context, ProgramContextResult previousResult) throws CompilationException {
+        LumParser.ProgramContext ctx = previousResult.intermediateResult();
+        var imports = ModelsParser.parseImports(ctx);
+
+        Set<ClassModel> classes = new HashSet<>();
+
+        Exception error = null;
+        try {
+            List<Pair<ClassModel, ParserRuleContext>> pairs = ModelsParser.buildClassModels(ctx).entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList();
+            for (var pair : pairs) {
+                if (pair.b() instanceof LumParser.ClassDeclarationContext clazz)
+                    ClassModelProcessor.processClassMembers(pair.a(), imports, clazz);
+                else if (pair.b() instanceof LumParser.InterfaceDeclarationContext interface_)
+                    ClassModelProcessor.processInterfaceMembers(pair.a(), imports, interface_);
+
+                classes.add(pair.a());
+            }
+        } catch (Exception e) {
+            error = e;
+        }
+
+        return new ClassDefinitionsResult(ctx, classes, error, error == null);
+    }
+}

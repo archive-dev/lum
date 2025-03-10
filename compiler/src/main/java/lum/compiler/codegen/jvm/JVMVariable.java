@@ -123,11 +123,10 @@ class JVMVariable implements Variable {
 
         if (method.isStatic())
             invokeOpcode = Opcode.INVOKESTATIC;
+        else if (getType().model().isInterface())
+            invokeOpcode = Opcode.INVOKEINTERFACE;
         else if (type.model().isSubclassOf(method.owner()))
             invokeOpcode = Opcode.INVOKESPECIAL;
-        else if (getType().model().isInterface()) {
-            invokeOpcode = Opcode.INVOKEINTERFACE;
-        }
 
         return invokeOpcode;
     }
@@ -187,7 +186,7 @@ class JVMVariable implements Variable {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
             if (opcode != Opcode.INVOKESTATIC)
-                load();
+                load(cm);
 
             for (var arg : arguments) {
                 cm.load(arg);
@@ -207,7 +206,7 @@ class JVMVariable implements Variable {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
         v.addCode(cm -> {
             if (opcode != Opcode.INVOKESTATIC)
-                load();
+                load(cm);
 
             for (var arg : arguments) {
                 cm.load(arg);

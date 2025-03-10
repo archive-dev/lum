@@ -10,8 +10,8 @@ repositories {
 }
 
 dependencies {
-    implementation(":core")
-    implementation(":compiler")
+    implementation(project(":core"))
+    implementation(project(":compiler"))
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

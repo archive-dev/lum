@@ -53,6 +53,8 @@ public final class Utils {
 
     public static Set<AccessFlag> getAccessFlags(int modifiers) {
         Set<AccessFlag> flags = new HashSet<>();
+        if (Modifier.isInterface(modifiers))
+             flags.add(AccessFlag.INTERFACE);
         if (Modifier.isPrivate(modifiers))
             flags.add(AccessFlag.PRIVATE);
         if (Modifier.isPublic(modifiers))

@@ -3,6 +3,7 @@ package lum.core.model;
 import lum.core.util.Utils;
 
 import java.io.FileNotFoundException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
 import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
 
 final class ModelFactory {
@@ -33,7 +35,7 @@ final class ModelFactory {
         if (!Utils.fileExists(Path.of(element))) {
             throw new FileNotFoundException("File not found: " + element);
         }
-        return new ClassPath(Path.of(""), element + ".lum", element);
+        return new ClassPath(Path.of(System.getProperty("user.dir")), element + ".lum", element);
     }
 
     private static ClassPath createMultiElementClassPath(List<String> elements) throws FileNotFoundException {
@@ -92,6 +94,7 @@ final class ModelFactory {
                 new ClassModel[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
                 EMPTY_GENERIC_PARAMETERS,
+                EMPTY_CLASS_MODELS,
                 clazz.isInterface(),
                 clazz.isPrimitive()
         );
@@ -102,16 +105,23 @@ final class ModelFactory {
                 .map(ClassModel::of)
                 .toArray(ClassModel[]::new);
         System.arraycopy(interfaces, 0, model.interfaces(), 0, interfaces.length);
+
         if (!clazz.isPrimitive() && clazz != Object.class) {
             model.setSuperClass(ClassModel.of(clazz.getSuperclass() == null ? Object.class : clazz.getSuperclass()));
         }
     }
 
     private static void cacheClassMembers(Class<?> clazz) {
-        Arrays.stream(clazz.getMethods()).forEach(ModelFactory::createMethodModel);
-        Arrays.stream(clazz.getConstructors()).forEach(ModelFactory::createMethodModel);
+        for (Method method : clazz.getMethods()) {
+            createMethodModel(method);
+        }
+        for (Constructor<?> constructor : clazz.getConstructors()) {
+            createMethodModel(constructor);
+        }
 
-        Arrays.stream(clazz.getFields()).forEach(ModelFactory::createFieldModel);
+        for (Field field : clazz.getFields()) {
+            createFieldModel(field);
+        }
     }
 
     // Method Model Creation
@@ -123,7 +133,8 @@ final class ModelFactory {
                 createParameterModels(method.getParameters()),
                 createExceptionModels(method.getExceptionTypes()),
                 Utils.getAccessFlags(method.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS
+                EMPTY_GENERIC_PARAMETERS,
+                EMPTY_CLASS_MODELS
         );
         ModelCache.cacheMethod(model);
         return model;
@@ -137,7 +148,8 @@ final class ModelFactory {
                 createParameterModels(constructor.getParameters()),
                 createExceptionModels(constructor.getExceptionTypes()),
                 Utils.getAccessFlags(constructor.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS
+                EMPTY_GENERIC_PARAMETERS,
+                EMPTY_CLASS_MODELS
         );
         ModelCache.cacheMethod(model);
         return model;
@@ -150,7 +162,8 @@ final class ModelFactory {
                 field.getName(),
                 TypeModel.of(field.getType()),
                 Utils.getAccessFlags(field.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS
+                EMPTY_GENERIC_PARAMETERS,
+                EMPTY_CLASS_MODELS
         );
         ModelCache.cacheField(model);
         return model;
@@ -170,5 +183,10 @@ final class ModelFactory {
         return Arrays.stream(exceptionTypes)
                 .map(TypeModel::of)
                 .toArray(TypeModel[]::new);
+    }
+
+    // Annotations Model creation
+    private static ClassModel[] createAnnotationModels(Annotation[] annotations) {
+        return Arrays.stream(annotations).map(Annotation::annotationType).map(ClassModel::of).toArray(ClassModel[]::new);
     }
 }

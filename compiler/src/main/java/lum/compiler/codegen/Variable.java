@@ -19,6 +19,14 @@ public interface Variable {
     void load(CodeMaker to);
     void store();
 
+    default Variable setTyped(ConstantDesc value) {
+        return set(TypeModel.of(value), value);
+    }
+
+    default Variable setTyped(Variable value) {
+        return set(value.getType(), value);
+    }
+
     default Variable set(ConstantDesc value) {
         return set(getType(), value);
     }

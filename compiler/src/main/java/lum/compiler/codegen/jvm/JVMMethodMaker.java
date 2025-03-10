@@ -4,6 +4,7 @@ import lum.compiler.codegen.*;
 import lum.core.model.ClassModel;
 import lum.core.model.MethodModel;
 
+import java.lang.annotation.Annotation;
 import java.lang.classfile.MethodBuilder;
 import java.lang.reflect.AccessFlag;
 import java.util.ArrayList;
@@ -45,17 +46,29 @@ class JVMMethodMaker implements MethodMaker {
     // todo:
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
-        return null;
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
+        builder.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
-        return null;
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
+        builder.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     @Override
-    public AnnotationMaker annotateWith(Class<?> annotation) {
-        return null;
+    public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
+        builder.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     List<Consumer<MethodBuilder>> finish() {

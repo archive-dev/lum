@@ -7,6 +7,7 @@ import lum.compiler.codegen.FieldMaker;
 import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
 
+import java.lang.annotation.Annotation;
 import java.lang.classfile.FieldBuilder;
 import java.lang.reflect.AccessFlag;
 import java.util.ArrayList;
@@ -36,17 +37,29 @@ class JVMFieldMaker implements FieldMaker {
 
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
-        return null;
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
+        code.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
-        return null;
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
+        code.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     @Override
-    public AnnotationMaker annotateWith(Class<?> annotation) {
-        return null;
+    public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
+        code.add(mb -> {
+            mb.with(maker.finish());
+        });
+        return maker;
     }
 
     List<Consumer<FieldBuilder>> finish() {

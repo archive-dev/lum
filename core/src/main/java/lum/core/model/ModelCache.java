@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class ModelCache {
     private static final Map<Class<?>, ClassModel> classPool = new ConcurrentHashMap<>();
-    private static final Map<ClassPath, ClassModel> pathPool = new ConcurrentHashMap<>();
+    static final Map<ClassPath, ClassModel> pathPool = new ConcurrentHashMap<>();
 
     private static final Map<ClassModel, Map<String, Map<List<TypeModel>, MethodModel>>> classModelMethods = new ConcurrentHashMap<>();
     private static final Map<ClassModel, Map<String, FieldModel>> classModelFields = new ConcurrentHashMap<>();
@@ -60,36 +60,36 @@ final class ModelCache {
         return typeModelsCache.get(model).get(arrayDimensions);
     }
 
-    /**
-     * Retrieves a ClassModel instance based on a list of path elements representing the class's fully qualified name.
-     * <p>
-     * This method first attempts to load the class using {@link Class#forName(String)} with the path elements joined by dots.
-     * If the class is not found in the classpath, it then tries to create a ClassPath object using {@link ModelFactory#createClassPath(List)}
-     * and retrieves the ClassModel from the {@link #pathPool} cache. If the ClassModel is not already in the cache, it is created using
-     * {@link ParserModelFactory#createClassModel(ClassPath)} and added to the cache.
-     * </p>
-     *
-     * @param pathElements A list of strings representing the fully qualified name of the class (e.g., ["com", "example", "MyClass"]).
-     * @return The ClassModel instance representing the class.
-     * @throws RuntimeException If a ClassNotFoundException occurs when using {@link Class#forName(String)},
-     *                            if a FileNotFoundException occurs when creating the ClassPath,
-     *                            or if an IOException occurs when creating the ClassModel using {@link ParserModelFactory#createClassModel(ClassPath)}.
-     */
+    /// Retrieves a ClassModel instance based on a list of path elements representing the class's fully qualified name.
+    ///
+    /// This method first attempts to load the class using [#forName(String)] with the path elements joined by dots.
+    /// If the class is not found in the classpath, it then tries to create a ClassPath object using [#createClassPath(List)]
+    /// and retrieves the ClassModel from the [#pathPool] cache. If the ClassModel is not already in the cache, it is created using
+    /// [#createClassModel(ClassPath)] and added to the cache.
+    ///
+    ///
+    /// @param pathElements A list of strings representing the fully qualified name of the class (e.g., ["com", "example", "MyClass"]).
+    /// @return The ClassModel instance representing the class.
+    /// @throws RuntimeException If a ClassNotFoundException occurs when using [#forName(String)],
+    ///                            if a FileNotFoundException occurs when creating the ClassPath,
+    ///                            or if an IOException occurs when creating the ClassModel using [#createClassModel(ClassPath)].
     public static ClassModel getClassFromPath(List<String> pathElements) {
         try {
             return getClass(Class.forName(String.join(".", pathElements)));
         } catch (ClassNotFoundException ex) {
             try {
                 ClassPath path = ModelFactory.createClassPath(pathElements);
-                return pathPool.computeIfAbsent(path, p -> {
-                    try {
-                        return ParserModelFactory.createClassModel(p);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                if (pathPool.containsKey(path)) return pathPool.get(path);
+
+                try {
+                    var model = ClassModelBuilder.createClassModel(path);
+                    pathPool.put(path, model);
+                    return pathPool.get(path);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+                return null;
             }
         }
     }
@@ -144,7 +144,7 @@ final class ModelCache {
         classModelMethods
                 .computeIfAbsent(method.owner(), _ -> new ConcurrentHashMap<>())
                 .computeIfAbsent(method.name(), _ -> new ConcurrentHashMap<>())
-                .put(
+                .putIfAbsent(
                         Arrays.stream(method.parameters())
                                 .map(ParameterModel::type)
                                 .toList(),
@@ -199,7 +199,7 @@ final class ModelCache {
     }
 
     public static List<TypeModel> containsMethod(ClassModel owner, String name, TypeModelList arguments) {
-        cacheClass(owner);
+//        cacheClass(owner);
         if (!classModelMethods.containsKey(owner) || !classModelMethods.get(owner).containsKey(name)) {
             return null;
         }

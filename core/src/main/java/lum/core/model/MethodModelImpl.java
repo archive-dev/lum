@@ -12,7 +12,8 @@ record MethodModelImpl(
         ParameterModel[] parameters,
         TypeModel[] exceptions,
         Set<AccessFlag> accessFlags,
-        GenericParameter[] genericParameters
+        GenericParameter[] genericParameters,
+        ClassModel[] annotations
 ) implements MethodModel {
     @Override
     public String toString() {

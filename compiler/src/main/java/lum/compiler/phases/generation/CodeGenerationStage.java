@@ -3,20 +3,20 @@ package lum.compiler.phases.generation;
 import lum.compiler.phases.CompilationException;
 import lum.compiler.phases.CompilationInfo;
 import lum.compiler.phases.CompilerStage;
-import lum.compiler.phases.parsing.ProgramContextResult;
+import lum.compiler.phases.parsing.ClassDefinitionsResult;
 import lum.core.model.ModelsParser;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 
-public class CodeGenerationStage implements CompilerStage<CompilationInfo, ProgramContextResult, GeneratedClassesResult> {
+public class CodeGenerationStage implements CompilerStage<CompilationInfo, ClassDefinitionsResult, GeneratedClassesResult> {
     @Override
-    public GeneratedClassesResult execute(CompilationInfo context, ProgramContextResult result) throws CompilationException {
-        var classModels = ModelsParser.parseClassModels(result.intermediateResult());
-        var fileCM = ModelsParser.parseFileClassModel(result.intermediateResult(), context.file().toString().substring(0, context.file().toString().lastIndexOf(".")));
+    public GeneratedClassesResult execute(CompilationInfo context, ClassDefinitionsResult result) throws CompilationException {
+        var classModels = result.intermediateResult();
+        var fileCM = ModelsParser.parseFileClassModel(result.ctx(), context.file().toString().substring(0, context.file().toString().lastIndexOf(".")));
         if (fileCM != null)
             classModels.add(fileCM);
-        var imports = ModelsParser.parseImports(result.intermediateResult());
+        var imports = ModelsParser.parseImports(result.ctx());
 
         HashMap<Path, byte[]> files = new HashMap<>();
 

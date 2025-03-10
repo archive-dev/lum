@@ -10,8 +10,12 @@ import java.lang.reflect.AccessFlag;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ClassModelTest {
+    static class SuperClass {
+        public void superMethod() {}
+    }
+
     @SuppressWarnings("unused")
-    static class TestClass {
+    static class TestClass extends SuperClass {
         private int privateField;
         protected String protectedField;
         public File publicField;
@@ -21,16 +25,27 @@ class ClassModelTest {
         volatile boolean volatileField;
         transient long transientField;
 
-        public static void main(String[] args) {}
+        public static void main(String[] args) {
+        }
 
-        private void privateMethod() {}
-        protected void protectedMethod() {}
-        public void publicMethod() {}
-        void packagePrivateMethod() {}
+        private void privateMethod() {
+        }
 
-        File getFileMethod() { return null; }
+        protected void protectedMethod() {
+        }
 
-        void methodWithParameters(int a, float b, File file) {}
+        public void publicMethod() {
+        }
+
+        void packagePrivateMethod() {
+        }
+
+        public File getFileMethod() {
+            return null;
+        }
+
+        public void methodWithParameters(int a, float b, File file) {
+        }
     }
 
     static ClassModel classModel;
@@ -47,14 +62,21 @@ class ClassModelTest {
 
     @Test
     void test_get_method_without_parameters() {
+        // Only public methods should be accessible now
         assertNotNull(classModel.getMethod("publicMethod"));
-        assertNotNull(classModel.getMethod("protectedMethod"));
-        assertNotNull(classModel.getMethod("packagePrivateMethod"));
-        assertNotNull(classModel.getMethod("privateMethod"));
+        assertNull(classModel.getMethod("protectedMethod"));
+        assertNull(classModel.getMethod("packagePrivateMethod"));
+        assertNull(classModel.getMethod("privateMethod"));
+    }
+
+    @Test
+    void test_get_superclass_method() {
+        assertNotNull(classModel.getMethod("superMethod"));
     }
 
     @Test
     void test_get_method_with_return_type() {
+        // Made getFileMethod public in the test class
         MethodModel fileMethod = classModel.getMethod("getFileMethod");
         assertNotNull(fileMethod);
         assertEquals(TypeModel.of(File.class), fileMethod.returnType());
@@ -62,6 +84,7 @@ class ClassModelTest {
 
     @Test
     void test_get_method_with_parameters() {
+        // Made methodWithParameters public in the test class
         MethodModel method = classModel.getMethod("methodWithParameters",
                 TypeModel.of(int.class),
                 TypeModel.of(float.class),
@@ -80,87 +103,100 @@ class ClassModelTest {
     void test_methods_collection() {
         MethodModel[] methods = classModel.methods();
         assertNotNull(methods);
-        assertTrue(methods.length >= 6); // Including inherited methods
 
-        // Verify specific methods exist
-        assertTrue(containsMethodNamed(methods, "privateMethod"));
-        assertTrue(containsMethodNamed(methods, "protectedMethod"));
+        // Only public methods should be included
+        // Plus inherited public methods from Object and SuperClass
+        assertTrue(methods.length >= 15);
+
+        // Verify only public methods exist
         assertTrue(containsMethodNamed(methods, "publicMethod"));
-        assertTrue(containsMethodNamed(methods, "packagePrivateMethod"));
         assertTrue(containsMethodNamed(methods, "getFileMethod"));
         assertTrue(containsMethodNamed(methods, "methodWithParameters"));
+        assertTrue(containsMethodNamed(methods, "superMethod"));
+
+        // Non-public methods should not be present
+        assertFalse(containsMethodNamed(methods, "privateMethod"));
+        assertFalse(containsMethodNamed(methods, "protectedMethod"));
+        assertFalse(containsMethodNamed(methods, "packagePrivateMethod"));
     }
 
     @Test
     void test_method_access_flags() {
-        assertTrue(classModel.getMethod("privateMethod").accessFlags().contains(AccessFlag.PRIVATE));
-        assertTrue(classModel.getMethod("protectedMethod").accessFlags().contains(AccessFlag.PROTECTED));
+        // Only test public methods now
         assertTrue(classModel.getMethod("publicMethod").accessFlags().contains(AccessFlag.PUBLIC));
 
-        // Package-private method should not have private, protected, or public flags
-        MethodModel packagePrivateMethod = classModel.getMethod("packagePrivateMethod");
-        assertFalse(packagePrivateMethod.accessFlags().contains(AccessFlag.PRIVATE));
-        assertFalse(packagePrivateMethod.accessFlags().contains(AccessFlag.PROTECTED));
-        assertFalse(packagePrivateMethod.accessFlags().contains(AccessFlag.PUBLIC));
+        // Non-public methods should not be found
+        assertNull(classModel.getMethod("privateMethod"));
+        assertNull(classModel.getMethod("protectedMethod"));
+        assertNull(classModel.getMethod("packagePrivateMethod"));
     }
 
     // New field tests
     @Test
     void test_get_field_by_name() {
-        assertNotNull(classModel.getField("privateField"));
-        assertNotNull(classModel.getField("protectedField"));
+        // Only public fields should be accessible
+        assertNull(classModel.getField("privateField"));
+        assertNull(classModel.getField("protectedField"));
         assertNotNull(classModel.getField("publicField"));
-        assertNotNull(classModel.getField("packagePrivateField"));
+        assertNull(classModel.getField("packagePrivateField"));
     }
 
     @Test
     void test_field_types() {
-        assertEquals(TypeModel.of(int.class), classModel.getField("privateField").type());
-        assertEquals(TypeModel.of(String.class), classModel.getField("protectedField").type());
+        // Only test public fields
         assertEquals(TypeModel.of(File.class), classModel.getField("publicField").type());
-        assertEquals(TypeModel.of(float.class), classModel.getField("packagePrivateField").type());
+
+        // Non-public fields should not be found
+        assertNull(classModel.getField("privateField"));
+        assertNull(classModel.getField("protectedField"));
+        assertNull(classModel.getField("packagePrivateField"));
     }
 
     @Test
     void test_fields_collection() {
         FieldModel[] fields = classModel.fields();
         assertNotNull(fields);
-        assertTrue(fields.length >= 7); // Including all declared fields
 
-        assertTrue(containsFieldNamed(fields, "privateField"));
-        assertTrue(containsFieldNamed(fields, "protectedField"));
+        // Only public fields should be included
+        // CONSTANT_FIELD is static final but not explicitly public, so it shouldn't be included
+        assertTrue(fields.length >= 1);
+
+        // Only public fields should be present
         assertTrue(containsFieldNamed(fields, "publicField"));
-        assertTrue(containsFieldNamed(fields, "packagePrivateField"));
-        assertTrue(containsFieldNamed(fields, "CONSTANT_FIELD"));
-        assertTrue(containsFieldNamed(fields, "volatileField"));
-        assertTrue(containsFieldNamed(fields, "transientField"));
+
+        // Non-public fields should not be present
+        assertFalse(containsFieldNamed(fields, "privateField"));
+        assertFalse(containsFieldNamed(fields, "protectedField"));
+        assertFalse(containsFieldNamed(fields, "packagePrivateField"));
+        assertFalse(containsFieldNamed(fields, "CONSTANT_FIELD"));
+        assertFalse(containsFieldNamed(fields, "volatileField"));
+        assertFalse(containsFieldNamed(fields, "transientField"));
     }
 
     @Test
     void test_field_access_flags() {
-        assertTrue(classModel.getField("privateField").accessFlags().contains(AccessFlag.PRIVATE));
-        assertTrue(classModel.getField("protectedField").accessFlags().contains(AccessFlag.PROTECTED));
+        // Only test public fields
         assertTrue(classModel.getField("publicField").accessFlags().contains(AccessFlag.PUBLIC));
 
-        // Package-private field should not have private, protected, or public flags
-        FieldModel packagePrivateField = classModel.getField("packagePrivateField");
-        assertFalse(packagePrivateField.accessFlags().contains(AccessFlag.PRIVATE));
-        assertFalse(packagePrivateField.accessFlags().contains(AccessFlag.PROTECTED));
-        assertFalse(packagePrivateField.accessFlags().contains(AccessFlag.PUBLIC));
+        // Non-public fields should not be found
+        assertNull(classModel.getField("privateField"));
+        assertNull(classModel.getField("protectedField"));
+        assertNull(classModel.getField("packagePrivateField"));
     }
 
     @Test
     void test_field_modifiers() {
-        FieldModel constantField = classModel.getField("CONSTANT_FIELD");
-        assertTrue(constantField.accessFlags().contains(AccessFlag.STATIC));
-        assertTrue(constantField.accessFlags().contains(AccessFlag.FINAL));
-
-        FieldModel volatileField = classModel.getField("volatileField");
-        assertTrue(volatileField.accessFlags().contains(AccessFlag.VOLATILE));
-
-        FieldModel transientField = classModel.getField("transientField");
-        assertTrue(transientField.accessFlags().contains(AccessFlag.TRANSIENT));
+        // Since CONSTANT_FIELD, volatileField, and transientField are not public,
+        // they should not be accessible
+        assertNull(classModel.getField("CONSTANT_FIELD"));
+        assertNull(classModel.getField("volatileField"));
+        assertNull(classModel.getField("transientField"));
     }
+
+//    @Test
+//    void test_are_annotations_present() {
+//        assertNotEquals(0, classModel.annotations().length);
+//    }
 
     private boolean containsFieldNamed(FieldModel[] fields, String fieldName) {
         for (FieldModel field : fields) {

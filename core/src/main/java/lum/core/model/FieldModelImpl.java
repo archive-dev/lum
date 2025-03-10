@@ -9,7 +9,8 @@ record FieldModelImpl(
         String name,
         TypeModel type,
         Set<AccessFlag> accessFlags,
-        GenericParameter[] genericParameters
+        GenericParameter[] genericParameters,
+        ClassModel[] annotations
 ) implements FieldModel {
     @Override
     public String toString() {

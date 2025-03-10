@@ -2,9 +2,12 @@ package lum.core.model;
 
 import lum.core.parsing.antlr4.LumParser;
 import lum.core.util.Utils;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.lang.reflect.AccessFlag;
 import java.util.*;
+
+import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
 
 public final class ModelsParser {
     private ModelsParser() {}
@@ -19,7 +22,7 @@ public final class ModelsParser {
         if (importsCache.containsKey(ctx.hashCode()))
             return importsCache.get(ctx.hashCode());
 
-        var imports = ParserModelFactory.createImportsModel(
+        var imports = ImportsModelFactory.createImportsModel(
                 ctx.statement().stream()
                         .map(LumParser.StatementContext::importStatement)
                         .filter(Objects::nonNull)
@@ -58,12 +61,13 @@ public final class ModelsParser {
                 Utils.EMPTY_CLASS_MODELS,
                 Set.of(AccessFlag.PUBLIC, AccessFlag.FINAL),
                 Utils.EMPTY_GENERIC_PARAMETERS,
+                EMPTY_CLASS_MODELS,
                 false,
                 false
         );
 
         for (var func : functions) {
-            var method = ParserModelFactory.createMethodModel(model, imports, func);
+            var method = ClassModelProcessor.createMethodModel(model, imports, func);
             method.accessFlags().add(AccessFlag.STATIC);
             imports.methods()
                     .computeIfAbsent(method.name(), _ -> new HashMap<>())
@@ -77,7 +81,7 @@ public final class ModelsParser {
 
         HashSet<FieldModel> fields = new HashSet<>();
         for (var var : variables) {
-            fields.addAll(ParserModelFactory.createFieldModels(model, imports, var));
+            fields.addAll(ClassModelProcessor.createFieldModels(model, imports, var));
         }
 
         for (var field : fields) {
@@ -88,42 +92,56 @@ public final class ModelsParser {
         return model;
     }
 
-    public static Set<ClassModel> parseClassModels(LumParser.ProgramContext ctx) {
-        HashSet<ClassModel> models = new HashSet<>();
+    public static Map<ClassModel, ParserRuleContext> buildClassModels(LumParser.ProgramContext ctx) {
+        Map<ClassModel, ParserRuleContext> contexts = new HashMap<>();
+        var imports = parseImports(ctx);
 
-        Imports imports = parseImports(ctx);
-
-        List<LumParser.ClassDeclarationContext> classes =
-                ctx.statement().stream()
+        List<LumParser.ClassDeclarationContext> classes = ctx.statement().stream()
                 .map(LumParser.StatementContext::declaration)
                 .filter(Objects::nonNull)
                 .map(LumParser.DeclarationContext::classDeclaration)
                 .filter(Objects::nonNull)
                 .toList();
 
-        List<LumParser.InterfaceDeclarationContext> interfaces =
-                ctx.statement().stream()
+        List<LumParser.InterfaceDeclarationContext> interfaces = ctx.statement().stream()
                 .map(LumParser.StatementContext::declaration)
                 .filter(Objects::nonNull)
                 .map(LumParser.DeclarationContext::interfaceDeclaration)
                 .filter(Objects::nonNull)
                 .toList();
 
-        for (var classDeclaration : classes) {
-            var model = ParserModelFactory.createClassModel(imports, classDeclaration);
-            models.add(model);
+        for (var decl : interfaces) {
+            var model = ClassModelBuilder.buildInterfaceModel(imports, decl);
             imports.classes().put(model.name(), model);
-            classContexts.put(model, classDeclaration);
+            contexts.put(model, decl);
+            interfaceContexts.put(model, decl);
         }
 
-        for (var interfaceDeclaration : interfaces) {
-            var model = ParserModelFactory.createInterfaceModel(imports, interfaceDeclaration);
-            models.add(model);
+        for (var decl : classes) {
+            var model = ClassModelBuilder.buildClassModel(imports, decl);
             imports.classes().put(model.name(), model);
-            interfaceContexts.put(model, interfaceDeclaration);
+            contexts.put(model, decl);
+            classContexts.put(model, decl);
         }
 
-        return models;
+        return contexts;
+    }
+
+    public static Set<ClassModel> processClassModelsMembers(Imports imports, Map<ClassModel, ParserRuleContext> contexts) {
+        contexts.forEach((model, context) -> {
+            if (context instanceof LumParser.ClassDeclarationContext classCtx)
+                ClassModelProcessor.processClassMembers(model, imports, classCtx);
+            else if (context instanceof LumParser.InterfaceDeclarationContext interfaceCtx)
+                ClassModelProcessor.processInterfaceMembers(model, imports, interfaceCtx);
+        });
+
+        return contexts.keySet();
+    }
+
+    public static Set<ClassModel> parseClassModels(LumParser.ProgramContext ctx) {
+        Map<ClassModel, ParserRuleContext> contexts = buildClassModels(ctx);
+
+        return new HashSet<>(contexts.keySet());
     }
 
     public static HashMap<MethodModel, LumParser.BlockContext> parseMethodBodies(ClassModel model, Imports imports) {
@@ -157,17 +175,17 @@ public final class ModelsParser {
                 .toList();
 
         for (var func : funcs) {
-            var method = ParserModelFactory.createMethodModel(model, imports, func);
+            var method = ClassModelProcessor.createMethodModel(model, imports, func);
             bodies.put(method, func.block());
         }
 
         for (var func : operators) {
-            var method = ParserModelFactory.createMethodModel(model, imports, func);
+            var method = ClassModelProcessor.createMethodModel(model, imports, func);
             bodies.put(method, func.block());
         }
 
-        for (var func : constructors ) {
-            var method = ParserModelFactory.createMethodModel(model, imports, func);
+        for (var func : constructors) {
+            var method = ClassModelProcessor.createMethodModel(model, imports, func);
             bodies.put(method, func.block());
         }
 

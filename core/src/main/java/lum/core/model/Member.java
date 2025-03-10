@@ -1,5 +1,5 @@
 package lum.core.model;
 
-public interface Member {
+public interface Member extends Annotatable {
     ClassModel owner();
 }

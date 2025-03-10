@@ -13,7 +13,7 @@ record SourceFileImpl (
         FieldModel[] fields
 ) implements SourceFile {
     public SourceFileImpl(LumParser.ProgramContext program) {
-        Imports imports = ParserModelFactory.createImportsModel(
+        Imports imports = ImportsModelFactory.createImportsModel(
                 program.statement()
                         .stream()
                         .map(LumParser.StatementContext::importStatement)
@@ -26,7 +26,7 @@ record SourceFileImpl (
                 .filter(Objects::nonNull)
                 .map(LumParser.DeclarationContext::classDeclaration)
                 .filter(Objects::nonNull)
-                .map(decl -> ParserModelFactory.createClassModel(imports, decl))
+                .map(decl -> ClassModelBuilder.createClassModel(imports, decl))
                 .collect(Collectors.toList()); // default .toList() return unmodifiable list
 
         classesList.addAll(program.statement().stream()
@@ -34,7 +34,7 @@ record SourceFileImpl (
                 .filter(Objects::nonNull)
                 .map(LumParser.DeclarationContext::interfaceDeclaration)
                 .filter(Objects::nonNull)
-                .map(decl -> ParserModelFactory.createInterfaceModel(imports, decl))
+                .map(decl -> ClassModelBuilder.createInterfaceModel(imports, decl))
                 .toList());
 
         this(imports, classesList.toArray(ClassModel[]::new), new MethodModel[0], new FieldModel[0]);

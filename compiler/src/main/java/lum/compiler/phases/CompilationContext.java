@@ -21,14 +21,18 @@ public abstract class CompilationContext {
     }
 
     public void print() {
-        System.out.println("Errors: ");
-        for (var err : errors()) {
-            err.printStackTrace(System.out);
+        if (!errors().isEmpty()) {
+            System.out.println("Errors: ");
+            for (var err : errors()) {
+                err.printStackTrace(System.out);
+            }
         }
 
-        System.out.println("Warnings: ");
-        for (var warn : warnings) {
-            System.out.println(warn);
+        if (!warnings().isEmpty()) {
+            System.out.println("Warnings: ");
+            for (var warn : warnings) {
+                System.out.println(warn);
+            }
         }
     }
 }

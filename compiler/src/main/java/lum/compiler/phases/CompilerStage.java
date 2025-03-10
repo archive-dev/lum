@@ -4,5 +4,5 @@ package lum.compiler.phases;
 /// @param <U> Result of the previous stage.
 /// @param <R> Return type
 public interface CompilerStage<T extends CompilationContext, U extends CompilationResult<?>, R extends CompilationResult<?>> {
-    R execute(T context, U result) throws CompilationException;
+    R execute(T context, U previousResult) throws CompilationException;
 }

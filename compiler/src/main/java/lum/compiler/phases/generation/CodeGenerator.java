@@ -12,9 +12,7 @@ import lum.core.util.TypeModelList;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.Label;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class CodeGenerator implements CodeHandler {
@@ -134,17 +132,46 @@ public class CodeGenerator implements CodeHandler {
 
     @Override
     public void handleSwitchStatement(LumParser.SwitchStatementContext ctx) {
-        // Implementation for switch statement
+        Variable switchValue = handleExpression(ctx.expression());
+
+        List<LumParser.CaseContext> cases = ctx.case_();
+
+        LumParser.DefaultContext defaultCase = ctx.default_();
+
+        if (cases.isEmpty() && defaultCase == null) {
+            return;
+        }
+
+        CodeBuilder cb = cm.codeBuilder();
+        Label endLabel = cb.newLabel();
+
+        for (LumParser.CaseContext caseCtx : cases) {
+            LumParser.ExpressionContext caseExpr = caseCtx.expression();
+            Variable caseValue = handleExpression(caseExpr);
+
+            Variable comparison = switchValue.eq(caseValue);
+
+            cm.ifThen(comparison, _ -> {
+                handleBlock(caseCtx.block());
+                cm.codeBuilder().goto_(endLabel);
+            });
+        }
+
+        if (defaultCase != null) {
+            handleBlock(defaultCase.block());
+        }
+
+        cb.labelBinding(endLabel);
     }
 
     @Override
     public void handleWhileLoop(LumParser.WhileLoopContext ctx) {
-        cm.while_(_ -> handleExpression(ctx.expression()), _ -> handleBlock(ctx.block()));
+        cm.while_(cm -> handleExpression(ctx.expression()).load(cm), _ -> handleBlock(ctx.block()));
     }
 
     @Override
     public void handleDoWhileLoop(LumParser.DoWhileLoopContext ctx) {
-        cm.doWhile(_ -> handleExpression(ctx.expression()), _ -> handleBlock(ctx.block()));
+        cm.doWhile(cm -> handleExpression(ctx.expression()).load(cm), _ -> handleBlock(ctx.block()));
     }
 
     @Override
@@ -406,7 +433,18 @@ public class CodeGenerator implements CodeHandler {
     @Override
     public Variable handleDictLiteral(LumParser.DictLiteralContext ctx) {
         // Implementation for dict literal
-        return null;
+        var hashMap =
+                cm.var("tmpMap"+ctx.hashCode(), TypeModel.of(Map.class))
+                .set(cm.new_(TypeModel.of(HashMap.class)));
+
+        for (var kv : ctx.keyValueList().keyValue()) {
+            var key = handleExpression(kv.expression(0));
+            var val = handleExpression(kv.expression(1));
+
+            hashMap.invoke("put", key, val).load(cm);
+        }
+
+        return hashMap;
     }
 
     @Override
