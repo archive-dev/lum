@@ -127,23 +127,6 @@ public final class ModelsParser {
         return contexts;
     }
 
-    public static Set<ClassModel> processClassModelsMembers(Imports imports, Map<ClassModel, ParserRuleContext> contexts) {
-        contexts.forEach((model, context) -> {
-            if (context instanceof LumParser.ClassDeclarationContext classCtx)
-                ClassModelProcessor.processClassMembers(model, imports, classCtx);
-            else if (context instanceof LumParser.InterfaceDeclarationContext interfaceCtx)
-                ClassModelProcessor.processInterfaceMembers(model, imports, interfaceCtx);
-        });
-
-        return contexts.keySet();
-    }
-
-    public static Set<ClassModel> parseClassModels(LumParser.ProgramContext ctx) {
-        Map<ClassModel, ParserRuleContext> contexts = buildClassModels(ctx);
-
-        return new HashSet<>(contexts.keySet());
-    }
-
     public static HashMap<MethodModel, LumParser.BlockContext> parseMethodBodies(ClassModel model, Imports imports) {
         HashMap<MethodModel, LumParser.BlockContext> bodies = new HashMap<>();
 

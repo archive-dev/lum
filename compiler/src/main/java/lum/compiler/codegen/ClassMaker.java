@@ -34,7 +34,7 @@ public interface ClassMaker extends Accessible, Annotatable {
     byte[] finish();
 
     class Utils {
-        private final static HashMap<Option.SourceOption, Function<ClassModel, ClassMaker>> suppliers = new HashMap();
+        private final static HashMap<Option.SourceOption, Function<ClassModel, ClassMaker>> suppliers = new HashMap<>();
         static {
             suppliers.put(Option.SourceOption.JVM, (model) -> JVMClassMakerFactory.create(model));
         }

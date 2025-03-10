@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,7 +26,7 @@ public class ParserFactoryFindDeclarationContextTest {
         LumParser.ClassDeclarationContext classDecl = mock(LumParser.ClassDeclarationContext.class);
         TerminalNode identifier = mock(TerminalNode.class);
 
-        when(block.statement()).thenReturn(Arrays.asList(stmt));
+        when(block.statement()).thenReturn(Collections.singletonList(stmt));
         when(stmt.declaration()).thenReturn(decl);
         when(decl.getChild(0)).thenReturn(classDecl);
         when(classDecl.IDENTIFIER()).thenReturn(identifier);
@@ -45,7 +46,7 @@ public class ParserFactoryFindDeclarationContextTest {
         LumParser.InterfaceDeclarationContext interfaceDecl = mock(LumParser.InterfaceDeclarationContext.class);
         TerminalNode identifier = mock(TerminalNode.class);
 
-        when(block.statement()).thenReturn(Arrays.asList(stmt));
+        when(block.statement()).thenReturn(Collections.singletonList(stmt));
         when(stmt.declaration()).thenReturn(decl);
         when(decl.getChild(0)).thenReturn(interfaceDecl);
         when(interfaceDecl.IDENTIFIER()).thenReturn(identifier);
@@ -65,7 +66,7 @@ public class ParserFactoryFindDeclarationContextTest {
         LumParser.AnnotationDeclarationContext annotationDecl = mock(LumParser.AnnotationDeclarationContext.class);
         TerminalNode identifier = mock(TerminalNode.class);
 
-        when(block.statement()).thenReturn(Arrays.asList(stmt));
+        when(block.statement()).thenReturn(Collections.singletonList(stmt));
         when(stmt.declaration()).thenReturn(decl);
         when(decl.getChild(0)).thenReturn(annotationDecl);
         when(annotationDecl.IDENTIFIER()).thenReturn(identifier);
@@ -90,14 +91,14 @@ public class ParserFactoryFindDeclarationContextTest {
         TerminalNode outerIdentifier = mock(TerminalNode.class);
         TerminalNode innerIdentifier = mock(TerminalNode.class);
 
-        when(outerBlock.statement()).thenReturn(Arrays.asList(outerStmt));
+        when(outerBlock.statement()).thenReturn(Collections.singletonList(outerStmt));
         when(outerStmt.declaration()).thenReturn(outerDecl);
         when(outerDecl.getChild(0)).thenReturn(outerClass);
         when(outerClass.IDENTIFIER()).thenReturn(outerIdentifier);
         when(outerIdentifier.getText()).thenReturn("OuterClass");
         when(outerClass.block()).thenReturn(innerBlock);
 
-        when(innerBlock.statement()).thenReturn(Arrays.asList(innerStmt));
+        when(innerBlock.statement()).thenReturn(Collections.singletonList(innerStmt));
         when(innerStmt.declaration()).thenReturn(innerDecl);
         when(innerDecl.getChild(0)).thenReturn(innerClass);
         when(innerClass.IDENTIFIER()).thenReturn(innerIdentifier);
@@ -132,7 +133,7 @@ public class ParserFactoryFindDeclarationContextTest {
         LumParser.BlockContext block = mock(LumParser.BlockContext.class);
         LumParser.StatementContext stmt = mock(LumParser.StatementContext.class);
 
-        when(block.statement()).thenReturn(Arrays.asList(stmt));
+        when(block.statement()).thenReturn(Collections.singletonList(stmt));
         when(stmt.declaration()).thenReturn(null);
 
         ParseTree result = ParserFactory.findDeclarationContext(block, "TestClass");

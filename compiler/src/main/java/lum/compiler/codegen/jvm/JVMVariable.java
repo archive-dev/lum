@@ -548,7 +548,7 @@ class JVMVariable implements Variable {
     @Override
     public Variable isInstance(Variable other) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
+        v.addCode(_ -> {
             if (getType().isPrimitive()) {
                 load();
                 var cb = codeMaker().codeBuilder();
@@ -564,7 +564,7 @@ class JVMVariable implements Variable {
     @Override
     public Variable in(Variable other) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(cm -> {
+        v.addCode(_ -> {
             if (getType().isPrimitive()) {
                 throw new IllegalStateException();
             } else {

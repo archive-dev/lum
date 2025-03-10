@@ -38,27 +38,21 @@ class JVMFieldMaker implements FieldMaker {
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
-        code.add(mb -> {
-            mb.with(maker.finish());
-        });
+        code.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
-        code.add(mb -> {
-            mb.with(maker.finish());
-        });
+        code.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
-        code.add(mb -> {
-            mb.with(maker.finish());
-        });
+        code.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 

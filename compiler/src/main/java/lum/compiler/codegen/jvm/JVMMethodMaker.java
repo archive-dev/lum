@@ -21,25 +21,19 @@ class JVMMethodMaker implements MethodMaker {
 
     @Override
     public MethodMaker withCode(Consumer<CodeMaker> code) {
-        builder.add(mb -> {
-            mb.withCode(c -> c.block(b -> code.accept(new JVMCodeMaker(b, model))));
-        });
+        builder.add(mb -> mb.withCode(c -> c.block(b -> code.accept(new JVMCodeMaker(b, model)))));
         return this;
     }
 
     @Override
     public Accessible access(AccessFlag flag) {
-        builder.add(mb -> {
-            mb.withFlags(flag);
-        });
+        builder.add(mb -> mb.withFlags(flag));
         return this;
     }
 
     @Override
     public Accessible access(AccessFlag... flags) {
-        builder.add(mb -> {
-            mb.withFlags(flags);
-        });
+        builder.add(mb -> mb.withFlags(flags));
         return this;
     }
 
@@ -47,27 +41,21 @@ class JVMMethodMaker implements MethodMaker {
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
-        builder.add(mb -> {
-            mb.with(maker.finish());
-        });
+        builder.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
-        builder.add(mb -> {
-            mb.with(maker.finish());
-        });
+        builder.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
-        builder.add(mb -> {
-            mb.with(maker.finish());
-        });
+        builder.add(mb -> mb.with(maker.finish()));
         return maker;
     }
 

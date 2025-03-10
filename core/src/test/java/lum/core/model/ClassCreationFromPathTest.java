@@ -13,7 +13,7 @@ public class ClassCreationFromPathTest {
     public void test_creates_class_model_from_valid_class_declaration() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "Test.lum", "TestClass");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNotNull(result);
         assertFalse(result.isInterface());
@@ -25,7 +25,7 @@ public class ClassCreationFromPathTest {
     public void test_creates_class_model_from_valid_interface_declaration() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "TestInterface.lum", "TestInterface");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNotNull(result);
         assertTrue(result.isInterface());
@@ -37,7 +37,7 @@ public class ClassCreationFromPathTest {
     public void test_processes_import_statements() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "WithImports.lum", "TestClass");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNotNull(result);
         assertTrue(result.interfaces().length > 0);
@@ -49,7 +49,7 @@ public class ClassCreationFromPathTest {
     public void test_maps_declarations_to_models() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "MultipleClasses.lum", "InnerClass");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNotNull(result);
         assertEquals("InnerClass", result.name());
@@ -60,7 +60,7 @@ public class ClassCreationFromPathTest {
     public void test_invalid_classpath_throws_exception() {
         ClassPath path = new ClassPath(Path.of("nonexistent"), "Missing.lum", "TestClass");
 
-        assertThrows(NoSuchFileException.class, () -> ImportsModelFactory.createClassModel(path));
+        assertThrows(NoSuchFileException.class, () -> ClassModelBuilder.createClassModel(path));
     }
 
     // The Program contains no matching class name
@@ -68,7 +68,7 @@ public class ClassCreationFromPathTest {
     public void test_no_matching_class_returns_null() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "Valid.lum", "NonExistentClass");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNull(result);
     }
@@ -78,7 +78,7 @@ public class ClassCreationFromPathTest {
     public void test_multiple_declarations_same_name() throws IOException {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "DuplicateClass.lum", "DuplicateClass");
 
-        ClassModel result = ImportsModelFactory.createClassModel(path);
+        ClassModel result = ClassModelBuilder.createClassModel(path);
 
         assertNotNull(result);
         assertEquals("DuplicateClass", result.name());
@@ -89,6 +89,6 @@ public class ClassCreationFromPathTest {
     public void test_invalid_imports_handling() {
         ClassPath path = new ClassPath(Path.of("src/test/resources"), "InvalidImports.lum", "TestClass");
 
-        assertThrows(RuntimeException.class, () -> ImportsModelFactory.createClassModel(path));
+        assertThrows(RuntimeException.class, () -> ClassModelBuilder.createClassModel(path));
     }
 }

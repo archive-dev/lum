@@ -9,9 +9,7 @@ import lum.core.parsing.antlr4.LumParser;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class Utils {

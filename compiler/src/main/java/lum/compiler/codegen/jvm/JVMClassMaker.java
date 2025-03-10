@@ -7,10 +7,8 @@ import lum.core.model.MethodModel;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.annotation.Target;
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
-import java.lang.constant.ClassDesc;
 import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
@@ -146,27 +144,21 @@ class JVMClassMaker implements ClassMaker {
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
-        addClassBuilderAction(cb -> {
-            cb.with(maker.finish());
-        });
+        addClassBuilderAction(cb -> cb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
-        addClassBuilderAction(cb -> {
-            cb.with(maker.finish());
-        });
+        addClassBuilderAction(cb -> cb.with(maker.finish()));
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
-        addClassBuilderAction(cb -> {
-            cb.with(maker.finish());
-        });
+        addClassBuilderAction(cb -> cb.with(maker.finish()));
         return maker;
     }
 

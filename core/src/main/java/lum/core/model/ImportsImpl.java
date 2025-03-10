@@ -51,8 +51,7 @@ record ImportsImpl(
 
     @Override
     public TypeModel getType(LumParser.TypeContext t) {
-        if (t instanceof LumParser.PlainTypeContext) {
-            LumParser.PlainTypeContext type = ((LumParser.PlainTypeContext) t);
+        if (t instanceof LumParser.PlainTypeContext type) {
             return classes().get(String.join(".", type.IDENTIFIER().stream().map(TerminalNode::getText).toList())).typeModel();
         } else if (t instanceof LumParser.ArrayTypeContext arrayType) {
             return getType(arrayType.type()).asArray(arrayType.ARRAY().size());

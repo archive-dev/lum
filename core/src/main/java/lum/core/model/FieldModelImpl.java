@@ -1,7 +1,6 @@
 package lum.core.model;
 
 import java.lang.reflect.AccessFlag;
-import java.util.List;
 import java.util.Set;
 
 record FieldModelImpl(

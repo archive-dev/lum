@@ -137,11 +137,13 @@ final class ClassModelBuilder {
 
     public static ClassModel createClassModel(Imports imports, LumParser.ClassDeclarationContext ctx) {
         var model = buildClassModel(imports, ctx);
+        imports.classes().put(model.name(), model);
         return model;
     }
 
     public static ClassModel createInterfaceModel(Imports imports, LumParser.InterfaceDeclarationContext ctx) {
         var model = buildInterfaceModel(imports, ctx);
+        imports.classes().put(model.name(), model);
         return model;
     }
 }

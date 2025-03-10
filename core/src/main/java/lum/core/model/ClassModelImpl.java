@@ -13,10 +13,10 @@ final class ClassModelImpl extends ClassModel {
     private final ClassModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
-    private HashSet<MethodModel> methods = null;
+    private final HashSet<MethodModel> methods = null;
 
-    private Map<String, FieldModel> fieldCache = null;
-    private boolean fieldCacheInitialized = false;
+    private final Map<String, FieldModel> fieldCache = null;
+    private final boolean fieldCacheInitialized = false;
 
     public ClassModelImpl(
             String name,
