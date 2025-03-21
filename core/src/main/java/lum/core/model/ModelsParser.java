@@ -4,6 +4,7 @@ import lum.core.parsing.antlr4.LumParser;
 import lum.core.util.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.io.File;
 import java.lang.reflect.AccessFlag;
 import java.util.*;
 
@@ -34,6 +35,8 @@ public final class ModelsParser {
     }
 
     public static ClassModel parseFileClassModel(LumParser.ProgramContext ctx, String className) {
+        className = className.replace(File.separatorChar, '.');
+
         Imports imports = parseImports(ctx);
 
         List<LumParser.FunctionDeclarationContext> functions =
