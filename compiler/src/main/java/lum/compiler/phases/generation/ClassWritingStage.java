@@ -13,10 +13,12 @@ import java.util.Map;
 public class ClassWritingStage implements CompilerStage<CompilationInfo, GeneratedClassesResult, ClassWritingResult> {
     @Override
     public ClassWritingResult execute(CompilationInfo context, GeneratedClassesResult result) throws CompilationException {
+        Path outDir = context.outputDirectory().normalize();
+        outDir.toFile().mkdirs();
         Exception error = null;
 
         for (Map.Entry<Path, byte[]> entry : result.intermediateResult().entrySet()) {
-            Path path = entry.getKey();
+            Path path = outDir.resolve(entry.getKey());
             byte[] bytes = entry.getValue();
             try {
                 Files.write(path, bytes);
