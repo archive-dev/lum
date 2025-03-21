@@ -88,4 +88,7 @@ public interface Variable {
     Variable increment(Variable other);
     Variable decrement(Variable other);
     Variable not();
+
+    Variable isInstance(TypeModel type);
+    Variable cast(TypeModel type);
 }

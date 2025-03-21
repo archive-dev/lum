@@ -645,6 +645,27 @@ class JVMVariable implements Variable {
         return new JVMInlinedVariableBuilder(List.of((_) -> invokeOperator("!"))).build();
     }
 
+    @Override
+    public Variable isInstance(TypeModel type) {
+        var builder = new JVMInlinedVariableBuilder();
+        builder.addCode(cm -> {
+            load(cm);
+            cm.codeBuilder().instanceOf(type.classDesc());
+        })
+                .setType(TypeModel.BOOLEAN)
+                .setCodeMaker(this.codeMaker());
+
+        return builder.build();
+    }
+
+    @Override
+    public Variable cast(TypeModel type) {
+        load();
+        codeMaker().codeBuilder().checkcast(type.classDesc());
+        this.type = type;
+        return this;
+    }
+
     @FunctionalInterface
     private interface Operation {
         Variable apply(Variable variable);
