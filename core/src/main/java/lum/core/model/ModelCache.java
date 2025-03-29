@@ -1,5 +1,6 @@
 package lum.core.model;
 
+import lum.core.parsing.antlr4.LumParser;
 import lum.core.util.TypeModelList;
 import lum.core.util.Utils;
 import java.io.FileNotFoundException;
@@ -18,6 +19,10 @@ final class ModelCache {
     private static final Map<ClassModel, Map<String, FieldModel>> classModelFields = new ConcurrentHashMap<>();
 
     private static final Map<ClassModel, Map<Integer, TypeModel>> typeModelsCache = new ConcurrentHashMap<>();
+
+    static final HashMap<ClassModel, LumParser.ClassDeclarationContext> classContexts = new HashMap<>();
+    static final HashMap<ClassModel, LumParser.InterfaceDeclarationContext> interfaceContexts = new HashMap<>();
+    static final HashMap<MethodModel, LumParser.BlockContext> methodContexts = new HashMap<>();
 
     private ModelCache() {}
 
@@ -89,7 +94,7 @@ final class ModelCache {
                     throw new RuntimeException(e);
                 }
             } catch (FileNotFoundException e) {
-                return null;
+                throw new RuntimeException(e);
             }
         }
     }
@@ -294,5 +299,9 @@ final class ModelCache {
 
     public static Map<String, Map<List<TypeModel>, MethodModel>> getModelMethods(ClassModel model) {
         return classModelMethods.get(model);
+    }
+
+    static Map<ClassModel, Map<String, Map<List<TypeModel>, MethodModel>>> getClassModelMethods() {
+        return classModelMethods;
     }
 }
