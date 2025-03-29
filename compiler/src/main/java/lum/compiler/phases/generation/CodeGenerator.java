@@ -200,7 +200,10 @@ public class CodeGenerator implements CodeHandler {
     }
 
     private TypeModel getType(String type) {
-        return imports.getType(List.of(type.split("\\.")));
+        var t = imports.getType(List.of(type.split("\\.")));
+        if (t == null)
+            t = getType(model.owner().pkg()+"."+type);
+        return t;
     }
 
     @Override
@@ -522,7 +525,7 @@ public class CodeGenerator implements CodeHandler {
     private Variable handleFunctionCall(Variable caller, LumParser.FunctionCallContext ctx) {
         if (ctx.NEW() == null) {
             String name = ctx.IDENTIFIER().getText();
-            if (ctx.argumentList() == null | ctx.argumentList().expression() == null || ctx.argumentList().isEmpty())
+            if (ctx.argumentList() == null || ctx.argumentList().expression() == null || ctx.argumentList().isEmpty())
                 return caller.invoke(name, Variable.EMPTY_VARIABLES);
             var args = handleArgumentList(ctx.argumentList());
             return caller.invoke(name, args);
