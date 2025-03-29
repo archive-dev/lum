@@ -28,7 +28,7 @@ record TypeModelImpl(
 
     @Override
     public ClassDesc classDesc() {
-        ClassDesc classDesc = ClassDesc.of(model().name());
+        ClassDesc classDesc = ClassDesc.of("%s%s".formatted(model().pkg().isEmpty() ? "" : model().pkg() + ".", model().name()));
         if (arrayDimensions() > 0)
             return classDesc.arrayType(arrayDimensions());
         return classDesc;
