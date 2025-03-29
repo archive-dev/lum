@@ -6,6 +6,7 @@ import java.util.*;
 
 final class ClassModelImpl extends ClassModel {
     private final String name;
+    private final String pkg;
     ClassModel superClass;
     private final ClassModel[] interfaces;
     private final Set<AccessFlag> accessFlags;
@@ -13,13 +14,13 @@ final class ClassModelImpl extends ClassModel {
     private final ClassModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
-    private final HashSet<MethodModel> methods = null;
+    private HashSet<MethodModel> methods = null;
 
     private final Map<String, FieldModel> fieldCache = null;
     private final boolean fieldCacheInitialized = false;
 
     public ClassModelImpl(
-            String name,
+            String name, String pkg,
             ClassModel superClass,
             ClassModel[] interfaces,
             Set<AccessFlag> accessFlags,
@@ -28,6 +29,7 @@ final class ClassModelImpl extends ClassModel {
             boolean isInterface, boolean isPrimitive
     ) {
         this.name = name;
+        this.pkg = pkg;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.accessFlags = accessFlags;
@@ -40,6 +42,11 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public String name() {
         return name;
+    }
+
+    @Override
+    public String pkg() {
+        return pkg;
     }
 
     @Override
@@ -141,6 +148,7 @@ final class ClassModelImpl extends ClassModel {
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (ClassModel) obj;
         return Objects.equals(this.name, that.name()) &&
+                Objects.equals(this.pkg, that.pkg()) &&
                 Objects.equals(this.superClass, that.superClass()) &&
                 Arrays.equals(this.interfaces, that.interfaces()) &&
                 Objects.equals(this.accessFlags, that.accessFlags()) &&
@@ -155,6 +163,7 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public String toString() {
         return "ClassModel[" +
+                "package=" + pkg + ", " +
                 "name=" + name + ", " +
                 "superClass=" + superClass + ", " +
                 "interfaces=" + Arrays.toString(interfaces) + ", " +
@@ -219,6 +228,7 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public MethodModel[] methods() {
         Set<MethodModel> models = new HashSet<>();
+
         if (ModelCache.getModelMethods(this) != null) {
             for (var entry : ModelCache.getModelMethods(this).entrySet()) {
                 for (var entry2 : entry.getValue().entrySet()) {

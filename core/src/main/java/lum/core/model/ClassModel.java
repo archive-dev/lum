@@ -7,6 +7,7 @@ import java.util.List;
 
 public abstract class ClassModel implements Accessible, GenericTyped, Annotatable {
     public abstract String name();
+    public abstract String pkg();
 
     public abstract ClassModel superClass();
     abstract void setSuperClass(ClassModel value);
