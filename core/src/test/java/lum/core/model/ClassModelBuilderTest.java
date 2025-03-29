@@ -4,6 +4,7 @@ import lum.core.parsing.antlr4.LumParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,11 @@ public class ClassModelBuilderTest {
     public void test_create_class_model() {
         Imports imports = new ImportsImpl(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
+//        ClassPath classPath = mock(ClassPath.class);
+//        when(classPath.className()).thenReturn("TestClass");
+//        when(classPath.pathToDir()).thenReturn(Path.of(""));
+//        when(classPath.fileName()).thenReturn("TestClass");
+
         LumParser.ClassDeclarationContext ctx = mock(LumParser.ClassDeclarationContext.class);
         when(ctx.IDENTIFIER()).thenReturn(mock(TerminalNode.class));
         when(ctx.IDENTIFIER().getText()).thenReturn("TestClass");
@@ -25,7 +31,7 @@ public class ClassModelBuilderTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx, null);
 
         assertNotNull(model);
         assertEquals("TestClass", model.name());
@@ -45,7 +51,7 @@ public class ClassModelBuilderTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ClassModelBuilder.createInterfaceModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createInterfaceModel(imports, ctx, null);
 
         assertNotNull(model);
         assertEquals("TestInterface", model.name());
@@ -68,7 +74,7 @@ public class ClassModelBuilderTest {
         when(block.statement()).thenReturn(List.of(stmt));
         when(stmt.declaration()).thenReturn(decl);
 
-        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx, null);
 
         assertNotNull(model);
         assertTrue(imports.classes().containsKey("TestClass"));
@@ -112,7 +118,7 @@ public class ClassModelBuilderTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx, null);
 
         assertNotNull(model);
         assertEquals(ClassModel.of(Object.class), model.superClass());
@@ -130,7 +136,7 @@ public class ClassModelBuilderTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx, null);
 
         assertNotNull(model);
         assertEquals("EmptyClass", model.name());
@@ -149,7 +155,7 @@ public class ClassModelBuilderTest {
         when(ctx.block()).thenReturn(mock(LumParser.BlockContext.class));
         when(ctx.block().statement()).thenReturn(new ArrayList<>());
 
-        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx);
+        ClassModel model = ClassModelBuilder.createClassModel(imports, ctx, null);
 
         assertNotNull(model);
         assertTrue(model.accessFlags().isEmpty());

@@ -12,24 +12,22 @@ class ModelCacheTest {
     void getClassFromPath_classFoundInClasspath() {
         ClassModel stringModel = ModelCache.getClassFromPath(List.of("java", "util", "ArrayList"));
         assertNotNull(stringModel);
-        assertEquals("java.util.ArrayList", stringModel.name());
+        assertEquals("ArrayList", stringModel.name());
+        assertEquals("java.util", stringModel.pkg());
     }
 
     @Test
     void getClassFromPath_classNotFoundInClasspath_classPathCreatedAndParsed() {
         // Assuming you have a test class file in the test resources
         List<String> pathElements = List.of("nonexistent", "Class"); // Replace with your test class
-        ClassModel testClassModel = ModelCache.getClassFromPath(pathElements);
-        assertNull(testClassModel);
+        assertThrows(RuntimeException.class, () -> ModelCache.getClassFromPath(pathElements));
     }
 
     @Test
     void getClassFromPath_fileNotFoundException() {
         List<String> pathElements = List.of("non", "existent", "Class");
 
-        var classModel = ModelCache.getClassFromPath(pathElements);
-
-        assertNull(classModel);
+        assertThrows(RuntimeException.class, () -> ModelCache.getClassFromPath(pathElements));
     }
 
     @Test
@@ -37,9 +35,7 @@ class ModelCacheTest {
         // Create a ClassPath that will cause an IOException during parsing
         List<String> pathElements = List.of("faulty", "example", "BrokenClass");
 
-        var classModel = ModelCache.getClassFromPath(pathElements);
-
-        assertNull(classModel);
+        assertThrows(RuntimeException.class, () -> ModelCache.getClassFromPath(pathElements));
     }
 
     // Helper methods and test classes (if needed)
