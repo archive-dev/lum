@@ -20,11 +20,15 @@ public class CompletingClassDefinitionsStage implements CompilerStage<Compilatio
         LumParser.ProgramContext ctx = previousResult.intermediateResult();
         var imports = ModelsParser.parseImports(ctx);
 
+        ModelsParser.buildClassModels(context.file());
+
+        imports.classes().values().forEach(model -> ModelsParser.buildClassModel(model, imports));
+
         Set<ClassModel> classes = new HashSet<>();
 
         Exception error = null;
         try {
-            List<Pair<ClassModel, ParserRuleContext>> pairs = ModelsParser.buildClassModels(ctx).entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList();
+            List<Pair<ClassModel, ParserRuleContext>> pairs = ModelsParser.buildClassModels(context.file()).entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList();
             for (var pair : pairs) {
                 if (pair.b() instanceof LumParser.ClassDeclarationContext clazz)
                     ClassModelProcessor.processClassMembers(pair.a(), imports, clazz);

@@ -2,21 +2,26 @@ package lum.compiler;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.converters.FileConverter;
 import com.beust.jcommander.converters.PathConverter;
-import lum.compiler.phases.CompilationContext;
 import lum.compiler.phases.CompilationInfo;
 import lum.compiler.pipeline.Executor;
+import lum.core.model.ModelConfig;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Compiler {
+    private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
+
     @Parameter(names = {"-o", "--output"}, description = "Output directory", converter = PathConverter.class)
     private Path outputDir = null;
 
@@ -24,36 +29,64 @@ public class Compiler {
     private Path file;
 
     @Parameter(names = "-src", description = "Sources directory", converter = PathConverter.class)
-    private Path srcDir;
+    private Path srcDir = null;
+
+    public Compiler() {}
+
+    public Compiler(Path file) {
+        this.file = file;
+    }
+
+    public Compiler(Path outputDir, Path file, Path srcDir) {
+        this.outputDir = outputDir;
+        this.file = file;
+        this.srcDir = srcDir;
+    }
+
+    public static int compile(Path outputDir, Path file, Path srcDir) {
+        return new Compiler(outputDir, file, srcDir).compile();
+    }
 
     public int compile() {
         if (srcDir == null)
             srcDir = Files.isDirectory(file) ? file : file.getParent();
 
+        ModelConfig.workDir = srcDir;
+
+        Executor executor = new Executor();
+        String absoluteOutputPath = outputDir != null ? outputDir.toAbsolutePath().toString() : null; // Calculate absolute path once
+
         if (!file.toFile().isDirectory()) {
-            var res = new Executor().execute(new CompilationInfo(file, outputDir));
-            res.info().add(outputDir.toAbsolutePath().toString());
+            CompilationInfo compilationInfo = new CompilationInfo(file, outputDir);
+            var res = executor.execute(compilationInfo);
+            if (absoluteOutputPath != null) {
+                res.info().add(absoluteOutputPath);
+            }
 
             res.printInfo();
             res.printWarnings();
 
             if (!res.errors().isEmpty()) {
-                res.print();
+                res.printErrors();
+                System.exit(1);
                 return 1;
             }
         } else {
-            Executor executor = new Executor();
-            var files = listFilesRecursive(file.toFile(), new ArrayList<>());
+            List<File> files = listFilesRecursive(file.toFile());
 
-            for (var file : files) {
-                var res = executor.execute(new CompilationInfo(file.toPath(), outputDir));
-                res.info().add(outputDir.toAbsolutePath().toString());
+            for (var f : files) {
+                CompilationInfo compilationInfo = new CompilationInfo(f.toPath(), outputDir, srcDir);
+                var res = executor.execute(compilationInfo);
+                if (absoluteOutputPath != null) {
+                    res.info().add(absoluteOutputPath);
+                }
 
                 res.printInfo();
                 res.printWarnings();
 
                 if (!res.errors().isEmpty()) {
-                    res.print();
+                    res.printErrors();
+                    System.exit(1);
                     return 1;
                 }
             }
@@ -69,23 +102,21 @@ public class Compiler {
                 .build()
                 .parse(args);
 
+        logger.info("Compiling...");
+
         compilerArgs.compile();
     }
 
-    private static List<File> listFilesRecursive(File directory, List<File> files) {
-        files.addAll(
-                Arrays.stream(Objects.requireNonNull(
-                        directory.listFiles(
-                                file -> !file.isDirectory() && file.getName().endsWith(".lum")
-                            )
-                        )
-                    )
-                .toList());
-
-        for (File file : Objects.requireNonNull(directory.listFiles(File::isDirectory))) {
-            listFilesRecursive(file, files);
+    private List<File> listFilesRecursive(File directory) {
+        List<File> files = new ArrayList<>();
+        try (Stream<Path> pathStream = Files.walk(directory.toPath())) {
+            files = pathStream.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".lum"))
+                    .map(Path::toFile)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            logger.error("Error listing files recursively", e);
         }
-
         return files;
     }
 }

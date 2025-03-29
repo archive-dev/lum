@@ -1,8 +1,13 @@
 package lum.compiler.phases;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 public abstract class CompilationContext {
+    private static final Logger logger = LoggerFactory.getLogger(CompilationContext.class);
+
     private final List<String> info;
     private final List<String> warnings;
     private final List<Exception> errors;
@@ -39,27 +44,27 @@ public abstract class CompilationContext {
 
     public void printErrors() {
         if (!errors().isEmpty()) {
-            System.out.println("Errors: ");
+            logger.error("Errors: ");
             for (var err : errors()) {
-                err.printStackTrace(System.out);
+                logger.error(err.getMessage(), err);
             }
         }
     }
 
     public void printInfo() {
         if (!info.isEmpty()) {
-            System.out.println("Info: ");
+            logger.info("Info: ");
             for (var info : info) {
-                System.out.println(info);
+                logger.info(info);
             }
         }
     }
 
     public void printWarnings() {
         if (!warnings().isEmpty()) {
-            System.out.println("Warnings: ");
+            logger.warn("Warnings: ");
             for (var warn : warnings) {
-                System.out.println(warn);
+                logger.warn(warn);
             }
         }
     }

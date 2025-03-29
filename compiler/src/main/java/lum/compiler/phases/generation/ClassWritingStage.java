@@ -21,6 +21,7 @@ public class ClassWritingStage implements CompilerStage<CompilationInfo, Generat
             Path path = outDir.resolve(entry.getKey());
             byte[] bytes = entry.getValue();
             try {
+                path.getParent().toFile().mkdirs();
                 Files.write(path, bytes);
             } catch (IOException e) {
                 error = e;

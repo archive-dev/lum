@@ -24,16 +24,8 @@ public class CodeGenerationStage implements CompilerStage<CompilationInfo, Class
 
         for (var model : classModels) {
             try {
-                Path path;
-                if (context.outputDirectory() != null) {
-                    path = Path.of(model.name().replace(".", "/")+".class");
-                    if (context.srcDir() != null)
-                        path = path.subpath(path.getNameCount()-context.srcDir().getNameCount()+1, path.getNameCount());
-                } else {
-                    path = context.file().getParent();
-                    path = path == null ? Path.of("") : path;
-                    path = path.resolve(model.name() + ".class");
-                }
+                Path path = context.srcDir().resolve(model.pkg().replace(".", "/"));
+                path = context.srcDir().relativize(path.resolve(model.name() + ".class"));
                 byte[] file = ClassGenerator.generate(model, imports);
                 files.put(path, file);
             } catch (Exception e) {
