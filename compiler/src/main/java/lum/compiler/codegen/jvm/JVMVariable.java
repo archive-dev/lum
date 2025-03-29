@@ -120,12 +120,13 @@ class JVMVariable implements Variable {
 
     private Opcode getInvokeOpcode(MethodModel method) {
         Opcode invokeOpcode = Opcode.INVOKEVIRTUAL;
+        var currentMethod = ((JVMCodeMaker) this.codeMaker()).method();
 
         if (method.isStatic())
             invokeOpcode = Opcode.INVOKESTATIC;
         else if (getType().model().isInterface())
             invokeOpcode = Opcode.INVOKEINTERFACE;
-        else if (type.model().isSubclassOf(method.owner()))
+        else if (currentMethod.owner().isSubclassOf(method.owner()) && !method.isStatic())
             invokeOpcode = Opcode.INVOKESPECIAL;
 
         return invokeOpcode;

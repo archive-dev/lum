@@ -27,6 +27,10 @@ class JVMCodeMaker implements CodeMaker {
     private final CodeBuilder.BlockCodeBuilder cb;
     private final MethodModel method;
 
+    MethodModel method() {
+        return method;
+    }
+
     public JVMCodeMaker(CodeBuilder.BlockCodeBuilder cb, MethodModel method) {
         this.cb = cb;
         this.method = method;
