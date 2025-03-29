@@ -31,7 +31,7 @@ tasks.compileJava {
 }
 
 subprojects {
-    apply(plugin = "java")
+    apply<JavaPlugin>()
 
     tasks.compileJava {
         options.compilerArgs.add("--enable-preview")
