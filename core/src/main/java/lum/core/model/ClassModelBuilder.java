@@ -4,8 +4,8 @@ import lum.core.parsing.ParserFactory;
 import lum.core.parsing.antlr4.LumParser;
 import lum.core.util.Utils;
 import lum.lang.struct.Pair;
-import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.AccessFlag;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static lum.core.model.ModelConfig.workDir;
 import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
 import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
 
@@ -29,36 +30,45 @@ final class ClassModelBuilder {
                         .toList()
         );
 
-        Pair<ClassModel, ParserRuleContext> pair = buildClassModel(path, program, imports);
-        if (pair == null) return null;
-        ModelCache.pathPool.put(path, pair.a());
+        ClassModel model = buildClassModel(path, program, imports);
+        if (model == null) return null;
+        ModelCache.pathPool.put(path, model);
 
-        return pair.a();
+        return model;
     }
 
-    private static Pair<ClassModel, ParserRuleContext> buildClassModel(ClassPath path, LumParser.ProgramContext program, Imports imports) {
+    private static ClassModel buildClassModel(ClassPath path, LumParser.ProgramContext program, Imports imports) {
         return switch (ParserFactory.getClassContext(program, path.className())) {
             case LumParser.ClassDeclarationContext clazz -> {
-                var model = buildClassModel(imports, clazz);
+                var model = buildClassModel(imports, clazz, path);
                 imports.classes().put(model.name(), model);
-                yield new Pair<>(model, clazz);
+                ModelCache.classContexts.put(model, clazz);
+                yield model;
             }
             case LumParser.InterfaceDeclarationContext interface_ -> {
-                var model = buildInterfaceModel(imports, interface_);
+                var model = buildInterfaceModel(imports, interface_, path);
                 imports.classes().put(model.name(), model);
-                yield new Pair<>(model, interface_);
+                ModelCache.interfaceContexts.put(model, interface_);
+                yield model;
             }
             case null, default -> null;
         };
     }
 
-    public static ClassModel buildClassModel(Imports imports, LumParser.ClassDeclarationContext ctx) {
+    public static ClassModel buildClassModel(Imports imports, LumParser.ClassDeclarationContext ctx, ClassPath path) {
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
         var name = ctx.IDENTIFIER().getText();
         var inheritance = processInheritance(imports, ctx.inheritance());
+        String pkg = "";
+
+        if (path != null) {
+            var p = workDir.relativize(path.pathToDir()).toString();
+            if (!p.isEmpty())
+                pkg = p.replace(File.separator, ".");
+        }
 
         var model = new ClassModelImpl(
-                name,
+                name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
@@ -71,15 +81,22 @@ final class ClassModelBuilder {
         return model;
     }
 
-    public static ClassModel buildInterfaceModel(Imports imports, LumParser.InterfaceDeclarationContext ctx) {
+    public static ClassModel buildInterfaceModel(Imports imports, LumParser.InterfaceDeclarationContext ctx, ClassPath path) {
         var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
         accessFlags.add(AccessFlag.ABSTRACT);
         accessFlags.add(AccessFlag.INTERFACE);
         var name = ctx.IDENTIFIER().getText();
         var inheritance = processInheritance(imports, ctx.inheritance());
+        String pkg = "";
+
+        if (path != null) {
+            var p = workDir.relativize(path.pathToDir()).toString();
+            if (!p.isEmpty())
+                pkg = p.replace(File.separator, ".");
+        }
 
         var model = new ClassModelImpl(
-                name,
+                name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
@@ -135,14 +152,14 @@ final class ClassModelBuilder {
         return imports.getType(type).model();
     }
 
-    public static ClassModel createClassModel(Imports imports, LumParser.ClassDeclarationContext ctx) {
-        var model = buildClassModel(imports, ctx);
+    public static ClassModel createClassModel(Imports imports, LumParser.ClassDeclarationContext ctx, ClassPath path) {
+        var model = buildClassModel(imports, ctx, path);
         imports.classes().put(model.name(), model);
         return model;
     }
 
-    public static ClassModel createInterfaceModel(Imports imports, LumParser.InterfaceDeclarationContext ctx) {
-        var model = buildInterfaceModel(imports, ctx);
+    public static ClassModel createInterfaceModel(Imports imports, LumParser.InterfaceDeclarationContext ctx, ClassPath path) {
+        var model = buildInterfaceModel(imports, ctx, path);
         imports.classes().put(model.name(), model);
         return model;
     }

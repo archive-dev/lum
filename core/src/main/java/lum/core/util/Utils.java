@@ -1,9 +1,6 @@
 package lum.core.util;
 
-import lum.core.model.ClassModel;
-import lum.core.model.GenericParameter;
-import lum.core.model.ParameterModel;
-import lum.core.model.TypeModel;
+import lum.core.model.*;
 import lum.core.parsing.antlr4.LumParser;
 
 import java.lang.reflect.AccessFlag;
@@ -46,7 +43,7 @@ public final class Utils {
     }
 
     public static boolean fileExists(Path path) {
-        return Path.of(path+".lum").toFile().exists();
+        return ModelConfig.workDir.resolve(Path.of(path+".lum")).toFile().exists();
     }
 
     public static Set<AccessFlag> getAccessFlags(int modifiers) {

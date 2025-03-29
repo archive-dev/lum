@@ -34,16 +34,16 @@ final class ModelFactory {
         if (!Utils.fileExists(Path.of(element))) {
             throw new FileNotFoundException("File not found: " + element);
         }
-        return new ClassPath(Path.of(System.getProperty("user.dir")), element + ".lum", element);
+        return new ClassPath(ModelConfig.workDir, element + ".lum", element);
     }
 
     private static ClassPath createMultiElementClassPath(List<String> elements) throws FileNotFoundException {
-        Path path = resolveFilePath(elements);
+        Path path = ModelConfig.workDir.resolve(resolveFilePath(elements));
         List<String> pathComponents = getPathComponents(path);
         String fileName = getFileName(elements, pathComponents);
         String className = elements.getLast();
 
-        return new ClassPath(path, fileName, className);
+        return new ClassPath(path.getParent(), fileName, className);
     }
 
     private static Path resolveFilePath(List<String> elements) throws FileNotFoundException {
@@ -62,6 +62,7 @@ final class ModelFactory {
     private static List<String> getPathComponents(Path path) {
         return StreamSupport.stream(path.spliterator(), false)
                 .map(Path::toString)
+                .limit(path.getNameCount()-1)
                 .toList();
     }
 
@@ -88,7 +89,7 @@ final class ModelFactory {
 
     private static ClassModel buildInitialClassModel(Class<?> clazz) {
         return new ClassModelImpl(
-                clazz.getName(),
+                clazz.getSimpleName(), clazz.getPackageName(),
                 null,
                 new ClassModel[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),

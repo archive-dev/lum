@@ -4,10 +4,7 @@ import lum.core.parsing.antlr4.LumParser;
 import lum.core.util.Utils;
 
 import java.lang.reflect.AccessFlag;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
 import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
@@ -18,10 +15,13 @@ public final class ClassModelProcessor {
     private ClassModelProcessor() {}
 
     public static void processClassMembers(ClassModel model, Imports imports, LumParser.ClassDeclarationContext ctx) {
-        List<LumParser.DeclarationContext> declarations = ctx.block().statement().stream()
-                .map(LumParser.StatementContext::declaration)
-                .filter(Objects::nonNull)
-                .toList();
+        List<LumParser.DeclarationContext> declarations = Collections.emptyList();
+        if (ctx != null && ctx.block() != null) {
+            declarations = ctx.block().statement().stream()
+                    .map(LumParser.StatementContext::declaration)
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
 
         processMembers(model, imports, declarations);
     }

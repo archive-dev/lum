@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public final class ParserFactory {
     private ParserFactory() {}
+
+    private static final HashMap<Integer, LumParser> lumParserCache = new HashMap<>();
 
     public static LumParser createParser(String code) {
         LumLexer lx = new LumLexer(CharStreams.fromString(code));
@@ -26,7 +29,10 @@ public final class ParserFactory {
         LumLexer lx = null;
         lx = new LumLexer(CharStreams.fromFileName(path.toAbsolutePath().toString()));
         CommonTokenStream cts = new CommonTokenStream(lx);
-        return new LumParser(cts);
+
+        LumParser ret = new LumParser(cts);
+        lumParserCache.put(path.hashCode(), ret);
+        return ret;
     }
 
     public static LumParser createParser(ClassPath path) throws IOException {
