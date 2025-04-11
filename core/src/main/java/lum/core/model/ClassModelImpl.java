@@ -10,7 +10,7 @@ final class ClassModelImpl extends ClassModel {
     ClassModel superClass;
     private final ClassModel[] interfaces;
     private final Set<AccessFlag> accessFlags;
-    private final GenericParameter[] genericParameters;
+    private final GenericArgument[] genericArguments;
     private final ClassModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
@@ -24,7 +24,7 @@ final class ClassModelImpl extends ClassModel {
             ClassModel superClass,
             ClassModel[] interfaces,
             Set<AccessFlag> accessFlags,
-            GenericParameter[] genericParameters,
+            GenericArgument[] genericArgument,
             ClassModel[] annotations,
             boolean isInterface, boolean isPrimitive
     ) {
@@ -33,7 +33,7 @@ final class ClassModelImpl extends ClassModel {
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.accessFlags = accessFlags;
-        this.genericParameters = genericParameters;
+        this.genericArguments = genericArgument;
         this.annotations = annotations;
         this.isInterface = isInterface;
         this.isPrimitive = isPrimitive;
@@ -98,8 +98,8 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
-    public GenericParameter[] genericParameters() {
-        return genericParameters;
+    public GenericArgument[] genericArguments() {
+        return genericArguments;
     }
 
     @Override
@@ -110,11 +110,6 @@ final class ClassModelImpl extends ClassModel {
     @Override
     public boolean isPrimitive() {
         return isPrimitive;
-    }
-
-    @Override
-    public TypeModel typeModel() {
-        return typeModel(0);
     }
 
     @Override
@@ -147,17 +142,17 @@ final class ClassModelImpl extends ClassModel {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (ClassModel) obj;
-        return Objects.equals(this.name, that.name()) &&
-                Objects.equals(this.pkg, that.pkg()) &&
-                Objects.equals(this.superClass, that.superClass()) &&
-                Arrays.equals(this.interfaces, that.interfaces()) &&
-                Objects.equals(this.accessFlags, that.accessFlags()) &&
-                Arrays.equals(this.genericParameters, that.genericParameters());
+        return Objects.equals(this.name(), that.name()) &&
+                Objects.equals(this.pkg(), that.pkg()) &&
+                Objects.equals(this.superClass(), that.superClass()) &&
+                Arrays.equals(this.interfaces(), that.interfaces()) &&
+                Objects.equals(this.accessFlags(), that.accessFlags()) &&
+                Arrays.equals(this.genericArguments(), that.genericArguments());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, superClass, Arrays.hashCode(interfaces), accessFlags, Arrays.hashCode(genericParameters));
+        return Objects.hash(fullName(), superClass, Arrays.hashCode(interfaces), accessFlags, Arrays.hashCode(genericArguments));
     }
 
     @Override
@@ -168,7 +163,7 @@ final class ClassModelImpl extends ClassModel {
                 "superClass=" + superClass + ", " +
                 "interfaces=" + Arrays.toString(interfaces) + ", " +
                 "accessFlags=" + accessFlags + ", " +
-                "genericParameters=" + Arrays.toString(genericParameters) + ", " +
+                "genericArguments=" + Arrays.toString(genericArguments) + ", " +
                 "methods=" + Arrays.toString(methods()) + ", " +
                 "fields=" + Arrays.toString(fields()) + ']';
     }
