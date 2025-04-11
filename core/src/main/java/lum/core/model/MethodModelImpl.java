@@ -11,7 +11,7 @@ record MethodModelImpl(
         ParameterModel[] parameters,
         TypeModel[] exceptions,
         Set<AccessFlag> accessFlags,
-        GenericParameter[] genericParameters,
+        GenericArgument[] genericArguments,
         ClassModel[] annotations
 ) implements MethodModel {
     @Override
@@ -22,6 +22,6 @@ record MethodModelImpl(
                 "parameters=" + Arrays.toString(parameters) + ", " +
                 "exceptions=" + Arrays.toString(exceptions) + ", " +
                 "accessFlags=" + accessFlags + ", " +
-                "genericParameters=" + Arrays.toString(genericParameters) + ']';
+                "genericParameters=" + Arrays.toString(genericArguments) + ']';
     }
 }
