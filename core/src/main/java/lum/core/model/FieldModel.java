@@ -2,10 +2,7 @@ package lum.core.model;
 
 import lum.core.util.Utils;
 
-import java.lang.reflect.AccessFlag;
-import java.util.Set;
-
-public interface FieldModel extends Accessible, GenericTyped, Member {
+public interface FieldModel extends Accessible, Member {
     String name();
 
     TypeModel type();
