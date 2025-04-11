@@ -25,7 +25,7 @@ public final class TypeModelList extends ArrayList<TypeModel> {
             return false;
         }
         for (int i = 0; i < size(); i++) {
-            if (!other.get(i).model().isSubclassOf(this.get(i).model())) {
+            if (!this.get(i).model().isAssignableFrom(other.get(i).model())) {
                 isAssignableFromCache.put(other, false);
                 return false;
             }
