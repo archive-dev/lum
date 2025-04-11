@@ -5,9 +5,24 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.util.List;
 
-public abstract class ClassModel implements Accessible, GenericTyped, Annotatable {
+public abstract class ClassModel implements Accessible, Parametrized, Annotatable {
+    public static final ClassModel INT = ClassModel.of(int.class);
+    public static final ClassModel LONG = ClassModel.of(long.class);
+    public static final ClassModel DOUBLE = ClassModel.of(double.class);
+    public static final ClassModel FLOAT = ClassModel.of(float.class);
+    public static final ClassModel BOOLEAN = ClassModel.of(boolean.class);
+    public static final ClassModel BYTE = ClassModel.of(byte.class);
+    public static final ClassModel CHAR = ClassModel.of(char.class);
+    public static final ClassModel SHORT = ClassModel.of(short.class);
+    public static final ClassModel VOID = ClassModel.of(void.class);
+    public static final ClassModel OBJECT = ClassModel.of(Object.class);
+
     public abstract String name();
     public abstract String pkg();
+    public String fullName() {
+        if (pkg() != null && !pkg().isEmpty()) return ("%s.%s").formatted(pkg(), name());
+        return name();
+    }
 
     public abstract ClassModel superClass();
     abstract void setSuperClass(ClassModel value);
@@ -16,11 +31,17 @@ public abstract class ClassModel implements Accessible, GenericTyped, Annotatabl
 
     public abstract boolean isSubclassOf(ClassModel other);
 
+    public boolean isAssignableFrom(ClassModel other) {
+        return other.isSubclassOf(this);
+    }
+
     public abstract boolean isInterface();
 
     public abstract boolean isPrimitive();
 
-    public abstract TypeModel typeModel();
+    public TypeModel typeModel() {
+        return typeModel(0);
+    }
 
     public abstract TypeModel typeModel(int arrayDimensions);
 
