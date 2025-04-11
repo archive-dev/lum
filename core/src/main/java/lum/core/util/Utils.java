@@ -1,6 +1,7 @@
 package lum.core.util;
 
 import lum.core.model.*;
+import lum.core.model.ModelConfig;
 import lum.core.parsing.antlr4.LumParser;
 
 import java.lang.reflect.AccessFlag;
@@ -11,12 +12,11 @@ import java.util.Set;
 
 public final class Utils {
     public static final ClassModel[] EMPTY_CLASS_MODELS = new ClassModel[0];
-
-    private Utils() {}
-
-    public static final GenericParameter[] EMPTY_GENERIC_PARAMETERS = new GenericParameter[0];
+    public static final GenericArgument[] EMPTY_GENERIC_ARGUMENTS = new GenericArgument[0];
     public static final TypeModel[] EMPTY_TYPE_MODELS = new TypeModel[0];
     public static final ParameterModel[] EMPTY_PARAMETERS = new ParameterModel[0];
+
+    private Utils() {}
 
     public static int getArrayDepth(Class<?> clazz) {
         int depth = 0;
@@ -91,5 +91,8 @@ public final class Utils {
 
     public static String toTitled(String str) {
         return String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1);
+    }
+    public static String toCamelCase(String str) {
+        return String.valueOf(str.charAt(0)).toLowerCase() + str.substring(1);
     }
 }
