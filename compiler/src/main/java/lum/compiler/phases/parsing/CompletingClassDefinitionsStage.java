@@ -27,13 +27,14 @@ public class CompletingClassDefinitionsStage implements CompilerStage<Compilatio
         Set<ClassModel> classes = new HashSet<>();
 
         Exception error = null;
+
         try {
             List<Pair<ClassModel, ParserRuleContext>> pairs = ModelsParser.buildClassModels(context.file()).entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList();
             for (var pair : pairs) {
                 if (pair.b() instanceof LumParser.ClassDeclarationContext clazz)
-                    ClassModelProcessor.processClassMembers(pair.a(), imports, clazz);
+                    new ClassModelProcessor(pair.a(), imports).processClass(clazz);
                 else if (pair.b() instanceof LumParser.InterfaceDeclarationContext interface_)
-                    ClassModelProcessor.processInterfaceMembers(pair.a(), imports, interface_);
+                    new ClassModelProcessor(pair.a(), imports).processInterface(interface_);
 
                 classes.add(pair.a());
             }
