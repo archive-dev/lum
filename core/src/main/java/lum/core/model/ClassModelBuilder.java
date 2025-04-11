@@ -15,7 +15,7 @@ import java.util.Objects;
 
 import static lum.core.model.ModelConfig.workDir;
 import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
-import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
+import static lum.core.util.Utils.EMPTY_GENERIC_ARGUMENTS;
 
 final class ClassModelBuilder {
     private ClassModelBuilder() {}
@@ -67,12 +67,18 @@ final class ClassModelBuilder {
                 pkg = p.replace(File.separator, ".");
         }
 
+        GenericArgument[] genericArguments;
+        if (ctx.genericDeclaration() != null && ctx.genericDeclaration().generic() != null && !ctx.genericDeclaration().generic().isEmpty())
+            genericArguments = new GenericArgument[ctx.genericDeclaration().generic().size()];
+        else
+            genericArguments = EMPTY_GENERIC_ARGUMENTS;
+
         var model = new ClassModelImpl(
                 name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
-                EMPTY_GENERIC_PARAMETERS,
+                genericArguments,
                 EMPTY_CLASS_MODELS,
                 false,
                 false
@@ -95,12 +101,18 @@ final class ClassModelBuilder {
                 pkg = p.replace(File.separator, ".");
         }
 
+        GenericArgument[] genericArguments;
+        if (ctx.genericDeclaration() != null && ctx.genericDeclaration().generic() != null && !ctx.genericDeclaration().generic().isEmpty())
+            genericArguments = new GenericArgument[ctx.genericDeclaration().generic().size()];
+        else
+            genericArguments = EMPTY_GENERIC_ARGUMENTS;
+
         var model = new ClassModelImpl(
                 name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
-                EMPTY_GENERIC_PARAMETERS,
+                genericArguments,
                 EMPTY_CLASS_MODELS,
                 true,
                 false
