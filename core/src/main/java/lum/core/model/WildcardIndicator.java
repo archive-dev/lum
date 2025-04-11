@@ -20,10 +20,12 @@ public enum WildcardIndicator {
     }
 
     public static Signature.TypeArg.Bounded.WildcardIndicator getIndicator(LumParser.GenericContext ctx) {
-        if (ctx.extends_ != null)
-            return EXTENDS.getValue();
-        if (ctx.super_ != null)
-            return SUPER.getValue();
+        if (ctx instanceof LumParser.BoundGenericContext bound) {
+            if (bound.extends_ != null)
+                return EXTENDS.getValue();
+            if (bound.super_ != null)
+                return SUPER.getValue();
+        }
         return NONE.getValue();
     }
 }

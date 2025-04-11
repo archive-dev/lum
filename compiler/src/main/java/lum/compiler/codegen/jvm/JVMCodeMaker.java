@@ -36,8 +36,8 @@ class JVMCodeMaker implements CodeMaker {
         this.method = method;
 
         ParameterModel[] methodParameters = method.parameters();
-        for (int i = 0; i < methodParameters.length; i++) {
-            var param = methodParameters[i];
+        for (int i = method.isStatic() ? 0 : 1; i < methodParameters.length + (method.isStatic() ? 0 : 1); i++) {
+            var param = methodParameters[i - (method.isStatic() ? 0 : 1)];
             parameters.put(i, new JVMVariable(i, param.type(), this));
         }
 

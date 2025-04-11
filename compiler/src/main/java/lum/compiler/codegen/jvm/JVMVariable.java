@@ -114,8 +114,7 @@ class JVMVariable implements Variable {
     @Override
     public Field field(String fieldName) {
         var field = getType().model().getField(fieldName);
-        Field jvmField = new JVMField(codeMaker(), this, field.owner(), field);
-        return jvmField;
+        return new JVMField(codeMaker(), this, field.owner(), field);
     }
 
     private Opcode getInvokeOpcode(MethodModel method) {
@@ -296,7 +295,7 @@ class JVMVariable implements Variable {
         });
 
         if (opcode != null) {
-            v.setType(TypeModel.of(opcode.primaryTypeKind()));
+            v.setType(TypeModel.of(BytecodeHelper.primaryTypeKind(opcode)));
         } else {
             v.setType(getOperatorMethod(operatorName, other).returnType());
         }
@@ -308,22 +307,22 @@ class JVMVariable implements Variable {
     @Override
     public Variable multiply(Variable other) {
         return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
-            case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IMUL;
-            case LongType -> Opcode.LMUL;
-            case FloatType -> Opcode.FMUL;
-            case DoubleType -> Opcode.DMUL;
-            case ReferenceType, VoidType -> null;
+            case INT, BOOLEAN, CHAR, BYTE, SHORT -> Opcode.IMUL;
+            case LONG -> Opcode.LMUL;
+            case FLOAT -> Opcode.FMUL;
+            case DOUBLE -> Opcode.DMUL;
+            case REFERENCE, VOID -> null;
         }, "*");
     }
 
     @Override
     public Variable divide(Variable other) {
         return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
-            case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IDIV;
-            case LongType -> Opcode.LDIV;
-            case FloatType -> Opcode.FDIV;
-            case DoubleType -> Opcode.DDIV;
-            case ReferenceType, VoidType -> null;
+            case INT, BOOLEAN, CHAR, BYTE, SHORT -> Opcode.IDIV;
+            case LONG -> Opcode.LDIV;
+            case FLOAT -> Opcode.FDIV;
+            case DOUBLE -> Opcode.DDIV;
+            case REFERENCE, VOID -> null;
         }, "/");
     }
 
@@ -346,33 +345,33 @@ class JVMVariable implements Variable {
     @Override
     public Variable mod(Variable other) {
         return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
-            case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IREM;
-            case LongType -> Opcode.LREM;
-            case FloatType -> Opcode.FREM;
-            case DoubleType -> Opcode.DREM;
-            case ReferenceType, VoidType -> null;
+            case INT, BOOLEAN, CHAR, BYTE, SHORT -> Opcode.IREM;
+            case LONG -> Opcode.LREM;
+            case FLOAT -> Opcode.FREM;
+            case DOUBLE -> Opcode.DREM;
+            case REFERENCE, VOID -> null;
         }, "%");
     }
 
     @Override
     public Variable add(Variable other) {
         return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
-            case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.IADD;
-            case LongType -> Opcode.LADD;
-            case FloatType -> Opcode.FADD;
-            case DoubleType -> Opcode.DADD;
-            case ReferenceType, VoidType -> null;
+            case INT, BOOLEAN, CHAR, BYTE, SHORT -> Opcode.IADD;
+            case LONG -> Opcode.LADD;
+            case FLOAT -> Opcode.FADD;
+            case DOUBLE -> Opcode.DADD;
+            case REFERENCE, VOID -> null;
         }, "+");
     }
 
     @Override
     public Variable sub(Variable other) {
         return handleArithmeticOrBitwiseOperation(other, switch (getType().typeKind()) {
-            case IntType, BooleanType, CharType, ByteType, ShortType -> Opcode.ISUB;
-            case LongType -> Opcode.LSUB;
-            case FloatType -> Opcode.FSUB;
-            case DoubleType -> Opcode.DSUB;
-            case ReferenceType, VoidType -> null;
+            case INT, BOOLEAN, CHAR, BYTE, SHORT -> Opcode.ISUB;
+            case LONG -> Opcode.LSUB;
+            case FLOAT -> Opcode.FSUB;
+            case DOUBLE -> Opcode.DSUB;
+            case REFERENCE, VOID -> null;
         }, "-");
     }
 
@@ -406,11 +405,11 @@ class JVMVariable implements Variable {
                 }
 
                 cb.with(OperatorInstruction.of(switch (currentType.typeKind().asLoadable()) {
-                    case IntType -> {
+                    case INT -> {
                         type[0] = TypeModel.INT;
                         yield intOpcode;
                     }
-                    case LongType -> {
+                    case LONG -> {
                         type[0] = TypeModel.LONG;
                         yield longOpcode;
                     }
@@ -464,8 +463,8 @@ class JVMVariable implements Variable {
                 }
 
                 cb.with(OperatorInstruction.of(switch (currentType.typeKind().asLoadable()) {
-                    case IntType -> intOpcode;
-                    case LongType -> longOpcode;
+                    case INT -> intOpcode;
+                    case LONG -> longOpcode;
                     default -> throw new IllegalStateException();
                 }));
             } else {
@@ -516,16 +515,16 @@ class JVMVariable implements Variable {
                 if (!other.getType().typeKind().asLoadable().equals(getType().typeKind().asLoadable()))
                     cb.with(ConvertInstruction.of(other.getType().typeKind(), getType().typeKind()));
                 switch (getType().typeKind().asLoadable()) {
-                    case IntType -> cb.ifThenElse(opcode, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
-                    case LongType -> {
+                    case INT -> cb.ifThenElse(opcode, CodeBuilder::iconst_1, CodeBuilder::iconst_0);
+                    case LONG -> {
                         cb.lcmp();
                         cb.loadConstant(cmpValue);
                     }
-                    case FloatType -> {
+                    case FLOAT -> {
                         cb.fcmpg();
                         cb.loadConstant(cmpValue);
                     }
-                    case DoubleType -> {
+                    case DOUBLE -> {
                         cb.dcmpg();
                         cb.loadConstant(cmpValue);
                     }
@@ -537,7 +536,7 @@ class JVMVariable implements Variable {
         });
 
         if (opcode != null) {
-            v.setType(TypeModel.of(opcode.primaryTypeKind()));
+            v.setType(TypeModel.of(BytecodeHelper.primaryTypeKind(opcode)));
         } else {
             v.setType(getOperatorMethod(operatorName, other).returnType());
         }
@@ -605,9 +604,9 @@ class JVMVariable implements Variable {
                 }
 
                 cb.with(OperatorInstruction.of(switch (currentType.typeKind()) {
-                    case IntType, BooleanType, CharType, ByteType, ShortType -> intOpcode;
-                    case LongType -> longOpcode;
-                    case FloatType, DoubleType, ReferenceType, VoidType -> throw new IllegalStateException();
+                    case INT, BOOLEAN, CHAR, BYTE, SHORT -> intOpcode;
+                    case LONG -> longOpcode;
+                    case FLOAT, DOUBLE, REFERENCE, VOID -> throw new IllegalStateException();
                 }));
             } else {
                 invokeOperator(operatorName, other);
@@ -661,10 +660,19 @@ class JVMVariable implements Variable {
 
     @Override
     public Variable cast(TypeModel type) {
-        load();
-        codeMaker().codeBuilder().checkcast(type.classDesc());
-        this.type = type;
-        return this;
+        var v = new JVMInlinedVariableBuilder();
+        v.addCode(cm -> {
+            load(cm);
+            if (getType().isPrimitive()) {
+                cm.codeBuilder().with(ConvertInstruction.of(getType().typeKind(), type.typeKind()));
+            } else {
+                cm.codeBuilder().checkcast(type.classDesc());
+            }
+        })
+                .setType(type)
+                .setCodeMaker(this.codeMaker());
+
+        return v.build();
     }
 
     @FunctionalInterface

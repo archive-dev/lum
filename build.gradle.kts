@@ -18,8 +18,11 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_23
-    targetCompatibility = JavaVersion.VERSION_23
+    sourceCompatibility = JavaVersion.VERSION_24
+    targetCompatibility = JavaVersion.VERSION_24
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(24))
+    }
 }
 
 tasks.test {
@@ -43,8 +46,11 @@ subprojects {
 
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_23
-        targetCompatibility = JavaVersion.VERSION_23
+        sourceCompatibility = JavaVersion.VERSION_24
+        targetCompatibility = JavaVersion.VERSION_24
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(24))
+        }
     }
 
     val mockitoAgent = configurations.create("mockitoAgent")

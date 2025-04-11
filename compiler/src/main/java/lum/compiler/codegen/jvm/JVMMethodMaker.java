@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 class JVMMethodMaker implements MethodMaker {
     final MethodModel model;
-    private final List<Consumer<MethodBuilder>> builder = new ArrayList<>();
+    final List<Consumer<MethodBuilder>> builder = new ArrayList<>();
 
     public JVMMethodMaker(MethodModel model) {
         this.model = model;

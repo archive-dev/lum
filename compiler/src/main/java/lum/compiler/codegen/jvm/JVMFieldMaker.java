@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 class JVMFieldMaker implements FieldMaker {
-    private final List<Consumer<FieldBuilder>> code = new ArrayList<>();
+    final List<Consumer<FieldBuilder>> code = new ArrayList<>();
 
     final FieldModel model;
 
