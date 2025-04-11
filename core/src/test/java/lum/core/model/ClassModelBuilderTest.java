@@ -4,7 +4,6 @@ import lum.core.parsing.antlr4.LumParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,7 +98,7 @@ public class ClassModelBuilderTest {
         when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER()).thenReturn(new ArrayList<>(List.of(returnType)));
         when(((LumParser.PlainTypeContext) ctx.type()).IDENTIFIER(0)).thenReturn(returnType);
 
-        MethodModel model = ClassModelProcessor.createMethodModel(owner, imports, ctx);
+        MethodModel model = new MethodModelProcessor(owner, new TypeProcessor(imports, HashMap::new)).createMethodModel(ctx);
 
         assertNotNull(model);
         assertEquals("testMethod", model.name());
@@ -183,7 +182,7 @@ public class ClassModelBuilderTest {
         when(varDecl.getterDeclaration()).thenReturn(null);
         when(varDecl.setterDeclaration()).thenReturn(null);
 
-        List<FieldModel> fields = ClassModelProcessor.createFieldModels(owner, imports, ctx);
+        List<FieldModel> fields = new FieldModelProcessor(owner, new TypeProcessor(imports, HashMap::new)).createFieldModels(ctx);
 
         assertNotNull(fields);
         assertEquals(1, fields.size());

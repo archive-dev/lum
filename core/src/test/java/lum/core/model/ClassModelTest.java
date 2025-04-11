@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.lang.reflect.AccessFlag;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -191,6 +193,21 @@ class ClassModelTest {
         assertNull(classModel.getField("CONSTANT_FIELD"));
         assertNull(classModel.getField("volatileField"));
         assertNull(classModel.getField("transientField"));
+    }
+
+    @Test
+    void test_generic_class() {
+        var classes = ModelsParser.parseModels(Path.of("src", "test", "resources", "GenericClass.lum"));
+
+        assertEquals(2, classes.size());
+        var genericTestClass = classes.stream().filter(c -> c.name().equals("GenericClass")).findFirst().orElseThrow();
+        var otherClass = classes.stream().filter(c -> c.name().equals("Other")).findFirst().orElseThrow();
+
+        assertEquals(2, genericTestClass.genericArguments().length);
+        assertEquals("T", genericTestClass.genericArguments()[0].name());
+        assertEquals(otherClass.typeModel(), genericTestClass.genericArguments()[0].bounds()[0]);
+
+        System.out.println(classes.stream().map(ClassModel::genericArguments).map(Arrays::toString).toList());
     }
 
 //    @Test
