@@ -1,14 +1,16 @@
 package lum.compiler.codegen.jvm;
 
 import lum.compiler.codegen.*;
+import lum.compiler.codegen.Accessible;
+import lum.core.model.*;
 import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
 import lum.core.model.MethodModel;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.classfile.ClassBuilder;
-import java.lang.classfile.ClassFile;
+import java.lang.classfile.*;
+import java.lang.classfile.attribute.SignatureAttribute;
 import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
@@ -95,7 +97,11 @@ class JVMClassMaker implements ClassMaker {
                 model.name(),
                 model.methodTypeDesc(),
                 model.intAccessFlags(),
-                mb -> methodMaker.finish().forEach(c -> c.accept(mb))
+                mb -> {
+                    if (model.genericArguments().length > 0)
+                        methodMaker.builder.add(m -> m.with(SignatureAttribute.of(getMethodSignature(model))));
+                    methodMaker.finish().forEach(c -> c.accept(mb));
+                }
         );
     }
 
@@ -104,7 +110,11 @@ class JVMClassMaker implements ClassMaker {
         cb.withField(
                 model.name(),
                 model.type().classDesc(),
-                fb -> fieldMaker.finish().forEach(c -> c.accept(fb))
+                fb -> {
+                    if (model.type().genericArguments().length > 0)
+                        fieldMaker.code.add(f -> f.with(SignatureAttribute.of((Signature) getTypeSignature(model.type()))));
+                    fieldMaker.finish().forEach(c -> c.accept(fb));
+                }
         );
     }
 
@@ -124,6 +134,9 @@ class JVMClassMaker implements ClassMaker {
 
     private byte[] buildClassFile(Consumer<ClassBuilder> extraActions) {
         return ClassFile.of().build(this.model.classDesc(), cb -> {
+            cb.withVersion(ClassFile.JAVA_23_VERSION, 0);
+            if (this.model.genericArguments().length > 0)
+                cb.with(SignatureAttribute.of(getClassSignature(this.model)));
             this.classBuilderActions.forEach(b -> b.accept(cb));
             extraActions.accept(cb);
         });
@@ -164,5 +177,62 @@ class JVMClassMaker implements ClassMaker {
 
     private void addClassBuilderAction(Consumer<ClassBuilder> action) {
         this.classBuilderActions.add(action);
+    }
+
+    @SuppressWarnings("SuspiciousToArrayCall")
+    private static MethodSignature getMethodSignature(MethodModel model) {
+        List<Signature.TypeParam> typeParams = new ArrayList<>();
+        for (var param : model.genericArguments()) {
+            typeParams.add(Signature.TypeParam.of(param.name(), (Signature.RefTypeSig) getTypeSignature(param.bounds()[0]), Arrays.stream(param.bounds()).skip(1).map(JVMClassMaker::getTypeSignature).toArray(Signature.RefTypeSig[]::new)));
+        }
+
+        return
+                MethodSignature.of(
+                        typeParams,
+                        List.of(),
+                        getTypeSignature(model.returnType()),
+                        Arrays.stream(model.parameters())
+                                .map(ParameterModel::type)
+                                .map(JVMClassMaker::getTypeSignature)
+                                .toArray(Signature[]::new)
+                );
+    }
+
+    @SuppressWarnings("SuspiciousToArrayCall")
+    private static ClassSignature getClassSignature(ClassModel model) {
+        List<Signature.TypeParam> typeParams = new ArrayList<>();
+        for (var param : model.genericArguments()) {
+            //noinspection SuspiciousToArrayCall
+            typeParams.add(
+                    Signature.TypeParam.of(
+                            param.name(),
+                            (Signature.RefTypeSig) getTypeSignature(param.bounds()[0]),
+                            Arrays.stream(param.bounds())
+                                    .skip(1)
+                                    .map(JVMClassMaker::getTypeSignature)
+                                    .toArray(Signature.RefTypeSig[]::new)
+                    )
+            );
+        }
+
+        return ClassSignature.of(typeParams, getTypeSignature(model.superClass().typeModel()), Arrays.stream(model.interfaces()).map(ClassModel::typeModel).map(JVMClassMaker::getTypeSignature).toArray(Signature.ClassTypeSig[]::new));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Signature> T getTypeSignature(TypeModel typeModel) {
+        if (typeModel.isArray())
+            return (T) Signature.ArrayTypeSig.of(getTypeSignature(typeModel.asComponent()));
+
+        String desc = typeModel.model().fullName();
+        if (typeModel instanceof GenericTypeModel gen)
+            return (T) Signature.TypeVarSig.of(gen.name());
+
+        if (!typeModel.isPrimitive())
+            return (T) Signature.ClassTypeSig.of(desc, Arrays.stream(typeModel.genericArguments()).map(JVMClassMaker::getTypeArg).toArray(Signature.TypeArg[]::new));
+        return (T) Signature.BaseTypeSig.of(typeModel.classDesc());
+    }
+
+    private static Signature.TypeArg getTypeArg(GenericArgument genericArgument) {
+        return Signature.TypeArg.bounded(genericArgument.wildcardIndicator().getValue(), getTypeSignature(genericArgument.bounds()[0]));
     }
 }
