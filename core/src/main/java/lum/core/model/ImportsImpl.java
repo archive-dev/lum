@@ -53,6 +53,18 @@ record ImportsImpl(
     public TypeModel getType(LumParser.TypeContext t) {
         if (t instanceof LumParser.PlainTypeContext type) {
             return classes().get(String.join(".", type.IDENTIFIER().stream().map(TerminalNode::getText).toList())).typeModel();
+        } else if (t instanceof LumParser.UnionTypeContext union) {
+            TypeModel[] types = new TypeModel[union.type().size()];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = getType(union.type(i));
+            }
+            return TypeModel.unionOf(types);
+        } else if (t instanceof LumParser.IntersectionTypeContext intersection) {
+            TypeModel[] types = new TypeModel[intersection.type().size()];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = getType(intersection.type(i));
+            }
+            return TypeModel.intersectionOf(types);
         } else if (t instanceof LumParser.ArrayTypeContext arrayType) {
             return getType(arrayType.type()).asArray(arrayType.ARRAY().size());
         }
