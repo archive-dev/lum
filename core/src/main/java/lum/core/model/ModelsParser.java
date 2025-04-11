@@ -18,6 +18,20 @@ public final class ModelsParser {
 
     private static final HashMap<Integer, Imports> importsCache = new HashMap<>();
 
+    public static Set<ClassModel> parseModels(Path source) {
+        Imports imports;
+        try {
+            imports = parseImports(ParserFactory.createParser(source).program());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        var models = buildClassModels(source);
+
+        models.forEach((m, _) -> buildClassModel(m, imports));
+
+        return models.keySet();
+    }
+
     public static Imports parseImports(LumParser.ProgramContext ctx) {
         if (importsCache.containsKey(ctx.hashCode()))
             return importsCache.get(ctx.hashCode());
@@ -34,7 +48,7 @@ public final class ModelsParser {
     }
 
     public static ClassModel parseFileClassModel(LumParser.ProgramContext ctx, String className) {
-        String pkg = ModelConfig.workDir.relativize(Path.of(className).getParent()).toString().replace(File.separatorChar, '.');
+        String pkg = ModelConfig.workDir.relativize(Objects.requireNonNullElse(Path.of(className).getParent(), Path.of(""))).toString().replace(File.separatorChar, '.');
         className = List.of(className.split("\\%s".formatted(File.separatorChar))).getLast();
 
         Imports imports = parseImports(ctx);
@@ -63,14 +77,16 @@ public final class ModelsParser {
                 ClassModel.of(Object.class),
                 Utils.EMPTY_CLASS_MODELS,
                 Set.of(AccessFlag.PUBLIC, AccessFlag.FINAL),
-                Utils.EMPTY_GENERIC_PARAMETERS,
+                Utils.EMPTY_GENERIC_ARGUMENTS,
                 EMPTY_CLASS_MODELS,
                 false,
                 false
         );
 
+        var processor = new ClassModelProcessor(model, imports);
+
         for (var func : functions) {
-            var method = ClassModelProcessor.createMethodModel(model, imports, func);
+            var method = new MethodModelProcessor(model, processor.getTypeProcessor()).createMethodModel(func);
             method.accessFlags().add(AccessFlag.STATIC);
             imports.methods()
                     .computeIfAbsent(method.name(), _ -> new HashMap<>())
@@ -84,7 +100,7 @@ public final class ModelsParser {
 
         HashSet<FieldModel> fields = new HashSet<>();
         for (var var : variables) {
-            fields.addAll(ClassModelProcessor.createFieldModels(model, imports, var));
+            fields.addAll(new FieldModelProcessor(model, processor.getTypeProcessor()).createFieldModels(var));
         }
 
         for (var field : fields) {
@@ -96,10 +112,11 @@ public final class ModelsParser {
     }
 
     public static void buildClassModel(ClassModel model, Imports imports) {
-        if (!model.isInterface())
-            ClassModelProcessor.processClassMembers(model, imports, ModelCache.classContexts.get(model));
-        else
-            ClassModelProcessor.processInterfaceMembers(model, imports, ModelCache.interfaceContexts.get(model));
+        if (ModelCache.classContexts.containsKey(model))
+            if (!model.isInterface())
+                new ClassModelProcessor(model, imports).processClass(ModelCache.classContexts.get(model));
+            else
+                new ClassModelProcessor(model, imports).processInterface(ModelCache.interfaceContexts.get(model));
     }
 
     public static Map<ClassModel, ParserRuleContext> buildClassModels(Path classFile) {
@@ -182,18 +199,20 @@ public final class ModelsParser {
                 .filter(Objects::nonNull)
                 .toList();
 
+        var processor = new ClassModelProcessor(model, imports);
+
         for (var func : funcs) {
-            var method = ClassModelProcessor.createMethodModel(model, imports, func);
+            var method = new MethodModelProcessor(model, processor.getTypeProcessor()).createMethodModel(func);
             bodies.put(method, func.block());
         }
 
         for (var func : operators) {
-            var method = ClassModelProcessor.createMethodModel(model, imports, func);
+            var method = new MethodModelProcessor(model, processor.getTypeProcessor()).createMethodModel(func);
             bodies.put(method, func.block());
         }
 
         for (var func : constructors) {
-            var method = ClassModelProcessor.createMethodModel(model, imports, func);
+            var method = new MethodModelProcessor(model, processor.getTypeProcessor()).createMethodModel(func);
             bodies.put(method, func.block());
         }
 
