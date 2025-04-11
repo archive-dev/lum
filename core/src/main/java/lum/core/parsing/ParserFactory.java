@@ -39,6 +39,8 @@ public final class ParserFactory {
         var pathArray = new ArrayList<>(Arrays.stream(path.pathToDir().toString().split("\\%s".formatted(File.separator))).toList());
         pathArray.add(path.fileName());
         var pathString = String.join(File.separator, pathArray);
+        if (pathString.charAt(0) == File.separatorChar)
+            pathString = pathString.substring(1);
         Path p = Path.of(pathString);
         return createParser(p);
     }
