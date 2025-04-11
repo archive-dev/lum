@@ -38,7 +38,7 @@ public final class Pair<A, B> {
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (Pair) obj;
+        var that = (Pair<?,?>) obj;
         return Objects.equals(this.a, that.a) &&
                 Objects.equals(this.b, that.b);
     }
