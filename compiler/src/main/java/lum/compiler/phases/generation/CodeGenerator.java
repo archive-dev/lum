@@ -386,6 +386,7 @@ public class CodeGenerator implements CodeHandler {
             return cm.var(field.owner().typeModel()).build().field(field.name());
         }
 
+        //noinspection ConstantValue
         if (getType(identifier) != null)
             return cm.var().setType(getType(identifier)).build();
 
@@ -458,6 +459,11 @@ public class CodeGenerator implements CodeHandler {
     @Override
     public Variable handleSuperAccess(LumParser.SuperAccessContext ctx) {
         return cm.super_();
+    }
+
+    @Override
+    public Variable handleCastExpression(LumParser.CastExpressionContext ctx) {
+        return handleExpression(ctx.expression()).cast(getType(ctx.type()));
     }
 
     @Override

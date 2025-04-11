@@ -52,6 +52,7 @@ expression
     | preUnaryOperator expression                   # PreUnary
     | expression binaryOperator expression          # Binary
     | expression assignment                         # AssignmentExpr
+    | expression 'as' type                          # CastExpression
     | primary                                       # PrimaryExpression
     ;
 
@@ -230,7 +231,8 @@ type
 genericDeclaration: '[' generic (',' generic)* ']';
 
 generic
-    : ((IDENTIFIER | '?') ((extends=('extends' | ':') | super='super') type)? )?
+    : type # UnboundGeneric
+    | ((IDENTIFIER | QUESTION_MARK='?') ((extends=('extends' | ':') | super='super') type)) # BoundGeneric
     ;
 
 // Literals and Basic Types
@@ -318,7 +320,14 @@ fragment IDENTIFIER0: [a-zA-Z_][a-zA-Z0-9_]*;
 NEW: 'new';
 ARRAY: '[]';
 IDENTIFIER: IDENTIFIER0;
-NUMBER: [0-9]+ ('.' [0-9]+)? ('f' | 'F' | 'd' | 'D' | 'l' | 'L')?;
+NUMBER
+    : ('+' | '-')
+    ( [0-9]+ ('.' [0-9]+)? ('f' | 'F' | 'd' | 'D' | 'l' | 'L')?
+    | '0x' [0-9a-fA-F]+ ('l' | 'L')?
+    | '0b' [01]+        ('l' | 'L')?
+    | '0'  [0-7]+       ('l' | 'L')?
+    )
+    ;
 STRING: '\'' .*? '\'' | '"' .*? '"';
 WS: [ \t\r\n;]+ -> skip;
 COMMENT: ('#' .*? ('\n' | EOF)) -> skip;
