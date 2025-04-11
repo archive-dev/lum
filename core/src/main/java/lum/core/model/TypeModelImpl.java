@@ -3,15 +3,15 @@ package lum.core.model;
 import java.lang.classfile.TypeKind;
 import java.lang.constant.ClassDesc;
 
-import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
+import static lum.core.util.Utils.EMPTY_GENERIC_ARGUMENTS;
 
 record TypeModelImpl(
         ClassModel model,
         int arrayDimensions,
-        GenericParameter[] genericParameters
+        GenericArgument[] genericArguments
 ) implements TypeModel {
     public TypeModelImpl(ClassModel model, int arrayDimensions) {
-        this(model, arrayDimensions, EMPTY_GENERIC_PARAMETERS);
+        this(model, arrayDimensions, EMPTY_GENERIC_ARGUMENTS);
     }
 
     @Override
@@ -24,6 +24,11 @@ record TypeModelImpl(
         if (!isArray())
             return this;
         return new TypeModelImpl(model(), arrayDimensions()-1);
+    }
+
+    @Override
+    public TypeModel asNonArray() {
+        return new TypeModelImpl(model(), 0, genericArguments());
     }
 
     @Override
@@ -41,6 +46,6 @@ record TypeModelImpl(
 
     @Override
     public String toString() {
-        return model().name() + "[]".repeat(arrayDimensions());
+        return model().name() + (genericArguments().length == 0 ? "" : GenericArgument.toString(genericArguments())) + "[]".repeat(arrayDimensions());
     }
 }
