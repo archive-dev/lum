@@ -1,16 +1,21 @@
 package lum.core.model;
 
-record GenericParameterImpl(
-        String genericName,
+import java.util.Arrays;
+
+record GenericArgumentImpl(
+        String name,
         WildcardIndicator wildcardIndicator,
-        ClassModel bound
-) implements GenericParameter {
+        TypeModel[] bounds
+) implements GenericArgument {
     @Override
     public String toString() {
-        return genericName() + switch (wildcardIndicator()) {
-            case NONE -> "";
-            case SUPER -> "super" + bound().name();
-            case EXTENDS -> "extends" + bound().name();
-        };
+        if (name() != null)
+            return name() + switch (wildcardIndicator()) {
+                case NONE -> "";
+                case SUPER -> " super " + String.join(", ", Arrays.stream(bounds()).map(TypeModel::model).map(ClassModel::name).toList());
+                case EXTENDS -> " extends " + String.join(", ", Arrays.stream(bounds()).map(TypeModel::model).map(ClassModel::name).toList());
+            };
+
+        return String.join(", ", Arrays.stream(bounds()).map(TypeModel::model).map(ClassModel::name).toList());
     }
 }
