@@ -8,7 +8,6 @@ record FieldModelImpl(
         String name,
         TypeModel type,
         Set<AccessFlag> accessFlags,
-        GenericParameter[] genericParameters,
         ClassModel[] annotations
 ) implements FieldModel {
     @Override
@@ -16,7 +15,6 @@ record FieldModelImpl(
         return "FieldModelImpl[" +
                 "name=" + name + ", " +
                 "type=" + type + ", " +
-                "accessFlags=" + accessFlags + ", " +
-                "genericParameters=" + GenericParameter.toString(genericParameters) + ']';
+                "accessFlags=" + accessFlags + ']';
     }
 }
