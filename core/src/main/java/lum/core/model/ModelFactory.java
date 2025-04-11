@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
-import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
 
 final class ModelFactory {
     private ModelFactory() {}
@@ -93,7 +92,7 @@ final class ModelFactory {
                 null,
                 new ClassModel[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS,
+                new GenericArgument[clazz.getTypeParameters().length],
                 EMPTY_CLASS_MODELS,
                 clazz.isInterface(),
                 clazz.isPrimitive()
@@ -109,6 +108,9 @@ final class ModelFactory {
         if (!clazz.isPrimitive() && clazz != Object.class) {
             model.setSuperClass(ClassModel.of(clazz.getSuperclass() == null ? Object.class : clazz.getSuperclass()));
         }
+
+        var generics = GenericArgument.of(clazz);
+        System.arraycopy(generics, 0, model.genericArguments(), 0, generics.length);
     }
 
     private static void cacheClassMembers(Class<?> clazz) {
@@ -133,7 +135,7 @@ final class ModelFactory {
                 createParameterModels(method.getParameters()),
                 createExceptionModels(method.getExceptionTypes()),
                 Utils.getAccessFlags(method.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS,
+                GenericArgument.of(method),
                 EMPTY_CLASS_MODELS
         );
         ModelCache.cacheMethod(model);
@@ -148,7 +150,7 @@ final class ModelFactory {
                 createParameterModels(constructor.getParameters()),
                 createExceptionModels(constructor.getExceptionTypes()),
                 Utils.getAccessFlags(constructor.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS,
+                GenericArgument.of(constructor),
                 EMPTY_CLASS_MODELS
         );
         ModelCache.cacheMethod(model);
@@ -162,7 +164,6 @@ final class ModelFactory {
                 field.getName(),
                 TypeModel.of(field.getType()),
                 Utils.getAccessFlags(field.getModifiers()),
-                EMPTY_GENERIC_PARAMETERS,
                 EMPTY_CLASS_MODELS
         );
         ModelCache.cacheField(model);
