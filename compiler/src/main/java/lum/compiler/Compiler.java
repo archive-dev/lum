@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,13 +24,13 @@ public class Compiler {
     private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
     @Parameter(names = {"-o", "--output"}, description = "Output directory", converter = PathConverter.class)
-    private Path outputDir = null;
+    private Path outputDir = Path.of("");
 
     @Parameter(description = "Input file", converter = PathConverter.class)
     private Path file;
 
     @Parameter(names = "-src", description = "Sources directory", converter = PathConverter.class)
-    private Path srcDir = null;
+    private Path srcDir = Path.of("");
 
     public Compiler() {}
 
@@ -48,20 +49,17 @@ public class Compiler {
     }
 
     public int compile() {
-        if (srcDir == null)
-            srcDir = Files.isDirectory(file) ? file : file.getParent();
+        Path defaultPath = Path.of("");
+        if (srcDir.equals(defaultPath))
+            srcDir = Files.isDirectory(file) ? file : Objects.requireNonNullElse(file.getParent(), defaultPath);
 
         ModelConfig.workDir = srcDir;
 
         Executor executor = new Executor();
-        String absoluteOutputPath = outputDir != null ? outputDir.toAbsolutePath().toString() : null; // Calculate absolute path once
 
         if (!file.toFile().isDirectory()) {
             CompilationInfo compilationInfo = new CompilationInfo(file, outputDir);
             var res = executor.execute(compilationInfo);
-            if (absoluteOutputPath != null) {
-                res.info().add(absoluteOutputPath);
-            }
 
             res.printInfo();
             res.printWarnings();
@@ -77,9 +75,6 @@ public class Compiler {
             for (var f : files) {
                 CompilationInfo compilationInfo = new CompilationInfo(f.toPath(), outputDir, srcDir);
                 var res = executor.execute(compilationInfo);
-                if (absoluteOutputPath != null) {
-                    res.info().add(absoluteOutputPath);
-                }
 
                 res.printInfo();
                 res.printWarnings();

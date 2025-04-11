@@ -7,8 +7,8 @@ import lum.compiler.phases.CompilerStage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Map;
+import java.util.Objects;
 
 public class ClassWritingStage implements CompilerStage<CompilationInfo, GeneratedClassesResult, ClassWritingResult> {
     @Override
@@ -21,7 +21,7 @@ public class ClassWritingStage implements CompilerStage<CompilationInfo, Generat
             Path path = outDir.resolve(entry.getKey());
             byte[] bytes = entry.getValue();
             try {
-                path.getParent().toFile().mkdirs();
+                Objects.requireNonNullElse(path.getParent(), Path.of("")).toFile().mkdirs();
                 Files.write(path, bytes);
             } catch (IOException e) {
                 error = e;

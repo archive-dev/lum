@@ -11,4 +11,9 @@ public record ClassPath(
         Path pathToDir,
         String fileName,
         String className
-) {}
+) {
+    public Path pathToDir() {
+        if (pathToDir == null) return Path.of("");
+        return pathToDir;
+    }
+}
