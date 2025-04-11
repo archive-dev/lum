@@ -117,6 +117,7 @@ public interface CodeHandler {
     default Variable handleExpression(LumParser.ExpressionContext ctx) {
         return switch (ctx) {
             case LumParser.PrimaryExpressionContext primary -> handlePrimaryExpression(primary);
+            case LumParser.CastExpressionContext cast -> handleCastExpression(cast);
             case LumParser.AssignmentExprContext ctx_ -> handleAssignmentExpr(ctx_);
             case LumParser.LambdaExpressionContext lambda -> handleLambdaExpression(lambda);
             case LumParser.FunctionCallExprContext functionCall -> handleFunctionCallExpr(functionCall);
@@ -167,6 +168,7 @@ public interface CodeHandler {
     Variable handleParenExpr(LumParser.ParenExprContext ctx);
     Variable handleSuperAccess(LumParser.SuperAccessContext ctx);
 
+    Variable handleCastExpression(LumParser.CastExpressionContext ctx);
     Variable handleLambdaExpression(LumParser.LambdaExpressionContext ctx);
     Variable handleFunctionCallExpr(LumParser.FunctionCallExprContext ctx);
     Variable handleSuperCallExpr(LumParser.SuperCallExprContext superCall);
