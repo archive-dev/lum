@@ -1,0 +1,7 @@
+import java.util.List
+
+public class Other {}
+
+public class GenericClass[T : Other, List[T]] {
+    public func f(arg: T) {}
+}
