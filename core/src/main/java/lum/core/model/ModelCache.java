@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,9 +21,11 @@ final class ModelCache {
 
     private static final Map<ClassModel, Map<Integer, TypeModel>> typeModelsCache = new ConcurrentHashMap<>();
 
-    static final HashMap<ClassModel, LumParser.ClassDeclarationContext> classContexts = new HashMap<>();
-    static final HashMap<ClassModel, LumParser.InterfaceDeclarationContext> interfaceContexts = new HashMap<>();
-    static final HashMap<MethodModel, LumParser.BlockContext> methodContexts = new HashMap<>();
+    static final Map<ClassModel, LumParser.ClassDeclarationContext> classContexts = new HashMap<>();
+    static final Map<ClassModel, LumParser.InterfaceDeclarationContext> interfaceContexts = new HashMap<>();
+    static final Map<MethodModel, LumParser.BlockContext> methodContexts = new HashMap<>();
+
+    static final Map<TypeVariable<?>, GenericArgument> genericArguments = new HashMap<>();
 
     private ModelCache() {}
 
@@ -52,6 +55,7 @@ final class ModelCache {
 
     public static TypeModel getTypeModel(Class<?> clazz) {
         var model = getClass(clazz);
+
         int arrayDimensions = Utils.getArrayDepth(clazz);
         return getTypeModel(model, arrayDimensions);
     }
