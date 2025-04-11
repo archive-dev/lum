@@ -5,12 +5,11 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.HashMap;
 
-import static lum.core.util.Utils.EMPTY_GENERIC_PARAMETERS;
+import static lum.core.util.Utils.EMPTY_GENERIC_ARGUMENTS;
 
 public record PrimitiveTypeModelImpl(
         ClassModel model,
-        int arrayDimensions,
-        GenericParameter[] genericParameters
+        int arrayDimensions
 ) implements TypeModel {
     private static final HashMap<ClassModel, ClassDesc> primitiveDescriptors = new HashMap<>();
     static {
@@ -23,12 +22,10 @@ public record PrimitiveTypeModelImpl(
         primitiveDescriptors.put(ClassModel.of(float.class), ConstantDescs.CD_float);
         primitiveDescriptors.put(ClassModel.of(double.class), ConstantDescs.CD_double);
         primitiveDescriptors.put(ClassModel.of(char.class), ConstantDescs.CD_char);
-//        primitiveDescriptors.put("void", "V");
-//        primitiveDescriptors.put("void", "V");
     }
 
-    public PrimitiveTypeModelImpl(ClassModel model, int arrayDimensions) {
-        this(model, arrayDimensions, EMPTY_GENERIC_PARAMETERS);
+    public GenericArgument[] genericArguments() {
+        return EMPTY_GENERIC_ARGUMENTS;
     }
 
     @Override
@@ -41,6 +38,11 @@ public record PrimitiveTypeModelImpl(
         if (!isArray())
             return this;
         return new PrimitiveTypeModelImpl(model(), arrayDimensions()-1);
+    }
+
+    @Override
+    public TypeModel asNonArray() {
+        return new PrimitiveTypeModelImpl(model(), 0);
     }
 
     @Override
