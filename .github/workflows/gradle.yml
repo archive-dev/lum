@@ -28,7 +28,6 @@ jobs:
         java-version: '24'
         distribution: 'corretto' # Coretto is used
         java-package: jre
-        check-latest: true
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
