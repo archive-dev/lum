@@ -40,29 +40,23 @@ public class GenericsProcessor {
         }
     }
 
-    public GenericArgument[] processGenerics(LumParser.GenericDeclarationContext ctx) {
-        GenericArgument[] genericArguments = createGenericArguments(ctx);
-        for (GenericArgument arg : genericArguments) {
-            if (arg.name() != null && !arg.name().equals("?") && typeProcessor.resolveType(arg.name()) == null) {
-                // Assuming the first bound is the primary one for the map key
-                genericBounds.put(arg.name(), arg.bounds()[0].asGeneric(arg.name()));
-            }
-        }
-        return genericArguments;
-    }
-
     /**
      * Creates an array of GenericArgument models from the parser context.
      * @param ctx The generic declaration context.
      * @return An array of GenericArgument.
      */
-    public GenericArgument[] createGenericArguments(LumParser.GenericDeclarationContext ctx) {
+    public GenericArgument[] processGenerics(LumParser.GenericDeclarationContext ctx) {
         if (ctx == null || ctx.generic() == null || ctx.generic().isEmpty())
             return EMPTY_GENERIC_ARGUMENTS;
 
         List<GenericArgument> args = new ArrayList<>();
         for (var generic : ctx.generic()) {
-            args.add(createGenericArgument(generic));
+            GenericArgument arg;
+            args.add(arg = createGenericArgument(generic));
+            if (arg.name() != null && !arg.name().equals("?") && typeProcessor.resolveType(arg.name()) == null) {
+                // Assuming the first bound is the primary one for the map key
+                genericBounds.put(arg.name(), arg.bounds()[0].asGeneric(arg.name()));
+            }
         }
         return args.toArray(GenericArgument[]::new);
     }

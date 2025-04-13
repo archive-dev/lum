@@ -61,7 +61,7 @@ public class TypeProcessor {
             TypeModel genericType = currentGenericBounds.get(plainTypeName);
 
             if (plain.genericDeclaration() != null) {
-                GenericArgument[] arguments = genericsProcessor.createGenericArguments(plain.genericDeclaration());
+                GenericArgument[] arguments = genericsProcessor.processGenerics(plain.genericDeclaration());
                 return genericType.withGenericArguments(arguments); 
             }
             return genericType;
@@ -70,7 +70,7 @@ public class TypeProcessor {
         var type = imports.getType(plain);
 
         if (plain.genericDeclaration() != null) {
-            GenericArgument[] arguments = genericsProcessor.createGenericArguments(plain.genericDeclaration());
+            GenericArgument[] arguments = genericsProcessor.processGenerics(plain.genericDeclaration());
             type = type.withGenericArguments(arguments);
         }
         return type;
