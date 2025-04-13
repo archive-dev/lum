@@ -206,8 +206,6 @@ class ClassModelTest {
         assertEquals(2, genericTestClass.genericArguments().length);
         assertEquals("T", genericTestClass.genericArguments()[0].name());
         assertEquals(otherClass.typeModel(), genericTestClass.genericArguments()[0].bounds()[0]);
-
-        System.out.println(classes.stream().map(ClassModel::genericArguments).map(Arrays::toString).toList());
     }
 
 //    @Test
