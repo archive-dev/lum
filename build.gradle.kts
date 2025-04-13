@@ -1,9 +1,10 @@
 plugins {
     id("java")
+    `maven-publish`
 }
 
 group = "io.github.archivedev.lum"
-version = "1.0"
+version = "0.1"
 
 repositories {
     mavenCentral()
@@ -37,6 +38,46 @@ subprojects {
     group = "io.github.archivedev.lum"
 
     apply<JavaPlugin>()
+    // gradle-plugin project already has settings for publishing plugin to gradle plugin portal
+    if (this != project(":gradle-plugin")) {
+        apply(plugin = "maven-publish")
+
+        publishing {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    from(components["java"])
+
+                    pom {
+                        name = this@subprojects.name
+                        description = this@subprojects.name
+                        url = "https://github.com/archive-dev/lum"
+
+                        licenses {
+
+                        }
+
+                        scm {
+                            connection = "scm:git:git://github.com/archive-dev/lum.git"
+                            developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
+                            url = "https://github.com/archive-dev/lum/tree/main"
+                        }
+                    }
+
+                    repositories {
+                        maven {
+                            name = "GitHubPackages"
+
+                            url = uri("https://maven.pkg.github.com/archive-dev/lum")
+                            credentials {
+                                username = "whoisamyy"
+                                password = System.getenv("GITHUB_TOKEN")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     tasks.compileJava {
         options.compilerArgs.add("--enable-preview")
@@ -53,6 +94,9 @@ subprojects {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(24))
         }
+
+        withJavadocJar()
+        withSourcesJar()
     }
 
     val mockitoAgent = configurations.create("mockitoAgent")
