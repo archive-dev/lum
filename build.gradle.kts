@@ -69,8 +69,8 @@ subprojects {
 
                             url = uri("https://maven.pkg.github.com/archive-dev/lum")
                             credentials {
-                                username = "whoisamyy"
-                                password = System.getenv("GITHUB_TOKEN")
+                                username = System.getenv("USERNAME")
+                                password = System.getenv("TOKEN")
                             }
                         }
                     }
