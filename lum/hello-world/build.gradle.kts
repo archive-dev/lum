@@ -1,8 +1,4 @@
 plugins {
     id("java")
-    id("org.lum.gradle")
-}
-
-tasks.compileLum {
-    println("compile lum")
+    id("io.github.archivedev.lum.gradle")
 }

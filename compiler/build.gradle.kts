@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-group = "org.lum"
+group = "io.github.archivedev.lum"
 version = "1.0-SNAPSHOT"
 
 repositories {

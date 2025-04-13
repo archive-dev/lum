@@ -2,8 +2,8 @@ plugins {
     id("java")
 }
 
-group = "org.lum"
-version = "1.0-SNAPSHOT"
+group = "io.github.archivedev.lum"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -34,6 +34,8 @@ tasks.compileJava {
 }
 
 subprojects {
+    group = "io.github.archivedev.lum"
+
     apply<JavaPlugin>()
 
     tasks.compileJava {
