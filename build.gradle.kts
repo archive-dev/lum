@@ -87,7 +87,6 @@ subprojects {
         options.compilerArgs.add("--enable-preview")
     }
 
-
     java {
         sourceCompatibility = JavaVersion.VERSION_24
         targetCompatibility = JavaVersion.VERSION_24
@@ -110,6 +109,10 @@ subprojects {
             options {
                 jvmArgs("--enable-preview", "-javaagent:${mockitoAgent.asPath}")
             }
+        }
+        javadoc {
+            (options as CoreJavadocOptions).addStringOption("source", "24")
+            (options as CoreJavadocOptions).addBooleanOption("-enable-preview", true)
         }
     }
 }
