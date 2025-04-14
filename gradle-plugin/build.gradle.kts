@@ -6,9 +6,9 @@ plugins {
 }
 
 gradlePlugin {
+    website = "https://github.com/archive-dev/lum"
+    vcsUrl = "https://github.com/archive-dev/lum.git"
     plugins {
-        website = "https://github.com/archive-dev/lum"
-        vcsUrl = "https://github.com/archive-dev/lum.git"
         create("lumPlugin") {
             displayName = "Lum Gradle Plugin"
             description = "Lum Gradle Plugin"
