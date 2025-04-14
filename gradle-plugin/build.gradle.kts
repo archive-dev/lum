@@ -11,6 +11,7 @@ gradlePlugin {
         vcsUrl = "https://github.com/archive-dev/lum.git"
         create("lumPlugin") {
             displayName = "Lum Gradle Plugin"
+            description = "Lum Gradle Plugin"
 
             id = "io.github.archivedev.lum.gradle"
             tags = listOf("jvm", "programming language")
