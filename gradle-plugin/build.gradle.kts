@@ -22,18 +22,19 @@ gradlePlugin {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/archive-dev/lum")
-            credentials {
-                username = System.getenv("USERNAME")
-                password = System.getenv("TOKEN")
+    publications {
+        register<MavenPublication>("pluginMaven") {
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/archive-dev/lum")
+                    credentials {
+                        username = System.getenv("USERNAME")
+                        password = System.getenv("TOKEN")
+                    }
+                }
             }
         }
-    }
-    publications {
-        register<MavenPublication>("pluginMaven") {}
     }
 }
 
