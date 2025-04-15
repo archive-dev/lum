@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "2.1.10"
     `kotlin-dsl`
     id("com.gradleup.shadow") version "8.3.6"
-    id("com.gradle.plugin-publish") version "1.3.1"
+    `maven-publish`
 }
 
 gradlePlugin {
@@ -18,6 +18,22 @@ gradlePlugin {
 
             implementationClass = "lum.gradle.LumPlugin"
         }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/archive-dev/lum")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") as String?
+                password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") as String?
+            }
+        }
+    }
+    publications {
+        register<MavenPublication>("pluginMaven") {}
     }
 }
 
