@@ -45,4 +45,4 @@ jobs:
         GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PLUGIN_PUBLISH_SECRET }}
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VERSION: {{ github.ref_name }}
+        VERSION: ${{ github.ref_name }}
