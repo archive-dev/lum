@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.archivedev.lum"
-version = "0.1"
+version = System.getenv("VERSION")
 
 repositories {
     mavenCentral()
@@ -36,6 +36,7 @@ tasks.compileJava {
 
 subprojects {
     group = "io.github.archivedev.lum"
+    version = System.getenv("VERSION")
 
     apply<JavaPlugin>()
     // gradle-plugin project already has settings for publishing plugin to gradle plugin portal

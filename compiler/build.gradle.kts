@@ -4,7 +4,6 @@ plugins {
 }
 
 group = "io.github.archivedev.lum"
-version = "1.0"
 
 repositories {
     mavenCentral()
