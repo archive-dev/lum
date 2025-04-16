@@ -13,7 +13,7 @@ gradlePlugin {
             displayName = "Lum Gradle Plugin"
             description = "Lum Gradle Plugin"
 
-            id = "lum.gradle"
+            id = "io.github.archivedev.lum.gradle"
             tags = listOf("jvm", "programming language")
 
             implementationClass = "lum.gradle.LumPlugin"
@@ -38,7 +38,6 @@ publishing {
     }
 }
 
-group = "io.github.archivedev.lum"
 version = "1.0"
 
 repositories {
