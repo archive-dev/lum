@@ -13,7 +13,7 @@ gradlePlugin {
             displayName = "Lum Gradle Plugin"
             description = "Lum Gradle Plugin"
 
-            id = "io.github.archivedev.lum.gradle"
+            id = "lum.gradle"
             tags = listOf("jvm", "programming language")
 
             implementationClass = "lum.gradle.LumPlugin"
