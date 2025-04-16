@@ -40,39 +40,37 @@ subprojects {
 
     apply<JavaPlugin>()
     // gradle-plugin project already has settings for publishing plugin to gradle plugin portal
-    if (this != project(":gradle-plugin")) {
-        apply(plugin = "maven-publish")
+    apply(plugin = "maven-publish")
 
-        publishing {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    from(components["java"])
+    publishing {
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
 
-                    pom {
-                        name = this@subprojects.name
-                        description = this@subprojects.name
-                        url = "https://github.com/archive-dev/lum"
+                pom {
+                    name = this@subprojects.name
+                    description = this@subprojects.name
+                    url = "https://github.com/archive-dev/lum"
 
-                        licenses {
+                    licenses {
 
-                        }
-
-                        scm {
-                            connection = "scm:git:git://github.com/archive-dev/lum.git"
-                            developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
-                            url = "https://github.com/archive-dev/lum/tree/main"
-                        }
                     }
 
-                    repositories {
-                        maven {
-                            name = "GitHubPackages"
+                    scm {
+                        connection = "scm:git:git://github.com/archive-dev/lum.git"
+                        developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
+                        url = "https://github.com/archive-dev/lum/tree/main"
+                    }
+                }
 
-                            url = uri("https://maven.pkg.github.com/archive-dev/lum")
-                            credentials {
-                                username = System.getenv("USERNAME")
-                                password = System.getenv("TOKEN")
-                            }
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+
+                        url = uri("https://maven.pkg.github.com/archive-dev/lum")
+                        credentials {
+                            username = System.getenv("USERNAME")
+                            password = System.getenv("TOKEN")
                         }
                     }
                 }
