@@ -13,7 +13,7 @@ gradlePlugin {
             displayName = "Lum Gradle Plugin"
             description = "Lum Gradle Plugin"
 
-            id = "io.github.archivedev.lum.gradle"
+            id = "gradle"
             tags = listOf("jvm", "programming language")
 
             implementationClass = "lum.gradle.LumPlugin"
@@ -32,6 +32,21 @@ publishing {
                         username = System.getenv("USERNAME")
                         password = System.getenv("TOKEN")
                     }
+                }
+            }
+            pom {
+                name = this.name
+                description = this.name
+                url = "https://github.com/archive-dev/lum"
+
+                licenses {
+
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/archive-dev/lum.git"
+                    developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
+                    url = "https://github.com/archive-dev/lum/tree/main"
                 }
             }
         }
