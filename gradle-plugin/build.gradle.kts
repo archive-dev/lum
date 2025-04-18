@@ -35,8 +35,8 @@ publishing {
                 }
             }
             pom {
-                name = this.name
-                description = this.name
+                name = "gradle-plugin"
+                description = "Gradle Plugin"
                 url = "https://github.com/archive-dev/lum"
 
                 licenses {
