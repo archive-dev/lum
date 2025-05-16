@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.function.Function;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface ClassMaker extends Accessible, Annotatable {
     ClassMaker extend(ClassModel model);
 
@@ -33,13 +34,6 @@ public interface ClassMaker extends Accessible, Annotatable {
 
     byte[] finish();
 
-    class Utils {
-        private final static HashMap<Option.SourceOption, Function<ClassModel, ClassMaker>> suppliers = new HashMap<>();
-        static {
-            suppliers.put(Option.SourceOption.JVM, (model) -> JVMClassMakerFactory.create(model));
-        }
-    }
-
     static ClassMaker of(ClassModel model, Option... options) {
         Function<ClassModel, ClassMaker> getter = Utils.suppliers.get(Option.SourceOption.JVM);
 
@@ -54,5 +48,12 @@ public interface ClassMaker extends Accessible, Annotatable {
 
     static ClassMaker of(ClassModel model) {
         return of(model, new Option[0]);
+    }
+}
+
+class Utils {
+    final static HashMap<Option.SourceOption, Function<ClassModel, ClassMaker>> suppliers = new HashMap<>();
+    static {
+        suppliers.put(Option.SourceOption.JVM, JVMClassMakerFactory::create);
     }
 }

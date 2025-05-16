@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface CodeMaker {
     /// Returns the underlying CodeBuilder.
     ///
