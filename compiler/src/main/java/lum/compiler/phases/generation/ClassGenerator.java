@@ -1,6 +1,7 @@
 package lum.compiler.phases.generation;
 
 import lum.compiler.codegen.ClassMaker;
+import lum.compiler.codegen.FieldMaker;
 import lum.compiler.codegen.MethodMaker;
 import lum.core.model.ClassModel;
 import lum.core.model.Imports;
@@ -21,18 +22,23 @@ public final class ClassGenerator {
         maker.access(model.accessFlags().toArray(AccessFlag[]::new));
         maker.extend(model.superClass());
         maker.implement(model.interfaces());
-//        for (var annotation : model.annotations()) {
-//            var annotationMaker = maker.annotateWith(annotation);
-//
-//        }
+        for (var annotation : model.annotations()) {
+            var annotationMaker = maker.annotateWith(annotation);
+        }
 
         for (var f : model.fields()) {
-            maker.createField(f).access(f.accessFlags().toArray(AccessFlag[]::new));
+            FieldMaker field = (FieldMaker) maker.createField(f).access(f.accessFlags().toArray(AccessFlag[]::new));
+
+            for (var annotation : f.annotations())
+                field.annotateWith(annotation);
         }
 
         for (var m : model.methods()) {
             if (!m.owner().equals(model)) continue;
             MethodMaker method = (MethodMaker) maker.createMethod(m).access(m.accessFlags().toArray(AccessFlag[]::new));
+            for (var annotation : m.annotations())
+                method.annotateWith(annotation);
+
             if (blocks.get(m) != null) {
                 method.withCode((cm) -> {
                     var cg = new CodeGenerator(cm, m, imports);

@@ -169,6 +169,16 @@ class JVMClassMaker implements ClassMaker {
     }
 
     @Override
+    public AnnotationMaker annotateWith(AnnotationModel annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation.annotationModel());
+        for (var kv : annotation.values().entrySet()) {
+            maker.setProperty(kv.getKey(), kv.getValue());
+        }
+        addClassBuilderAction(cb -> cb.with(maker.finish()));
+        return maker;
+    }
+
+    @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
         addClassBuilderAction(cb -> cb.with(maker.finish()));

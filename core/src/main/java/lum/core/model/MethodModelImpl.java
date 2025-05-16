@@ -12,7 +12,7 @@ record MethodModelImpl(
         TypeModel[] exceptions,
         Set<AccessFlag> accessFlags,
         GenericArgument[] genericArguments,
-        ClassModel[] annotations
+        AnnotationModel[] annotations
 ) implements MethodModel {
     @Override
     public String toString() {

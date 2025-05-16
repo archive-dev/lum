@@ -1,6 +1,7 @@
 package lum.compiler.codegen.jvm;
 
 import lum.compiler.codegen.*;
+import lum.core.model.AnnotationModel;
 import lum.core.model.ClassModel;
 import lum.core.model.MethodModel;
 
@@ -48,6 +49,16 @@ class JVMMethodMaker implements MethodMaker {
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
+        builder.add(mb -> mb.with(maker.finish()));
+        return maker;
+    }
+
+    @Override
+    public AnnotationMaker annotateWith(AnnotationModel annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation.annotationModel());
+        for (var kv : annotation.values().entrySet()) {
+            maker.setProperty(kv.getKey(), kv.getValue());
+        }
         builder.add(mb -> mb.with(maker.finish()));
         return maker;
     }

@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static lum.core.model.ModelConfig.workDir;
-import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
-import static lum.core.util.Utils.EMPTY_GENERIC_ARGUMENTS;
+import static lum.core.util.Utils.*;
 
 final class ClassModelBuilder {
     private ClassModelBuilder() {}
@@ -73,13 +72,19 @@ final class ClassModelBuilder {
         else
             genericArguments = EMPTY_GENERIC_ARGUMENTS;
 
+        AnnotationModel[] annotations;
+        if (ctx.annotation() != null && !ctx.annotation().isEmpty())
+            annotations = new AnnotationModel[ctx.annotation().size()];
+        else
+            annotations = EMPTY_ANNOTATION_MODELS;
+
         var model = new ClassModelImpl(
                 name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS,
+                annotations,
                 false,
                 false
         );
@@ -107,13 +112,19 @@ final class ClassModelBuilder {
         else
             genericArguments = EMPTY_GENERIC_ARGUMENTS;
 
+        AnnotationModel[] annotations;
+        if (ctx.annotation() != null && !ctx.annotation().isEmpty())
+            annotations = new AnnotationModel[ctx.annotation().size()];
+        else
+            annotations = EMPTY_ANNOTATION_MODELS;
+
         var model = new ClassModelImpl(
                 name, pkg,
                 inheritance.a(),
                 inheritance.b().toArray(ClassModel[]::new),
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS,
+                annotations,
                 true,
                 false
         );

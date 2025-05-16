@@ -11,7 +11,7 @@ final class ClassModelImpl extends ClassModel {
     private final ClassModel[] interfaces;
     private final Set<AccessFlag> accessFlags;
     private final GenericArgument[] genericArguments;
-    private final ClassModel[] annotations;
+    private final AnnotationModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
     private HashSet<MethodModel> methods = null;
@@ -25,7 +25,7 @@ final class ClassModelImpl extends ClassModel {
             ClassModel[] interfaces,
             Set<AccessFlag> accessFlags,
             GenericArgument[] genericArgument,
-            ClassModel[] annotations,
+            AnnotationModel[] annotations,
             boolean isInterface, boolean isPrimitive
     ) {
         this.name = name;
@@ -113,6 +113,11 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
+    public boolean isAnnotation() {
+        return false;
+    }
+
+    @Override
     public TypeModel typeModel(int arrayDimensions) {
         if (ModelCache.containsTypeModel(this, arrayDimensions))
             return ModelCache.getTypeModel(this, arrayDimensions);
@@ -179,8 +184,7 @@ final class ClassModelImpl extends ClassModel {
         return candidate;
     }
 
-    @Override
-    protected MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters) {
+    private MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters) {
         ClassModel owner = startClass;
         MethodModel candidate = ModelCache.getMethod(owner, name, parameters);
 
@@ -192,8 +196,7 @@ final class ClassModelImpl extends ClassModel {
         return candidate;
     }
 
-    @Override
-    protected MethodModel getMethodFromInterfaces(String name, TypeModel... parameters) {
+    private MethodModel getMethodFromInterfaces(String name, TypeModel... parameters) {
         for (ClassModel interfaceModel : interfaces()) {
             MethodModel candidate = interfaceModel.getMethod(name, parameters);
             if (candidate != null) {
@@ -253,7 +256,7 @@ final class ClassModelImpl extends ClassModel {
     }
 
     @Override
-    public ClassModel[] annotations() {
-        return new ClassModel[0];
+    public AnnotationModel[] annotations() {
+        return annotations;
     }
 }

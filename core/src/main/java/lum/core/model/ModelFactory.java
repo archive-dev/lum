@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
+import static lum.core.util.Utils.EMPTY_ANNOTATION_MODELS;
 
 final class ModelFactory {
     private ModelFactory() {}
@@ -93,7 +93,7 @@ final class ModelFactory {
                 new ClassModel[clazz.getInterfaces().length],
                 Utils.getAccessFlags(clazz.getModifiers()),
                 new GenericArgument[clazz.getTypeParameters().length],
-                EMPTY_CLASS_MODELS,
+                EMPTY_ANNOTATION_MODELS,
                 clazz.isInterface(),
                 clazz.isPrimitive()
         );
@@ -136,7 +136,7 @@ final class ModelFactory {
                 createExceptionModels(method.getExceptionTypes()),
                 Utils.getAccessFlags(method.getModifiers()),
                 GenericArgument.of(method),
-                EMPTY_CLASS_MODELS
+                EMPTY_ANNOTATION_MODELS
         );
         ModelCache.cacheMethod(model);
         return model;
@@ -151,7 +151,7 @@ final class ModelFactory {
                 createExceptionModels(constructor.getExceptionTypes()),
                 Utils.getAccessFlags(constructor.getModifiers()),
                 GenericArgument.of(constructor),
-                EMPTY_CLASS_MODELS
+                EMPTY_ANNOTATION_MODELS
         );
         ModelCache.cacheMethod(model);
         return model;
@@ -164,7 +164,7 @@ final class ModelFactory {
                 field.getName(),
                 TypeModel.of(field.getType()),
                 Utils.getAccessFlags(field.getModifiers()),
-                EMPTY_CLASS_MODELS
+                EMPTY_ANNOTATION_MODELS
         );
         ModelCache.cacheField(model);
         return model;

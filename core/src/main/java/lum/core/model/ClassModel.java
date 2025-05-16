@@ -25,19 +25,25 @@ public abstract class ClassModel implements Accessible, Parametrized, Annotatabl
     }
 
     public abstract ClassModel superClass();
-    abstract void setSuperClass(ClassModel value);
+    void setSuperClass(ClassModel value) {};
 
     public abstract ClassModel[] interfaces();
+
+    public abstract FieldModel[] fields();
+
+    public abstract MethodModel[] methods();
+
+    public abstract boolean isInterface();
+
+    public abstract boolean isPrimitive();
+
+    public abstract boolean isAnnotation();
 
     public abstract boolean isSubclassOf(ClassModel other);
 
     public boolean isAssignableFrom(ClassModel other) {
         return other.isSubclassOf(this);
     }
-
-    public abstract boolean isInterface();
-
-    public abstract boolean isPrimitive();
 
     public TypeModel typeModel() {
         return typeModel(0);
@@ -57,19 +63,34 @@ public abstract class ClassModel implements Accessible, Parametrized, Annotatabl
 
     public abstract @Nullable MethodModel getMethod(String name, TypeModel... parameters);
 
-    protected abstract MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters);
+//    protected abstract MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters);
 
-    protected abstract MethodModel getMethodFromInterfaces(String name, TypeModel... parameters);
+//    protected abstract MethodModel getMethodFromInterfaces(String name, TypeModel... parameters);
 
     public abstract MethodModel getMethod(String name, List<TypeModel> parameters);
 
-    public abstract MethodModel[] methods();
-
     public abstract FieldModel getField(String name);
-
-    public abstract FieldModel[] fields();
 
     public static ClassModel of(Class<?> clazz) {
         return ModelCache.cacheClass(ModelCache.getClass(clazz));
     }
+//
+//    public static ClassModel of(AccessFlag[] accessFlags, String name, ClassModel superClass, ClassModel[] interfaces, FieldModel[] fields, MethodModel[] methods) {
+//        final var nameList = List.of(name.split("\\."));
+//        final String className = nameList.getLast();
+//        nameList.removeLast();
+//        final String pkg = String.join(".", nameList);
+//
+//        return new ClassModelImpl(
+//                className,
+//                pkg,
+//                superClass,
+//                interfaces,
+//                Set.of(accessFlags),
+//                Utils.EMPTY_GENERIC_ARGUMENTS,
+//                Utils.EMPTY_CLASS_MODELS,
+//                false,
+//                false
+//        );
+//    }
 }

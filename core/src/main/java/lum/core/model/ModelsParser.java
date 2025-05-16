@@ -11,7 +11,7 @@ import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
 
-import static lum.core.util.Utils.EMPTY_CLASS_MODELS;
+import static lum.core.util.Utils.EMPTY_ANNOTATION_MODELS;
 
 public final class ModelsParser {
     private ModelsParser() {}
@@ -78,7 +78,7 @@ public final class ModelsParser {
                 Utils.EMPTY_CLASS_MODELS,
                 Set.of(AccessFlag.PUBLIC, AccessFlag.FINAL),
                 Utils.EMPTY_GENERIC_ARGUMENTS,
-                EMPTY_CLASS_MODELS,
+                EMPTY_ANNOTATION_MODELS,
                 false,
                 false
         );

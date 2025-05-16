@@ -8,7 +8,7 @@ record FieldModelImpl(
         String name,
         TypeModel type,
         Set<AccessFlag> accessFlags,
-        ClassModel[] annotations
+        AnnotationModel[] annotations
 ) implements FieldModel {
     @Override
     public String toString() {

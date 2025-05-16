@@ -17,10 +17,12 @@ import static lum.core.util.Utils.*;
 public class FieldModelProcessor {
     private final ClassModel ownerModel;
     private final TypeProcessor typeProcessor;
+    private final AnnotationProcessor annotationProcessor;
 
     public FieldModelProcessor(ClassModel ownerModel, TypeProcessor typeProcessor) {
         this.ownerModel = ownerModel;
         this.typeProcessor = typeProcessor;
+        this.annotationProcessor = new AnnotationProcessor(typeProcessor);
     }
 
     /**
@@ -36,13 +38,14 @@ public class FieldModelProcessor {
         for (var decl : ctx.variableDeclaration()) {
             var type = typeProcessor.getType(decl.type());
             var name = decl.IDENTIFIER().getText();
+            var annotations = annotationProcessor.processAnnotations(ctx.annotation());
 
             var field = new FieldModelImpl(
                     ownerModel,
                     name,
                     type,
                     accessFlags,
-                    EMPTY_CLASS_MODELS 
+                    annotations
             );
             models.add(field);
             ModelCache.cacheField(field);
@@ -91,7 +94,7 @@ public class FieldModelProcessor {
                 EMPTY_TYPE_MODELS, 
                 accessFlags,
                 EMPTY_GENERIC_ARGUMENTS, 
-                EMPTY_CLASS_MODELS 
+                EMPTY_ANNOTATION_MODELS
         );
 
         ModelCache.cacheMethod(method); 
@@ -124,8 +127,8 @@ public class FieldModelProcessor {
                 new ParameterModel[]{parameter}, 
                 EMPTY_TYPE_MODELS, 
                 accessFlags,
-                EMPTY_GENERIC_ARGUMENTS, 
-                EMPTY_CLASS_MODELS 
+                EMPTY_GENERIC_ARGUMENTS,
+                EMPTY_ANNOTATION_MODELS
         );
 
         ModelCache.cacheMethod(method); 

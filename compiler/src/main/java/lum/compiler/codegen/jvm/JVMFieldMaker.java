@@ -4,6 +4,7 @@ import lum.compiler.codegen.Accessible;
 import lum.compiler.codegen.AnnotationMaker;
 import lum.compiler.codegen.ClassMaker;
 import lum.compiler.codegen.FieldMaker;
+import lum.core.model.AnnotationModel;
 import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
 
@@ -46,6 +47,16 @@ class JVMFieldMaker implements FieldMaker {
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
         code.add(mb -> mb.with(maker.finish()));
+        return maker;
+    }
+
+    @Override
+    public AnnotationMaker annotateWith(AnnotationModel annotation) {
+        JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation.annotationModel());
+        for (var kv : annotation.values().entrySet()) {
+            maker.setProperty(kv.getKey(), kv.getValue());
+        }
+        code.add(fb -> fb.with(maker.finish()));
         return maker;
     }
 

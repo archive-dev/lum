@@ -12,6 +12,7 @@ import java.util.Set;
 
 public final class Utils {
     public static final ClassModel[] EMPTY_CLASS_MODELS = new ClassModel[0];
+    public static final AnnotationModel[] EMPTY_ANNOTATION_MODELS = new AnnotationModel[0];
     public static final GenericArgument[] EMPTY_GENERIC_ARGUMENTS = new GenericArgument[0];
     public static final TypeModel[] EMPTY_TYPE_MODELS = new TypeModel[0];
     public static final ParameterModel[] EMPTY_PARAMETERS = new ParameterModel[0];

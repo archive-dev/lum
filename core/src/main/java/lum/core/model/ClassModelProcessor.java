@@ -15,26 +15,22 @@ import java.util.Objects;
 public final class ClassModelProcessor {
 
     private final ClassModel model;
-    private final Imports imports;
 
-    
     private final GenericsProcessor genericsProcessor;
+    private final AnnotationProcessor annotationProcessor;
     private final TypeProcessor typeProcessor;
 
     public ClassModelProcessor(ClassModel model, Imports imports) {
         this.model = model;
-        this.imports = imports;
 
-        this.typeProcessor = new TypeProcessor(this.imports, this::getGenericBoundsFromProcessor); 
+        this.typeProcessor = new TypeProcessor(imports, this::getGenericBoundsFromProcessor);
         this.genericsProcessor = new GenericsProcessor(this.typeProcessor);
+        this.annotationProcessor = new AnnotationProcessor(typeProcessor);
         this.typeProcessor.genericsProcessor = this.genericsProcessor;
     }
 
     
     private Map<String, TypeModel> getGenericBoundsFromProcessor() {
-        if (this.genericsProcessor == null) {
-            return Collections.emptyMap();
-        }
         return this.genericsProcessor.getGenericBounds();
     }
 
@@ -43,6 +39,7 @@ public final class ClassModelProcessor {
      * @param ctx The parser context for the class declaration.
      */
     public void processClass(LumParser.ClassDeclarationContext ctx) {
+        annotationProcessor.processAnnotations(ctx.annotation(), model);
         genericsProcessor.processGenerics(ctx.genericDeclaration(), model);
         processMembers(getDeclarations(ctx.block()));
     }
@@ -52,6 +49,7 @@ public final class ClassModelProcessor {
      * @param ctx The parser context for the interface declaration.
      */
     public void processInterface(LumParser.InterfaceDeclarationContext ctx) {
+        annotationProcessor.processAnnotations(ctx.annotation(), model);
         genericsProcessor.processGenerics(ctx.genericDeclaration(), model);
         processMembers(getDeclarations(ctx.block()));
     }

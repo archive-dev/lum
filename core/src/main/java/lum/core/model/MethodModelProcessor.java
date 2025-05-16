@@ -13,15 +13,18 @@ import static lum.core.util.Utils.*;
 /**
  * Processes method-like declarations (functions, constructors, operators, interface methods) for ClassModels.
  */
+@SuppressWarnings("UnusedReturnValue")
 public class MethodModelProcessor {
 
     private final ClassModel ownerModel;
     private final TypeProcessor typeProcessor;
+    private final AnnotationProcessor annotationProcessor;
     private final GenericsProcessor genericsProcessor;
         
     public MethodModelProcessor(ClassModel ownerModel, TypeProcessor typeProcessor) {
         this.ownerModel = ownerModel;
         this.typeProcessor = new TypeProcessor(typeProcessor.getImports(), this::getGenericBoundsFromProcessor);
+        this.annotationProcessor = new AnnotationProcessor(typeProcessor);
         this.genericsProcessor = new GenericsProcessor(this.typeProcessor);
         this.genericsProcessor.getGenericBounds().putAll(typeProcessor.genericBoundsSupplier.get());
         this.typeProcessor.genericsProcessor = this.genericsProcessor;
@@ -75,6 +78,7 @@ public class MethodModelProcessor {
         GenericArgument[] genericArguments = genericsProcessor.processGenerics(ctx.genericDeclaration());
         TypeModel returnType = ctx.type() != null ? typeProcessor.getType(ctx.type()) : TypeModel.VOID;
         ParameterModel[] parameters = createParameterModels(ctx.parameterList());
+        AnnotationModel[] annotations = annotationProcessor.processAnnotations(ctx.annotation());
 
         var method = new MethodModelImpl(
                 ownerModel,
@@ -84,7 +88,7 @@ public class MethodModelProcessor {
                 EMPTY_TYPE_MODELS,
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS
+                annotations
         );
         ModelCache.cacheMethod(method);
         return method;
@@ -101,6 +105,7 @@ public class MethodModelProcessor {
         GenericArgument[] genericArguments = genericsProcessor.processGenerics(ctx.genericDeclaration());
         TypeModel returnType = ctx.type() != null ? typeProcessor.getType(ctx.type()) : TypeModel.VOID;
         ParameterModel[] parameters = createParameterModels(ctx.parameterList());
+        AnnotationModel[] annotations = annotationProcessor.processAnnotations(ctx.annotation());
 
         var method = new MethodModelImpl(
                 ownerModel,
@@ -110,7 +115,7 @@ public class MethodModelProcessor {
                 EMPTY_TYPE_MODELS,
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS
+                annotations
         );
         ModelCache.cacheMethod(method);
         return method;
@@ -127,6 +132,7 @@ public class MethodModelProcessor {
         GenericArgument[] genericArguments = genericsProcessor.processGenerics(ctx.genericDeclaration());
         TypeModel returnType = TypeModel.of(void.class);
         ParameterModel[] parameters = createParameterModels(ctx.parameterList());
+        AnnotationModel[] annotations = annotationProcessor.processAnnotations(ctx.annotation());
 
         var method = new MethodModelImpl(
                 ownerModel,
@@ -136,7 +142,7 @@ public class MethodModelProcessor {
                 EMPTY_TYPE_MODELS,
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS
+                annotations
         );
         ModelCache.cacheMethod(method);
         return method;
@@ -154,6 +160,7 @@ public class MethodModelProcessor {
         GenericArgument[] genericArguments = genericsProcessor.processGenerics(ctx.genericDeclaration());
         TypeModel returnType = ctx.type() != null ? typeProcessor.getType(ctx.type()) : TypeModel.VOID;
         ParameterModel[] parameters = createParameterModels(ctx.parameterList());
+        AnnotationModel[] annotations = annotationProcessor.processAnnotations(ctx.annotation());
 
         var method = new MethodModelImpl(
                 ownerModel,
@@ -163,7 +170,7 @@ public class MethodModelProcessor {
                 EMPTY_TYPE_MODELS,
                 accessFlags,
                 genericArguments,
-                EMPTY_CLASS_MODELS
+                annotations
         );
         ModelCache.cacheMethod(method);
         return method;
@@ -176,7 +183,7 @@ public class MethodModelProcessor {
         return new MethodModelImpl(
                 owner, name, returnType,
                 EMPTY_PARAMETERS, EMPTY_TYPE_MODELS, accessFlags,
-                EMPTY_GENERIC_ARGUMENTS, EMPTY_CLASS_MODELS
+                EMPTY_GENERIC_ARGUMENTS, EMPTY_ANNOTATION_MODELS
         );
     }
 
@@ -185,14 +192,14 @@ public class MethodModelProcessor {
      * Assumes single parameter with the given type and derived name.
      */
     private MethodModel createSetterMethodModel(ClassModel owner, String name, TypeModel type, Set<AccessFlag> accessFlags) {
-        String paramName = Utils.toCamelCase(name.substring(3));
+        String paramName = toCamelCase(name.substring(3));
         ParameterModel parameter = new ParameterModelImpl(paramName, type);
 
         return new MethodModelImpl(
                 owner, name, TypeModel.of(void.class),
                 new ParameterModel[]{parameter},
                 EMPTY_TYPE_MODELS, accessFlags,
-                EMPTY_GENERIC_ARGUMENTS, EMPTY_CLASS_MODELS
+                EMPTY_GENERIC_ARGUMENTS, EMPTY_ANNOTATION_MODELS
         );
     }
 
