@@ -39,9 +39,6 @@ class IntersectionClassModel extends ClassModel {
     }
 
     @Override
-    void setSuperClass(ClassModel value) {}
-
-    @Override
     public ClassModel[] interfaces() {
         return interfaces;
     }
@@ -73,6 +70,11 @@ class IntersectionClassModel extends ClassModel {
 
     @Override
     public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
+    public boolean isAnnotation() {
         return false;
     }
 
@@ -112,16 +114,6 @@ class IntersectionClassModel extends ClassModel {
     @Override
     public @Nullable MethodModel getMethod(String name, TypeModel... parameters) {
         return getMethod(name, List.of(parameters));
-    }
-
-    @Override
-    protected MethodModel getMethodFromClassHierarchy(ClassModel startClass, String name, TypeModel... parameters) {
-        return null;
-    }
-
-    @Override
-    protected MethodModel getMethodFromInterfaces(String name, TypeModel... parameters) {
-        return null;
     }
 
     @Override
@@ -177,8 +169,8 @@ class IntersectionClassModel extends ClassModel {
     }
 
     @Override
-    public ClassModel[] annotations() {
-        return Utils.EMPTY_CLASS_MODELS;
+    public AnnotationModel[] annotations() {
+        return Utils.EMPTY_ANNOTATION_MODELS;
     }
 
     @Override
