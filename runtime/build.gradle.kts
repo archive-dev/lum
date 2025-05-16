@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath(files("../gradle-plugin/build/libs/gradle-plugin.jar"))
+    }
+}
+
 plugins {
     id("java")
 }

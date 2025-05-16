@@ -1,7 +1,3 @@
-plugins {
-    antlr
-}
-
 group = "io.github.archivedev.lum"
 
 repositories {
@@ -10,9 +6,10 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains:annotations:24.0.0")
-    antlr("org.antlr:antlr4:4.13.2")
 
     implementation(project(":runtime"))
+//    apiElements(project(":grammar"))
+    api(project(":grammar"))
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

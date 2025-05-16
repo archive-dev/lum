@@ -41,6 +41,7 @@ subprojects {
     apply<JavaPlugin>()
     // gradle-plugin project already has settings for publishing plugin to gradle plugin portal
     apply(plugin = "maven-publish")
+    apply(plugin = "java-library")
 
     publishing {
         publications {
@@ -80,40 +81,42 @@ subprojects {
         }
     }
 
-    tasks.compileJava {
-        options.compilerArgs.add("--enable-preview")
-    }
 
-    tasks.compileTestJava {
-        options.compilerArgs.add("--enable-preview")
-    }
-
-    java {
-        sourceCompatibility = JavaVersion.VERSION_24
-        targetCompatibility = JavaVersion.VERSION_24
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(24))
+    if (this@subprojects != project(":intellij-plugin")) {
+        tasks.compileJava {
+            options.compilerArgs.add("--enable-preview")
         }
 
-        withJavadocJar()
-        withSourcesJar()
-    }
+        tasks.compileTestJava {
+            options.compilerArgs.add("--enable-preview")
+        }
 
-    val mockitoAgent = configurations.create("mockitoAgent")
-    dependencies {
-        testImplementation("org.mockito:mockito-core:5.14.2")
-        mockitoAgent("org.mockito:mockito-core:5.14.2") { isTransitive = false }
-    }
-
-    tasks {
-        test {
-            options {
-                jvmArgs("--enable-preview", "-javaagent:${mockitoAgent.asPath}")
+        java {
+            sourceCompatibility = JavaVersion.VERSION_24
+            targetCompatibility = JavaVersion.VERSION_24
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(24))
             }
+
+            withJavadocJar()
+            withSourcesJar()
         }
-        javadoc {
-            (options as CoreJavadocOptions).addStringOption("source", "24")
-            (options as CoreJavadocOptions).addBooleanOption("-enable-preview", true)
+        val mockitoAgent = configurations.create("mockitoAgent")
+        dependencies {
+            testImplementation("org.mockito:mockito-core:5.14.2")
+            mockitoAgent("org.mockito:mockito-core:5.14.2") { isTransitive = false }
+        }
+
+        tasks {
+            test {
+                options {
+                    jvmArgs("--enable-preview", "-javaagent:${mockitoAgent.asPath}")
+                }
+            }
+            javadoc {
+                (options as CoreJavadocOptions).addStringOption("source", "24")
+                (options as CoreJavadocOptions).addBooleanOption("-enable-preview", true)
+            }
         }
     }
 }

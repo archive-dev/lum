@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.antlr:antlr4:4.13.2")
     implementation(project(":core"))
     implementation(project(":runtime"))
 
