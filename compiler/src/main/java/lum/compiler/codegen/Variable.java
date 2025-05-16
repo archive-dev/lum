@@ -6,6 +6,7 @@ import lum.core.model.TypeModel;
 import java.lang.constant.ConstantDesc;
 import java.util.function.Consumer;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface Variable {
     Variable[] EMPTY_VARIABLES = new Variable[0];
 

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface InlinedVariableBuilder {
     void setCode(ArrayList<Consumer<CodeMaker>> code);
 
