@@ -212,9 +212,9 @@ annotationDeclaration
       'annotation' IDENTIFIER ('(' parameterList? ')')? block?
     ;
 
-annotation: '@' IDENTIFIER ('(' (annotationArgs | literal) ')')?;
+annotation: '@' IDENTIFIER ('(' (annotationArgs | expression) ')')?;
 annotationArgs: annotationArg (',' annotationArg)*;
-annotationArg: IDENTIFIER '=' STRING;
+annotationArg: IDENTIFIER '=' expression;
 
 // Function Call
 functionCall: (IDENTIFIER | NEW) genericDeclaration? '(' argumentList? ')';
@@ -313,9 +313,84 @@ access
     | 'protected' # Protected
     ;
 
-modifier: (static='static' | abstract='abstract')? (final='final')?;
+modifier: (static='static' | abstract='abstract') (final='final')?;
 
 // Lexer Rules
+LBRACE : '{' ;
+RBRACE : '}' ;
+T__8 : '=>' ;
+LBRACK : '[' ;
+RBRACK : ']' ;
+DOT : '.' ;
+AS : 'as' ;
+SUPER : 'super' ;
+LPAREN : '(' ;
+RPAREN : ')' ;
+COMMA : ',' ;
+COLON : ':' ;
+PACKAGE : 'package' ;
+IMPORT : 'import' ;
+FROM : 'from' ;
+BREAK : 'break' ;
+CONTINUE : 'continue' ;
+RETURN : 'return' ;
+SWITCH : 'switch' ;
+CASE : 'case' ;
+DEFAULT : 'default' ;
+IF : 'if' ;
+ELIF : 'elif' ;
+ELSE : 'else' ;
+WHILE : 'while' ;
+DO : 'do' ;
+FOR : 'for' ;
+IN : 'in' ;
+T__14 : ':=' ;
+EQUAL : '=' ;
+GET : 'get' ;
+SET : 'set' ;
+FUNC : 'func' ;
+INIT : 'init' ;
+OPERATOR : 'operator' ;
+CLASS : 'class' ;
+EXTENDS : 'extends' ;
+IMPLEMENTS : 'implements' ;
+INTERFACE : 'interface' ;
+ANNOTATION : 'annotation' ;
+AT : '@' ;
+BITOR : '|' ;
+BITAND : '&' ;
+QUESTION : '?' ;
+NULL : 'null' ;
+TRUE : 'true' ;
+FALSE : 'false' ;
+MUL : '*' ;
+DIV : '/' ;
+T__11 : '//' ;
+MOD : '%' ;
+ADD : '+' ;
+SUB : '-' ;
+SHR : '>>' ;
+SHL : '<<' ;
+XOR : 'xor' | '^';
+GT : '>' ;
+LT : '<' ;
+GE : '>=' ;
+LE : '<=' ;
+EQUAL_EQUAL : '==' ;
+NOT_EQUAL : '!=' ;
+IS : 'is' ;
+AND : 'and' | '&&';
+OR : 'or' | '||';
+NOT : 'not' | '!';
+INC : '++' ;
+DEC : '--' ;
+PUBLIC : 'public' ;
+PRIVATE : 'private' ;
+PROTECTED : 'protected' ;
+STATIC : 'static' ;
+ABSTRACT : 'abstract' ;
+FINAL : 'final' ;
+
 fragment IDENTIFIER0: [a-zA-Z_][a-zA-Z0-9_]*;
 NEW: 'new';
 ARRAY: '[]';
@@ -329,5 +404,5 @@ NUMBER
     )
     ;
 STRING: '\'' .*? '\'' | '"' .*? '"';
-WS: [ \t\r\n;]+ -> skip;
-COMMENT: ('#' .*? ('\n' | EOF)) -> skip;
+WS: [ \t\r\n;]+ -> channel(HIDDEN);
+COMMENT: ('#' .*? ('\n' | EOF)) -> channel(HIDDEN);
