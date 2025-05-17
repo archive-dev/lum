@@ -64,6 +64,22 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_24
+    targetCompatibility = JavaVersion.VERSION_24
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(24))
+    }
+
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.javadoc {
+    (options as CoreJavadocOptions).addStringOption("source", "24")
+    (options as CoreJavadocOptions).addBooleanOption("-enable-preview", true)
+}
+
 tasks.shadowJar {
     archiveClassifier = ""
 }

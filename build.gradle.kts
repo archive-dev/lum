@@ -39,84 +39,10 @@ subprojects {
     version = System.getenv("VERSION")
 
     apply<JavaPlugin>()
-    // gradle-plugin project already has settings for publishing plugin to gradle plugin portal
-    apply(plugin = "maven-publish")
-    apply(plugin = "java-library")
-
-    publishing {
-        publications {
-            if (this@subprojects != project(":gradle-plugin")) {
-                create<MavenPublication>("mavenJava") {
-                    from(components["java"])
-
-                    pom {
-                        name = this@subprojects.name
-                        description = this@subprojects.name
-                        url = "https://github.com/archive-dev/lum"
-
-                        licenses {
-
-                        }
-
-                        scm {
-                            connection = "scm:git:git://github.com/archive-dev/lum.git"
-                            developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
-                            url = "https://github.com/archive-dev/lum/tree/main"
-                        }
-                    }
-
-                    repositories {
-                        maven {
-                            name = "GitHubPackages"
-
-                            url = uri("https://maven.pkg.github.com/archive-dev/lum")
-                            credentials {
-                                username = System.getenv("USERNAME")
-                                password = System.getenv("TOKEN")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
 
     if (this@subprojects != project(":intellij-plugin")) {
-        tasks.compileJava {
+        tasks.withType<JavaCompile>() {
             options.compilerArgs.add("--enable-preview")
-        }
-
-        tasks.compileTestJava {
-            options.compilerArgs.add("--enable-preview")
-        }
-
-        java {
-            sourceCompatibility = JavaVersion.VERSION_24
-            targetCompatibility = JavaVersion.VERSION_24
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(24))
-            }
-
-            withJavadocJar()
-            withSourcesJar()
-        }
-        val mockitoAgent = configurations.create("mockitoAgent")
-        dependencies {
-            testImplementation("org.mockito:mockito-core:5.14.2")
-            mockitoAgent("org.mockito:mockito-core:5.14.2") { isTransitive = false }
-        }
-
-        tasks {
-            test {
-                options {
-                    jvmArgs("--enable-preview", "-javaagent:${mockitoAgent.asPath}")
-                }
-            }
-            javadoc {
-                (options as CoreJavadocOptions).addStringOption("source", "24")
-                (options as CoreJavadocOptions).addBooleanOption("-enable-preview", true)
-            }
         }
     }
 }
