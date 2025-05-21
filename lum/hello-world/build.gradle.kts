@@ -1,4 +1,4 @@
 plugins {
     id("java")
-    id("io.github.archivedev.lum.gradle")
+    id("io.github.archive-dev.lum.gradle")
 }
