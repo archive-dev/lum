@@ -54,6 +54,16 @@ public final class ClassModelProcessor {
         processMembers(getDeclarations(ctx.block()));
     }
 
+    public void processAnnotation(LumParser.AnnotationDeclarationContext ctx) {
+        annotationProcessor.processAnnotations(ctx.annotation(), model);
+        processMembers(ctx.parameterList());
+    }
+
+    public void processEnum(LumParser.EnumDeclarationContext ctx) {
+        annotationProcessor.processAnnotations(ctx.annotation(), model);
+        processMembers(getDeclarations(ctx.block()));
+    }
+
     /**
      * Extracts declaration contexts from a block context.
      * @param block The block context.
@@ -94,9 +104,15 @@ public final class ClassModelProcessor {
                         decl.constructorDeclaration().block()
                 );
             } else if (decl.functionSignature() != null) {
-
-                new MethodModelProcessor(this.model, this.typeProcessor).createMethodModel(decl.functionSignature());
+                ModelCache.cacheMethod(new MethodModelProcessor(this.model, this.typeProcessor).createMethodModel(decl.functionSignature()));
             }
+        }
+    }
+
+    private void processMembers(LumParser.ParameterListContext ctx) {
+        for (var param : ctx.parameter()) {
+            if (param.type() == null) throw new IllegalStateException("Annotation parameters must have type");
+            ModelCache.cacheMethod(new MethodModelProcessor(this.model, this.typeProcessor).createMethodModel(param));
         }
     }
 

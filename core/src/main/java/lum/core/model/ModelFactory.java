@@ -95,7 +95,9 @@ final class ModelFactory {
                 new GenericArgument[clazz.getTypeParameters().length],
                 EMPTY_ANNOTATION_MODELS,
                 clazz.isInterface(),
-                clazz.isPrimitive()
+                clazz.isPrimitive(),
+                clazz.isAnnotation(),
+                clazz.isEnum()
         );
     }
 

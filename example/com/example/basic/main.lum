@@ -1,0 +1,77 @@
+package com.example.basic
+
+## Assuming some dummy paths for imports for demonstration
+import com.example.utils.StringUtils ## Simple import
+import com.example.math.Constants as MathConstants, com.example.math.Operations.add as sumTwo ## Multiple import with aliasing
+
+## Variable Declarations and Basic Expressions
+func demonstrateVariablesAndExpressions(): String {
+    var languageName: String = "Lum"
+    var version := 1.0 ## Type inference with :=
+    var yearEstablished: Int
+    yearEstablished = 2024
+
+    var isModern: Bool = true
+    var piApproximation: Float = 3.14159
+
+    var description: String = languageName + " v" + version +
+                              " (est. " + yearEstablished + "). Modern? " + isModern +
+                              ". Pi approx: " + piApproximation
+
+    var numA: Int = 100
+    var numB: Int = 20
+    var sumResult: Int = numA + numB
+    var productResult: Int = numA * numB
+    var divisionResult: Float = numA / numB ## Assuming float division
+    var isGreater: Bool = numA > numB && isModern
+
+    var listLiteral: [Int] = [1, 2, numA / 10, 4]
+    var firstFromList: Int = listLiteral[0] ## Array access
+
+    ## Assuming a way to convert numbers to string for concatenation if not implicit
+    return description + " | Sum: " + sumResult + " | Product: " + productResult +
+           " | Division: " + divisionResult + " | IsGreater: " + isGreater +
+           " | First from list: " + firstFromList
+}
+
+## Function definition and call
+func add(x: Int, y: Int): Int {
+    return x + y
+}
+
+func demonstrateFunctionCall(): Int {
+    var result: Int = add(75, 25) ## Calling a locally defined function
+    ## var externalSumResult: Int = sumTwo(10, 5) ## Example of calling an imported, aliased function
+    return result ## + externalSumResult (if externalSumResult was used)
+}
+
+## Unary operators
+func demonstrateUnaryOperators(): String {
+    var counter: Int = 5
+    counter++ ## Post-increment
+    var val1: Int = counter ## 6
+
+    var anotherCounter: Int = 10
+    var val2: Int = --anotherCounter ## Pre-decrement, val2 = 9
+
+    var isTrue: Bool = true
+    var isFalse: Bool = !isTrue ## Logical NOT
+
+    ## Note: Unary minus for numbers is typically part of the number literal or a built-in operator.
+    ## The grammar's `preUnaryOperator` doesn't list `-`.
+    var negativeVal: Int = -10 ## Assuming this is parsed as a literal or built-in.
+
+    return "Counter after ++: " + val1 + " | Counter after --: " + val2 +
+           " | Not true: " + isFalse + " | Negative: " + negativeVal
+}
+
+## Main function to run demos (optional, for structure)
+func mainBasicSyntax(): String {
+    var varDemoResult: String = demonstrateVariablesAndExpressions()
+    var funcCallDemoResult: Int = demonstrateFunctionCall()
+    var unaryDemoResult: String = demonstrateUnaryOperators()
+
+    return "Variables Demo: " + varDemoResult + "\n" +
+           "Function Call Demo: " + funcCallDemoResult + "\n" +
+           "Unary Operators Demo: " + unaryDemoResult
+}

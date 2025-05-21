@@ -40,9 +40,7 @@ subprojects {
 
     apply<JavaPlugin>()
 
-    if (this@subprojects != project(":intellij-plugin")) {
-        tasks.withType<JavaCompile>() {
-            options.compilerArgs.add("--enable-preview")
-        }
+    tasks.withType<JavaCompile>() {
+        options.compilerArgs.add("--enable-preview")
     }
 }

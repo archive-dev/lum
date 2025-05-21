@@ -23,7 +23,7 @@ public final class ClassGenerator {
         maker.extend(model.superClass());
         maker.implement(model.interfaces());
         for (var annotation : model.annotations()) {
-            var annotationMaker = maker.annotateWith(annotation);
+            maker.annotateWith(annotation);
         }
 
         for (var f : model.fields()) {

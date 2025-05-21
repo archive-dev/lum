@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class JVMAnnotationMaker implements AnnotationMaker {
+    private final ClassModel annotationModel;
     private final List<Supplier<AnnotationElement>> valuesBuilder = new ArrayList<>();
 
     private final Map<Boolean, Supplier<Attribute<?>>> suppliers = new HashMap<>();
@@ -17,6 +18,7 @@ public class JVMAnnotationMaker implements AnnotationMaker {
     private boolean isVisible = true;
 
     public JVMAnnotationMaker(ClassModel annotationModel) {
+        this.annotationModel = annotationModel;
         suppliers.put(true,
                 () -> RuntimeVisibleAnnotationsAttribute.of(
                         Annotation.of(
@@ -54,8 +56,23 @@ public class JVMAnnotationMaker implements AnnotationMaker {
         return this;
     }
 
+    @Override
+    public boolean isVisible() {
+        return isVisible;
+    }
+
     @SuppressWarnings("unchecked")
     <T> T finish() {
         return (T) suppliers.get(isVisible).get();
+    }
+
+    ClassModel annotationModel() {
+        return annotationModel;
+    }
+
+    List<AnnotationElement> values() {
+        return valuesBuilder.stream()
+                .map(Supplier::get)
+                .toList();
     }
 }

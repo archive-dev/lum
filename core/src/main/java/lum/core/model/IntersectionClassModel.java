@@ -79,6 +79,11 @@ class IntersectionClassModel extends ClassModel {
     }
 
     @Override
+    public boolean isEnum() {
+        return false;
+    }
+
+    @Override
     public TypeModel typeModel(int arrayDimensions) {
         return new IntersectionTypeModel(this, arrayDimensions);
     }

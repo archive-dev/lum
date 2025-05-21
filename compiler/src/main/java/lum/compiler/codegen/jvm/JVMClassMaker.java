@@ -10,11 +10,14 @@ import lum.core.model.MethodModel;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.classfile.*;
+import java.lang.classfile.attribute.RuntimeInvisibleAnnotationsAttribute;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
 import java.lang.classfile.attribute.SignatureAttribute;
 import java.lang.reflect.AccessFlag;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 class JVMClassMaker implements ClassMaker {
@@ -23,6 +26,36 @@ class JVMClassMaker implements ClassMaker {
     private final Set<MethodMaker> methods = new HashSet<>();
     private final Set<FieldMaker> fields = new HashSet<>();
     private final Set<AccessFlag> accessFlags = new HashSet<>();
+
+    private final List<JVMAnnotationMaker> annotations = new ArrayList<>();
+
+    private final Map<Boolean, Supplier<ClassElement>> suppliers = new HashMap<>();
+    {
+        suppliers.put(true,
+                () -> RuntimeVisibleAnnotationsAttribute.of(
+                        annotations.stream()
+                                .filter(JVMAnnotationMaker::isVisible)
+                                .map(maker ->
+                                    java.lang.classfile.Annotation.of(
+                                        maker.annotationModel().classDesc(),
+                                        maker.values()
+                                ))
+                                .toList()
+                )
+        );
+        suppliers.put(false,
+                () -> RuntimeInvisibleAnnotationsAttribute.of(
+                        annotations.stream()
+                                .filter(m -> !m.isVisible())
+                                .map(maker ->
+                                        java.lang.classfile.Annotation.of(
+                                                maker.annotationModel().classDesc(),
+                                                maker.values()
+                                        ))
+                                .toList()
+                )
+        );
+    }
 
     public JVMClassMaker(ClassModel model) {
         this.model = model;
@@ -112,7 +145,7 @@ class JVMClassMaker implements ClassMaker {
                 model.type().classDesc(),
                 fb -> {
                     if (model.type().genericArguments().length > 0)
-                        fieldMaker.code.add(f -> f.with(SignatureAttribute.of((Signature) getTypeSignature(model.type()))));
+                        fieldMaker.builder.add(f -> f.with(SignatureAttribute.of((Signature) getTypeSignature(model.type()))));
                     fieldMaker.finish().forEach(c -> c.accept(fb));
                 }
         );
@@ -129,6 +162,8 @@ class JVMClassMaker implements ClassMaker {
             methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
             fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
             cb.withFlags(accessFlags.toArray(AccessFlag[]::new));
+            cb.with(suppliers.get(true).get());
+            cb.with(suppliers.get(false).get());
         });
     }
 
@@ -157,14 +192,14 @@ class JVMClassMaker implements ClassMaker {
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
-        addClassBuilderAction(cb -> cb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
-        addClassBuilderAction(cb -> cb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
@@ -174,14 +209,14 @@ class JVMClassMaker implements ClassMaker {
         for (var kv : annotation.values().entrySet()) {
             maker.setProperty(kv.getKey(), kv.getValue());
         }
-        addClassBuilderAction(cb -> cb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
-        addClassBuilderAction(cb -> cb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 

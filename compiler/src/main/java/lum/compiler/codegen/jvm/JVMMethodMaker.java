@@ -7,14 +7,50 @@ import lum.core.model.MethodModel;
 
 import java.lang.annotation.Annotation;
 import java.lang.classfile.MethodBuilder;
+import java.lang.classfile.MethodElement;
+import java.lang.classfile.attribute.RuntimeInvisibleAnnotationsAttribute;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
 import java.lang.reflect.AccessFlag;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 class JVMMethodMaker implements MethodMaker {
     final MethodModel model;
     final List<Consumer<MethodBuilder>> builder = new ArrayList<>();
+
+    private final List<JVMAnnotationMaker> annotations = new ArrayList<>();
+
+    private final Map<Boolean, Supplier<MethodElement>> suppliers = new HashMap<>();
+    {
+        suppliers.put(true,
+                () -> RuntimeVisibleAnnotationsAttribute.of(
+                        annotations.stream()
+                                .filter(JVMAnnotationMaker::isVisible)
+                                .map(maker ->
+                                        java.lang.classfile.Annotation.of(
+                                                maker.annotationModel().classDesc(),
+                                                maker.values()
+                                        ))
+                                .toList()
+                )
+        );
+        suppliers.put(false,
+                () -> RuntimeInvisibleAnnotationsAttribute.of(
+                        annotations.stream()
+                                .filter(m -> !m.isVisible())
+                                .map(maker ->
+                                        java.lang.classfile.Annotation.of(
+                                                maker.annotationModel().classDesc(),
+                                                maker.values()
+                                        ))
+                                .toList()
+                )
+        );
+    }
 
     public JVMMethodMaker(MethodModel model) {
         this.model = model;
@@ -42,14 +78,14 @@ class JVMMethodMaker implements MethodMaker {
     @Override
     public AnnotationMaker annotateWith(ClassModel annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(annotation);
-        builder.add(mb -> mb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(ClassMaker annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(((JVMClassMaker) annotation).model);
-        builder.add(mb -> mb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
@@ -59,18 +95,22 @@ class JVMMethodMaker implements MethodMaker {
         for (var kv : annotation.values().entrySet()) {
             maker.setProperty(kv.getKey(), kv.getValue());
         }
-        builder.add(mb -> mb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
     @Override
     public AnnotationMaker annotateWith(Class<? extends Annotation> annotation) {
         JVMAnnotationMaker maker = new JVMAnnotationMaker(ClassModel.of(annotation));
-        builder.add(mb -> mb.with(maker.finish()));
+        annotations.add(maker);
         return maker;
     }
 
     List<Consumer<MethodBuilder>> finish() {
+        builder.add(mb -> {
+            mb.with(suppliers.get(true).get());
+            mb.with(suppliers.get(false).get());
+        });
         return builder;
     }
 }

@@ -2,59 +2,33 @@ plugins {
     kotlin("jvm") version "2.1.10"
     `kotlin-dsl`
     id("com.gradleup.shadow") version "8.3.6"
-    `maven-publish`
+    id("com.gradle.plugin-publish") version "1.2.1"
 }
+
+repositories {
+    mavenCentral()
+}
+
+version = "1.0"
+group = "io.github.archivedev"
 
 gradlePlugin {
     website = "https://github.com/archive-dev/lum"
     vcsUrl = "https://github.com/archive-dev/lum.git"
     plugins {
         create("lumPlugin") {
-            displayName = "Lum Gradle Plugin"
-            description = "Lum Gradle Plugin"
+            id = "io.github.archivedev.lum.gradle"
 
-            id = "lum.gradle"
+            displayName = "Lum Gradle Plugin"
+            description =
+                """Gradle plugin for Lum programming language. Includes compilation tasks.
+                    | Write lum code in src/main/lum directory and compile.
+                """.trimMargin()
             tags = listOf("jvm", "programming language")
 
             implementationClass = "lum.gradle.LumPlugin"
         }
     }
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("pluginMaven") {
-            repositories {
-                maven {
-                    name = "GitHubPackages"
-                    url = uri("https://maven.pkg.github.com/archive-dev/lum")
-                    credentials {
-                        username = System.getenv("USERNAME")
-                        password = System.getenv("TOKEN")
-                    }
-                }
-            }
-            pom {
-                name = "gradle-plugin"
-                description = "Lum Gradle Plugin"
-                url = "https://github.com/archive-dev/lum"
-
-                licenses {
-
-                }
-
-                scm {
-                    connection = "scm:git:git://github.com/archive-dev/lum.git"
-                    developerConnection = "scm:git:ssh://github.com:archive-dev/lum.git"
-                    url = "https://github.com/archive-dev/lum/tree/main"
-                }
-            }
-        }
-    }
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {

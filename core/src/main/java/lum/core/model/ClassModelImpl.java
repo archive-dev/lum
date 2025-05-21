@@ -14,6 +14,8 @@ final class ClassModelImpl extends ClassModel {
     private final AnnotationModel[] annotations;
     private final boolean isInterface;
     private final boolean isPrimitive;
+    private final boolean isAnnotation;
+    private final boolean isEnum;
     private HashSet<MethodModel> methods = null;
 
     private final Map<String, FieldModel> fieldCache = null;
@@ -26,7 +28,7 @@ final class ClassModelImpl extends ClassModel {
             Set<AccessFlag> accessFlags,
             GenericArgument[] genericArgument,
             AnnotationModel[] annotations,
-            boolean isInterface, boolean isPrimitive
+            boolean isInterface, boolean isPrimitive, boolean isAnnotation, boolean isEnum
     ) {
         this.name = name;
         this.pkg = pkg;
@@ -37,6 +39,8 @@ final class ClassModelImpl extends ClassModel {
         this.annotations = annotations;
         this.isInterface = isInterface;
         this.isPrimitive = isPrimitive;
+        this.isAnnotation = isAnnotation;
+        this.isEnum = isEnum;
     }
 
     @Override
@@ -114,7 +118,12 @@ final class ClassModelImpl extends ClassModel {
 
     @Override
     public boolean isAnnotation() {
-        return false;
+        return isAnnotation;
+    }
+
+    @Override
+    public boolean isEnum() {
+        return isEnum;
     }
 
     @Override
@@ -172,7 +181,6 @@ final class ClassModelImpl extends ClassModel {
                 "methods=" + Arrays.toString(methods()) + ", " +
                 "fields=" + Arrays.toString(fields()) + ']';
     }
-
     @Override
     public MethodModel getMethod(String name, TypeModel... parameters) {
         MethodModel candidate = getMethodFromClassHierarchy(this, name, parameters);
@@ -259,4 +267,5 @@ final class ClassModelImpl extends ClassModel {
     public AnnotationModel[] annotations() {
         return annotations;
     }
+
 }

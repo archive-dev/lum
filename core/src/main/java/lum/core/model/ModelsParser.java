@@ -80,6 +80,8 @@ public final class ModelsParser {
                 Utils.EMPTY_GENERIC_ARGUMENTS,
                 EMPTY_ANNOTATION_MODELS,
                 false,
+                false,
+                false,
                 false
         );
 
@@ -113,10 +115,14 @@ public final class ModelsParser {
 
     public static void buildClassModel(ClassModel model, Imports imports) {
         if (ModelCache.classContexts.containsKey(model))
-            if (!model.isInterface())
-                new ClassModelProcessor(model, imports).processClass(ModelCache.classContexts.get(model));
-            else
+            if (model.isAnnotation())
+                new ClassModelProcessor(model, imports).processAnnotation(ModelCache.annotationContexts.get(model));
+            else if (model.isInterface())
                 new ClassModelProcessor(model, imports).processInterface(ModelCache.interfaceContexts.get(model));
+            else if (model.isEnum())
+                new ClassModelProcessor(model, imports).processEnum(ModelCache.enumContexts.get(model));
+            else
+                new ClassModelProcessor(model, imports).processClass(ModelCache.classContexts.get(model));
     }
 
     public static Map<ClassModel, ParserRuleContext> buildClassModels(Path classFile) {
@@ -143,6 +149,42 @@ public final class ModelsParser {
                 .map(LumParser.DeclarationContext::interfaceDeclaration)
                 .filter(Objects::nonNull)
                 .toList();
+
+        List<LumParser.AnnotationDeclarationContext> annotations = ctx.statement().stream()
+                .map(LumParser.StatementContext::declaration)
+                .filter(Objects::nonNull)
+                .map(LumParser.DeclarationContext::annotationDeclaration)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<LumParser.EnumDeclarationContext> enums = ctx.statement().stream()
+                .map(LumParser.StatementContext::declaration)
+                .filter(Objects::nonNull)
+                .map(LumParser.DeclarationContext::enumDeclaration)
+                .filter(Objects::nonNull)
+                .toList();
+
+        for (var decl : annotations) {
+            var model = ClassModelBuilder.buildAnnotationModel(imports, decl, new ClassPath(
+                    classFile.getParent(),
+                    classFile.getName(classFile.getNameCount() - 1).toString().replace(File.separator, ""),
+                    decl.IDENTIFIER().getText())
+            );
+            imports.classes().put(model.name(), model);
+            contexts.put(model, decl);
+            ModelCache.annotationContexts.put(model, decl);
+        }
+
+        for (var decl : enums) {
+            var model = ClassModelBuilder.buildEnumModel(imports, decl, new ClassPath(
+                    classFile.getParent(),
+                    classFile.getName(classFile.getNameCount()-1).toString().replace(File.separator, ""),
+                    decl.IDENTIFIER().getText())
+            );
+            imports.classes().put(model.name(), model);
+            contexts.put(model, decl);
+            ModelCache.enumContexts.put(model, decl);
+        }
 
         for (var decl : interfaces) {
             var model = ClassModelBuilder.buildInterfaceModel(imports, decl, new ClassPath(

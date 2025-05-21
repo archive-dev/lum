@@ -22,7 +22,9 @@ final class ModelCache {
     private static final Map<ClassModel, Map<Integer, TypeModel>> typeModelsCache = new ConcurrentHashMap<>();
 
     static final Map<ClassModel, LumParser.ClassDeclarationContext> classContexts = new HashMap<>();
+    static final Map<ClassModel, LumParser.EnumDeclarationContext> enumContexts = new HashMap<>();
     static final Map<ClassModel, LumParser.InterfaceDeclarationContext> interfaceContexts = new HashMap<>();
+    static final Map<ClassModel, LumParser.AnnotationDeclarationContext> annotationContexts = new HashMap<>();
     static final Map<MethodModel, LumParser.BlockContext> methodContexts = new HashMap<>();
 
     static final Map<TypeVariable<?>, GenericArgument> genericArguments = new HashMap<>();

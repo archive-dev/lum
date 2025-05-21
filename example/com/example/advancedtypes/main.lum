@@ -1,0 +1,112 @@
+package com.example.advancedtypes
+
+## Union Type usage
+## type: ... | type (union='|' type)+ # UnionType
+func processIdentifier(id: Int | String): String {
+    ## Type checking: expression 'is' type # IsInstance (from binaryOperator)
+    if id is Int {
+        return "Numeric ID: " + (id as Int * 10) ## Cast with 'as'
+    } elif id is String {
+        return "String ID: " + (id as String).toUpperCase() ## Assuming toUpperCase and cast
+    }
+    return "Unknown ID type"
+}
+
+## Intersection Types with Interfaces
+## type: ... | type (intersection='&' type)+ # IntersectionType
+interface Logger { func log(message: String) }
+interface Formatter { func format(data: Any): String } ## Assuming 'Any' type
+
+## A class implementing multiple interfaces for intersection type demo
+class ConsoleLoggerFormatter (implements = [Logger, Formatter]) {
+    var logHistory: [String] = []
+    func log(message: String) {
+        this.logHistory = this.logHistory + [message] ## Assuming array append
+        ## print("LOG: " + message) ## Actual logging
+    }
+    func format(data: Any): String {
+        return "Formatted: " + data.toString() ## Assuming toString on Any
+    }
+    func getHistory(): String { return this.logHistory.toString() }
+}
+
+func useLogFormatter(lf: Logger & Formatter, dataToLog: Int): String {
+    var formattedData: String = lf.format(dataToLog)
+    lf.log(formattedData)
+    ## To return something meaningful, we might need to inspect lf if it's our test class
+    if lf is ConsoleLoggerFormatter {
+      return (lf as ConsoleLoggerFormatter).getHistory()
+    }
+    return "Logged and Formatted"
+}
+
+## Array Types
+## type: ... | type ARRAY+ # ArrayType (ARRAY is '[]')
+func sumIntegerArray(numbers: Int[]): Int {
+    var total: Int = 0
+    for var num: Int in numbers {
+        total = total + num
+    }
+    return total
+}
+
+## Generic Function
+## functionDeclaration: ... 'func' IDENTIFIER genericDeclaration? ...
+## genericDeclaration: '[' generic (',' generic)* ']';
+func identity<T>(value: T): T {
+    return value
+}
+
+## Generic Function with type bound (constraint)
+## generic: ... | (IDENTIFIER ((extends | ':') type))
+interface Nameable { func getName(): String }
+class Person (implements = [Nameable]) {
+    var name: String
+    init(n: String) { this.name = n }
+    func getName(): String { return this.name }
+}
+
+func printName<U extends Nameable>(item: U): String {
+    return "Item's Name: " + item.getName()
+}
+
+## Generic Class
+## classDeclaration: ... 'class' IDENTIFIER genericDeclaration? ...
+class Container<T> {
+    private var item: T
+    public init(initialItem: T) {
+        this.item = initialItem
+    }
+    public func getItem(): T { return this.item }
+    public func setItem(newItem: T) { this.item = newItem }
+}
+
+
+func mainAdvancedTypes(): String {
+    var idResult1: String = processIdentifier(123) ## "Numeric ID: 1230"
+    var idResult2: String = processIdentifier("ABC") ## "String ID: ABC" (assuming toUpperCase)
+
+    var myLoggerFormatter = new ConsoleLoggerFormatter()
+    var lfResult: String = useLogFormatter(myLoggerFormatter, 42) ## "Logged and Formatted" or history
+
+    var nums: Int[] = [10, 20, 30, 40]
+    var arraySum: Int = sumIntegerArray(nums) ## 100
+
+    var genericStr: String = identity<String>("Hello Generics")
+    var genericNum: Int = identity<Int>(99)
+
+    var person = new Person("Alice")
+    var namedItemResult: String = printName<Person>(person) ## "Item's Name: Alice"
+
+    var intContainer = new Container<Int>(101)
+    intContainer.setItem(202)
+    var itemFromContainer: Int = intContainer.getItem() ## 202
+
+    return "ID Proc1: " + idResult1 + "\n" +
+           "ID Proc2: " + idResult2 + "\n" +
+           "LogFormatter: " + lfResult + "\n" +
+           "Array Sum: " + arraySum + "\n" +
+           "Generic Identity: " + genericStr + ", " + genericNum + "\n" +
+           "Named Item: " + namedItemResult + "\n" +
+           "Container Item: " + itemFromContainer
+}

@@ -1,0 +1,133 @@
+package com.example.controlflow
+
+func testIfElseStatement(a: Int, b: Int): String {
+    var message: String
+    if a > b {
+        message = "a is greater than b"
+    } elif a < b {
+        message = "a is less than b"
+    } else {
+        message = "a is equal to b"
+    }
+    return message
+}
+
+func testSwitchStatement(day: Int): String {
+    var dayName: String
+    switch day {
+        case 1 { dayName = "Monday" }
+        case 2 { dayName = "Tuesday" }
+        case 3 { dayName = "Wednesday" }
+        ## Cases must be single expressions as per grammar `case: 'case' expression block;`
+        case 4 { dayName = "Thursday" }
+        case 5 { dayName = "Friday" }
+        case 6, 7 { ## This might not be supported if `expression` doesn't expand to multiple values here.
+                     ## Assuming `expression` in `case` is a single value.
+                     ## For multiple values, one might need fallthrough or separate cases.
+                     ## Let's assume for now it means `case (6 or 7)` if the language supports it.
+                     ## Sticking to single values per case for strict grammar adherence:
+           dayName = "Weekend_Placeholder_For_Single_Value_Case" ## Will adjust if grammar implies more
+        }
+        default {
+            dayName = "Invalid day"
+        }
+    }
+    ## Correcting switch for single value cases:
+    switch day {
+        case 1: dayName = "Monday"
+        case 2: dayName = "Tuesday"
+        case 3: dayName = "Wednesday"
+        case 4: dayName = "Thursday"
+        case 5: dayName = "Friday"
+        case 6: dayName = "Saturday"
+        case 7: dayName = "Sunday"
+        default: dayName = "Invalid day"
+    }
+    return dayName
+}
+
+func testWhileLoop(limit: Int): Int {
+    var sum: Int = 0
+    var i: Int = 0
+    while i < limit {
+        sum = sum + i
+        i = i + 1
+    }
+    return sum
+}
+
+func testDoWhileLoop(limit: Int): Int {
+    var sum: Int = 0
+    var i: Int = 0
+    if limit <= 0 { return 0 } ## do-while executes at least once
+    do {
+        sum = sum + i
+        i = i + 1
+    } while i < limit
+    return sum
+}
+
+func testForILoop(count: Int): Int {
+    var total: Int = 0
+    ## forILoop: 'for' variableDeclaration? ',' condition=expression? ',' iter=expression? block;
+    for var j: Int = 0, j < count, j = j + 1 {
+        total = total + j
+    }
+    return total
+}
+
+func testForEachLoop(data: [Int]): Int {
+    var total: Int = 0
+    ## forEachLoop: 'for' variableDeclaration 'in' expression block;
+    for var item: Int in data {
+        total = total + item
+    }
+    return total
+}
+
+func testLoopControl(limit: Int): String {
+    var numbersProcessed: [Int] = []
+    for var k: Int = 0, k < limit, k = k + 1 {
+        if k == 3 {
+            continue ## Skip 3
+        }
+        if k == 7 {
+            break ## Stop at 7
+        }
+        numbersProcessed = numbersProcessed + [k] ## Assuming array concatenation
+    }
+    
+    if limit > 5 {
+        return "Processed up to (but not including) 7, skipped 3: " + numbersProcessed.toString() ## Assuming toString for array
+    } else {
+        return "Early exit or full loop for small limit: " + numbersProcessed.toString()
+    }
+}
+
+func testReturnStatement(value: Int): Int {
+    if value < 0 {
+        return 0 ## Early return
+    }
+    return value * 10
+}
+
+func mainControlFlow(): String {
+    var ifResult = testIfElseStatement(10, 5)
+    var switchResult = testSwitchStatement(3)
+    var whileSum = testWhileLoop(5) ## 0+1+2+3+4 = 10
+    var doWhileSum = testDoWhileLoop(5) ## 0+1+2+3+4 = 10 (if limit > 0)
+    var forISum = testForILoop(5) ## 0+1+2+3+4 = 10
+    var anArray: [Int] = [10,20,30]
+    var forEachSum = testForEachLoop(anArray) ## 10+20+30 = 60
+    var loopControlResult = testLoopControl(10)
+    var returnResult = testReturnStatement(-5)
+
+    return "If/Else: " + ifResult + "\n" +
+           "Switch: " + switchResult + "\n" +
+           "While Sum: " + whileSum + "\n" +
+           "Do-While Sum: " + doWhileSum + "\n" +
+           "For-I Sum: " + forISum + "\n" +
+           "For-Each Sum: " + forEachSum + "\n" +
+           "Loop Control: " + loopControlResult + "\n" +
+           "Return Test: " + returnResult
+}

@@ -35,6 +35,10 @@ public class CompletingClassDefinitionsStage implements CompilerStage<Compilatio
                     new ClassModelProcessor(pair.a(), imports).processClass(clazz);
                 else if (pair.b() instanceof LumParser.InterfaceDeclarationContext interface_)
                     new ClassModelProcessor(pair.a(), imports).processInterface(interface_);
+                else if (pair.b() instanceof LumParser.EnumDeclarationContext enum_)
+                    new ClassModelProcessor(pair.a(), imports).processEnum(enum_);
+                else if (pair.b() instanceof LumParser.AnnotationDeclarationContext annotation)
+                    new ClassModelProcessor(pair.a(), imports).processAnnotation(annotation);
 
                 classes.add(pair.a());
             }

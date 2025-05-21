@@ -2,6 +2,7 @@ package lum.core.model;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.constant.ClassDesc;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public abstract class ClassModel implements Accessible, Parametrized, Annotatabl
     public static final ClassModel SHORT = ClassModel.of(short.class);
     public static final ClassModel VOID = ClassModel.of(void.class);
     public static final ClassModel OBJECT = ClassModel.of(Object.class);
+    public static final ClassModel ANNOTATION = ClassModel.of(Annotation.class);
 
     public abstract String name();
     public abstract String pkg();
@@ -38,6 +40,8 @@ public abstract class ClassModel implements Accessible, Parametrized, Annotatabl
     public abstract boolean isPrimitive();
 
     public abstract boolean isAnnotation();
+
+    public abstract boolean isEnum();
 
     public abstract boolean isSubclassOf(ClassModel other);
 

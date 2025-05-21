@@ -50,6 +50,18 @@ final class ClassModelBuilder {
                 ModelCache.interfaceContexts.put(model, interface_);
                 yield model;
             }
+            case LumParser.AnnotationDeclarationContext annotation -> {
+                var model = buildAnnotationModel(imports, annotation, path);
+                imports.classes().put(model.name(), model);
+                ModelCache.annotationContexts.put(model, annotation);
+                yield model;
+            }
+            case LumParser.EnumDeclarationContext enum_ -> {
+                var model = buildEnumModel(imports, enum_, path);
+                imports.classes().put(model.name(), model);
+                ModelCache.enumContexts.put(model, enum_);
+                yield model;
+            }
             case null, default -> null;
         };
     }
@@ -85,6 +97,8 @@ final class ClassModelBuilder {
                 accessFlags,
                 genericArguments,
                 annotations,
+                false,
+                false,
                 false,
                 false
         );
@@ -126,7 +140,81 @@ final class ClassModelBuilder {
                 genericArguments,
                 annotations,
                 true,
+                false,
+                false,
                 false
+        );
+
+        return model;
+    }
+
+    public static ClassModel buildAnnotationModel(Imports imports, LumParser.AnnotationDeclarationContext ctx, ClassPath path) {
+        var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
+        accessFlags.add(AccessFlag.ABSTRACT);
+        accessFlags.add(AccessFlag.ANNOTATION);
+        accessFlags.add(AccessFlag.INTERFACE);
+        var name = ctx.IDENTIFIER().getText();
+//        var inheritance = processInheritance(imports, ctx.inheritance());
+        String pkg = "";
+
+        if (path != null) {
+            var p = workDir.relativize(path.pathToDir()).toString();
+            if (!p.isEmpty())
+                pkg = p.replace(File.separator, ".");
+        }
+
+        AnnotationModel[] annotations;
+        if (ctx.annotation() != null && !ctx.annotation().isEmpty())
+            annotations = new AnnotationModel[ctx.annotation().size()];
+        else
+            annotations = EMPTY_ANNOTATION_MODELS;
+
+        var model = new ClassModelImpl(
+                name, pkg,
+                ClassModel.OBJECT,
+                new ClassModel[]{ClassModel.ANNOTATION},
+                accessFlags,
+                EMPTY_GENERIC_ARGUMENTS,
+                annotations,
+                true,
+                false,
+                true,
+                false
+        );
+
+        return model;
+    }
+
+    public static ClassModel buildEnumModel(Imports imports, LumParser.EnumDeclarationContext ctx, ClassPath path) {
+        var accessFlags = Utils.getAccessFlags(ctx.access(), ctx.modifier());
+        accessFlags.add(AccessFlag.ENUM);
+        var name = ctx.IDENTIFIER().getText();
+        var inheritance = processInheritance(imports, ctx.inheritance());
+        String pkg = "";
+
+        if (path != null) {
+            var p = workDir.relativize(path.pathToDir()).toString();
+            if (!p.isEmpty())
+                pkg = p.replace(File.separator, ".");
+        }
+
+        AnnotationModel[] annotations;
+        if (ctx.annotation() != null && !ctx.annotation().isEmpty())
+            annotations = new AnnotationModel[ctx.annotation().size()];
+        else
+            annotations = EMPTY_ANNOTATION_MODELS;
+
+        var model = new ClassModelImpl(
+                name, pkg,
+                ClassModel.of(Enum.class),
+                inheritance.b().toArray(ClassModel[]::new),
+                accessFlags,
+                EMPTY_GENERIC_ARGUMENTS,
+                annotations,
+                false,
+                false,
+                false,
+                true
         );
 
         return model;

@@ -36,7 +36,12 @@ public class FieldModelProcessor {
         var accessFlags = getAccessFlags(ctx.access(), ctx.modifier()); 
 
         for (var decl : ctx.variableDeclaration()) {
-            var type = typeProcessor.getType(decl.type());
+            TypeModel type;
+            if (ownerModel.isEnum() && decl.type() == null)
+                type = ownerModel.typeModel();
+            else
+                type = typeProcessor.getType(decl.type());
+
             var name = decl.IDENTIFIER().getText();
             var annotations = annotationProcessor.processAnnotations(ctx.annotation());
 

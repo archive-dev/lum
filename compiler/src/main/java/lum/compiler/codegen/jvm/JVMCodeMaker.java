@@ -159,7 +159,7 @@ class JVMCodeMaker implements CodeMaker {
         if (!switchCases.isEmpty()) {
             codeBuilder().tableswitch(defaultLabel, switchCases);
 
-            // Generate code for each case
+            // Generate builder for each case
             for (var switchCase : switchCases) {
                 codeBuilder().labelBinding(switchCase.target());
                 Consumer<CodeMaker> handler = caseHandlers.get(switchCase);

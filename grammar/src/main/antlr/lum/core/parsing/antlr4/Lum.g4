@@ -23,6 +23,7 @@ declaration
     | constructorDeclaration
     | functionSignature
     | classDeclaration
+    | enumDeclaration
     | interfaceDeclaration
     | annotationDeclaration
     ;
@@ -186,6 +187,11 @@ argumentList: expression (',' expression)*;
 classDeclaration
     : annotation* access? modifier?
       'class' IDENTIFIER genericDeclaration? inheritance? block?
+    ;
+
+enumDeclaration
+    : annotation* access? modifier?
+      'enum' IDENTIFIER genericDeclaration? inheritance? block?
     ;
 
 inheritance: '(' inheritanceSpec (',' inheritanceSpec)* ')';
@@ -352,6 +358,7 @@ FUNC : 'func' ;
 INIT : 'init' ;
 OPERATOR : 'operator' ;
 CLASS : 'class' ;
+ENUM  : 'enum' ;
 EXTENDS : 'extends' ;
 IMPLEMENTS : 'implements' ;
 INTERFACE : 'interface' ;
@@ -396,7 +403,7 @@ NEW: 'new';
 ARRAY: '[]';
 IDENTIFIER: IDENTIFIER0;
 NUMBER
-    : ('+' | '-')
+    : ('+' | '-')?
     ( [0-9]+ ('.' [0-9]+)? ('f' | 'F' | 'd' | 'D' | 'l' | 'L')?
     | '0x' [0-9a-fA-F]+ ('l' | 'L')?
     | '0b' [01]+        ('l' | 'L')?

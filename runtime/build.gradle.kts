@@ -1,11 +1,6 @@
-buildscript {
-    dependencies {
-        classpath(files("../gradle-plugin/build/libs/gradle-plugin.jar"))
-    }
-}
-
 plugins {
     id("java")
+//    id("io.github.whoisamyy.lum.gradle")
 }
 
 group = "io.github.archivedev.lum"

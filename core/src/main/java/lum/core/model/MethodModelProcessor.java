@@ -176,6 +176,10 @@ public class MethodModelProcessor {
         return method;
     }
 
+    public MethodModel createMethodModel(LumParser.ParameterContext param) {
+        return createGetterMethodModel(ownerModel, param.IDENTIFIER().getText(), typeProcessor.getType(param.type()), Set.of(AccessFlag.PUBLIC, AccessFlag.ABSTRACT));
+    }
+
     /**
      * Helper to create a simple getter MethodModel structure.
      */
