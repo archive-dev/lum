@@ -10,14 +10,14 @@ repositories {
 }
 
 version = "1.0"
-group = "io.github.archivedev"
+group = "io.github.archive-dev"
 
 gradlePlugin {
     website = "https://github.com/archive-dev/lum"
     vcsUrl = "https://github.com/archive-dev/lum.git"
     plugins {
         create("lumPlugin") {
-            id = "io.github.archivedev.lum.gradle"
+            id = "io.github.archive-dev.lum.gradle"
 
             displayName = "Lum Gradle Plugin"
             description =
