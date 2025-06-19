@@ -1,23 +1,32 @@
 package lum.core.util;
 
+import lum.antlr4.LumParser;
 import lum.core.model.*;
-import lum.core.model.ModelConfig;
-import lum.core.parsing.antlr4.LumParser;
+//import lum.core.parsing.antlr4.LumParser;
 
 import java.lang.reflect.AccessFlag;
-import java.lang.reflect.Modifier;
-import java.nio.file.Path;
+//import java.lang.reflect.Modifier;
+//import java.nio.file.Path;
+import java.util.ArrayList;
+//import java.util.HashSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+//import java.util.Set;
 
 public final class Utils {
     public static final ClassModel[] EMPTY_CLASS_MODELS = new ClassModel[0];
-    public static final AnnotationModel[] EMPTY_ANNOTATION_MODELS = new AnnotationModel[0];
-    public static final GenericArgument[] EMPTY_GENERIC_ARGUMENTS = new GenericArgument[0];
+    public static final AttributeModel[] EMPTY_ATTRIBUTE_MODELS = new AttributeModel[0];
     public static final TypeModel[] EMPTY_TYPE_MODELS = new TypeModel[0];
     public static final ParameterModel[] EMPTY_PARAMETERS = new ParameterModel[0];
+    public static final Member[] EMPTY_MEMBERS = new Member[0];
+    public static final AccessFlag[] EMPTY_ACCESS_FLAGS = new AccessFlag[0];
+    public static final AccessFlag[] DEFAULT_ACCESS_FLAGS = {AccessFlag.PUBLIC, AccessFlag.FINAL};
+    public static final TypeParameter[] EMPTY_TYPE_PARAMETERS = new TypeParameter[0];
+    public static final TypeArgument[] EMPTY_TYPE_ARGUMENTS = new TypeArgument[0];
 
     private Utils() {}
+/*
 
     public static int getArrayDepth(Class<?> clazz) {
         int depth = 0;
@@ -36,12 +45,14 @@ public final class Utils {
         return clazz;
     }
 
+*/
     public static Class<?> getComponentType(Class<?> clazz) {
         while (clazz.isArray()) {
             clazz = clazz.getComponentType();
         }
         return clazz;
     }
+/*
 
     public static boolean fileExists(Path path) {
         return ModelConfig.workDir.resolve(Path.of(path+".lum")).toFile().exists();
@@ -71,6 +82,7 @@ public final class Utils {
         return flags;
     }
 
+*/
     public static Set<AccessFlag> getAccessFlags(LumParser.AccessContext access, LumParser.ModifierContext modifier) {
         Set<AccessFlag> accessFlags = new HashSet<>();
         if (access!=null)
@@ -82,18 +94,29 @@ public final class Utils {
             });
 
         if (modifier != null) {
-            if (modifier.abstract_ != null) accessFlags.add(AccessFlag.ABSTRACT);
-            if (modifier.static_ != null) accessFlags.add(AccessFlag.STATIC);
-            if (modifier.final_ != null) accessFlags.add(AccessFlag.FINAL);
+            if (modifier.ABSTRACT() != null) accessFlags.add(AccessFlag.ABSTRACT);
+            if (modifier.STATIC() != null) accessFlags.add(AccessFlag.STATIC);
+            if (modifier.FINAL() != null) accessFlags.add(AccessFlag.FINAL);
         }
 
         return accessFlags;
     }
 
+    /// "someString" -> "SomeString"
     public static String toTitled(String str) {
         return String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1);
     }
-    public static String toCamelCase(String str) {
-        return String.valueOf(str.charAt(0)).toLowerCase() + str.substring(1);
+
+    public static java.lang.reflect.Member[] getClassMembers(Class<?> clazz) {
+        var constructors = clazz.getConstructors();
+        var fields = clazz.getFields();
+        var methods = clazz.getMethods();
+
+        List<java.lang.reflect.Member> members = new ArrayList<>();
+        members.addAll(List.of(constructors));
+        members.addAll(List.of(fields));
+        members.addAll(List.of(methods));
+
+        return members.toArray(java.lang.reflect.Member[]::new);
     }
 }

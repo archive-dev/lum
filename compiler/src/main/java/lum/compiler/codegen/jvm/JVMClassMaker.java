@@ -112,14 +112,20 @@ class JVMClassMaker implements ClassMaker {
     @Override
     public void finishTo(Path path) throws IOException {
         buildClassFile(path, (cb) -> {
-            methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
-            fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
+            for (MethodMaker method : methods) {
+                addMethodToClassBuilder(cb, (JVMMethodMaker) method);
+            }
+            for (FieldMaker field : fields) {
+                addFieldToClassBuilder(cb, (JVMFieldMaker) field);
+            }
         });
     }
 
     private void buildClassFile(Path path, Consumer<ClassBuilder> extraActions) throws IOException {
         ClassFile.of().buildTo(path, this.model.classDesc(), cb -> {
-            this.classBuilderActions.forEach(b -> b.accept(cb));
+            for (Consumer<ClassBuilder> b : this.classBuilderActions) {
+                b.accept(cb);
+            }
             extraActions.accept(cb);
         });
     }
@@ -133,7 +139,9 @@ class JVMClassMaker implements ClassMaker {
                 mb -> {
                     if (model.genericArguments().length > 0)
                         methodMaker.builder.add(m -> m.with(SignatureAttribute.of(getMethodSignature(model))));
-                    methodMaker.finish().forEach(c -> c.accept(mb));
+                    for (Consumer<MethodBuilder> c : methodMaker.finish()) {
+                        c.accept(mb);
+                    }
                 }
         );
     }
@@ -146,7 +154,9 @@ class JVMClassMaker implements ClassMaker {
                 fb -> {
                     if (model.type().genericArguments().length > 0)
                         fieldMaker.builder.add(f -> f.with(SignatureAttribute.of((Signature) getTypeSignature(model.type()))));
-                    fieldMaker.finish().forEach(c -> c.accept(fb));
+                    for (Consumer<FieldBuilder> c : fieldMaker.finish()) {
+                        c.accept(fb);
+                    }
                 }
         );
     }
@@ -159,8 +169,12 @@ class JVMClassMaker implements ClassMaker {
     @Override
     public byte[] finish() {
         return buildClassFile((cb) -> {
-            methods.forEach(method -> addMethodToClassBuilder(cb, (JVMMethodMaker) method));
-            fields.forEach(field -> addFieldToClassBuilder(cb, (JVMFieldMaker) field));
+            for (MethodMaker method : methods) {
+                addMethodToClassBuilder(cb, (JVMMethodMaker) method);
+            }
+            for (FieldMaker field : fields) {
+                addFieldToClassBuilder(cb, (JVMFieldMaker) field);
+            }
             cb.withFlags(accessFlags.toArray(AccessFlag[]::new));
             cb.with(suppliers.get(true).get());
             cb.with(suppliers.get(false).get());
@@ -172,7 +186,9 @@ class JVMClassMaker implements ClassMaker {
             cb.withVersion(ClassFile.JAVA_23_VERSION, 0);
             if (this.model.genericArguments().length > 0)
                 cb.with(SignatureAttribute.of(getClassSignature(this.model)));
-            this.classBuilderActions.forEach(b -> b.accept(cb));
+            for (Consumer<ClassBuilder> b : this.classBuilderActions) {
+                b.accept(cb);
+            }
             extraActions.accept(cb);
         });
     }

@@ -45,14 +45,14 @@ public class CodeGenerator implements CodeHandler {
 
     @Override
     public void handleBlock(LumParser.BlockContext ctx) {
-        ctx.statement().forEach(context -> {
+        for (LumParser.StatementContext context : ctx.statement()) {
             var result = handleStatement(context);
             result.ifPresent(vars -> {
                 for (var v : vars)
                     if (v instanceof InlinedVariable inlined)
                         inlined.load(cm);
             });
-        });
+        }
         blocksCount++;
     }
 
@@ -61,9 +61,11 @@ public class CodeGenerator implements CodeHandler {
         if (model.returnType() == TypeModel.of(void.class)) {
             if (returnsCount == 0)
                 cm.return_();
-        } else {
-            throw new IllegalStateException("Method ("+model+") must return a value!");
         }
+//        else {
+//            if (returnsCount == 0)
+//                throw new IllegalStateException("Method ("+model.owner().fullName() + "." + model.name()+") must return a value!");
+//        }
     }
 
     @Override
@@ -78,6 +80,7 @@ public class CodeGenerator implements CodeHandler {
     }
 
     private void handleIf(LumParser.IfContext if_) {
+        // todo: fix instanceOf
         var value = createConditionVariable(if_.expression());
         cm.ifThen(value, _ -> handleBlock(if_.block()));
     }
@@ -96,8 +99,8 @@ public class CodeGenerator implements CodeHandler {
         for (LumParser.ElifContext elif : elifs) {
             handleElifBlock(elif, endLabel);
         }
-
-        handleBlock(else_.block());
+        if (else_ != null)
+            handleBlock(else_.block());
 
         cb.labelBinding(endLabel);
     }
@@ -113,7 +116,7 @@ public class CodeGenerator implements CodeHandler {
 
     private void handleElifBlock(LumParser.ElifContext elif, Label endLabel) {
         Variable value = createConditionVariable(elif.expression());
-        value.load();
+        value.load(cm);
 
         CodeBuilder cb = cm.codeBuilder();
         Label elifEnd = cb.newLabel();
@@ -125,9 +128,7 @@ public class CodeGenerator implements CodeHandler {
     }
 
     private Variable createConditionVariable(LumParser.ExpressionContext expression) {
-        return cm.var()
-                .addCode(_ -> handleExpression(expression))
-                .build();
+        return handleExpression(expression);
     }
 
     @Override
@@ -202,7 +203,7 @@ public class CodeGenerator implements CodeHandler {
     private TypeModel getType(String type) {
         var t = imports.getType(List.of(type.split("\\.")));
         if (t == null)
-            t = getType(model.owner().pkg()+"."+type);
+            t = imports.getType(List.of((model.owner().pkg()+"."+type).split("\\.")));
         return t;
     }
 

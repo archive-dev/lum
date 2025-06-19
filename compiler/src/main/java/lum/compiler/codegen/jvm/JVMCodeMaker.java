@@ -339,7 +339,6 @@ class JVMCodeMaker implements CodeMaker {
             for (var arg : arguments) {
                 arg.load(cm);
             }
-
             cb.invokespecial(type.classDesc(), "<init>", type.model().getMethod("<init>", Arrays.stream(arguments).map(Variable::getType).toList()).methodTypeDesc());
         });
         v.setType(type);

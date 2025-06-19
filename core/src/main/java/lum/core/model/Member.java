@@ -1,5 +1,8 @@
 package lum.core.model;
 
-public interface Member extends Annotatable {
-    ClassModel owner();
+import java.util.Optional;
+
+public interface Member extends Accessible {
+    Optional<ClassModel> owner();
+    String name();
 }

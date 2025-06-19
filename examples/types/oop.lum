@@ -1,0 +1,191 @@
+package examples.types
+
+import java.util.ArrayList
+import java.util.HashMap
+
+## Union types in function parameters
+public class DataProcessor {
+
+    ## Function accepting union type parameter
+    public static func processInput(data: String | Number | Boolean): String {
+        if data is String {
+            return "Processing string: " + data.toUpperCase()
+        } elif data is Number {
+            return "Processing number: " + (data * 2)
+        } elif data is Boolean {
+            return "Processing boolean: " + (data ? "TRUE" : "FALSE")
+        }
+        return "Unknown type"
+    }
+
+    ## Function returning union type
+    public static func getValue(key: String): String | Number | null {
+        config := HashMap.new()
+        config.put("name", "John")
+        config.put("age", 30)
+        config.put("active", true)
+
+        value := config.get(key)
+        if value != null {
+            return value
+        }
+        return null
+    }
+
+    ## Complex union type with arrays
+    public static func handleData(items: Array[String | Number]): Array[String] {
+        results := ArrayList.new()
+        for item in items {
+            if item is String {
+                results.add("STR: " + item)
+            } elif item is Number {
+                results.add("NUM: " + item)
+            }
+        }
+        return results
+    }
+}
+
+## Intersection types with interfaces
+public interface Flyable {
+    func fly(): void
+    func getAltitude(): Number
+}
+
+public interface Swimmable {
+    func swim(): void
+    func getDepth(): Number
+}
+
+public interface Walkable {
+    func walk(): void
+    func getSpeed(): Number
+}
+
+## Class implementing multiple interfaces (intersection type)
+public class Duck(Flyable, Swimmable, Walkable) {
+    private altitude: Number = 0
+    private depth: Number = 0
+    private speed: Number = 0
+
+    public func fly() {
+        this.altitude = 100
+        print("Duck is flying at altitude " + this.altitude)
+    }
+
+    public func swim() {
+        this.depth = 5
+        print("Duck is swimming at depth " + this.depth)
+    }
+
+    public func walk() {
+        this.speed = 3
+        print("Duck is walking at speed " + this.speed)
+    }
+
+    public func getAltitude(): Number => this.altitude
+    public func getDepth(): Number => this.depth
+    public func getSpeed(): Number => this.speed
+}
+
+## Function accepting intersection type parameter
+public class AnimalTrainer {
+
+    ## Parameter that must implement both interfaces
+    public static func trainAmphibian(animal: Flyable & Swimmable) {
+        print("Training amphibian...")
+        animal.fly()
+        animal.swim()
+        print("Training complete!")
+    }
+
+    ## Parameter with complex intersection type
+    public static func trainTripleAthlete(athlete: Flyable & Swimmable & Walkable) {
+        print("Training triple athlete...")
+        athlete.walk()
+        athlete.swim()
+        athlete.fly()
+        print("Triathlon training complete!")
+    }
+
+    ## Variable with union of intersection types
+    public static func demonstrateComplexTypes() {
+        ## Variable that can hold either a flying swimmer or a walking swimmer
+        versatileAnimal: (Flyable & Swimmable) | (Walkable & Swimmable)
+
+        duck := Duck.new()
+        versatileAnimal = duck  ## Duck implements all three, so it fits both union options
+
+        if versatileAnimal is Flyable & Swimmable {
+            print("Animal can fly and swim")
+            versatileAnimal.fly()
+            versatileAnimal.swim()
+        }
+    }
+}
+
+## Generic class with union type constraints
+public class Container[T: String | Number | Boolean] {
+    private items: Array[T] = []
+
+    public func add(item: T) {
+        this.items.push(item)
+    }
+
+    public func processAll(): Array[String] {
+        results := ArrayList.new()
+        for item in this.items {
+            processed := DataProcessor.processInput(item)
+            results.add(processed)
+        }
+        return results
+    }
+}
+
+## Function with multiple union type parameters
+public class MathUtils {
+    public static func calculate(
+        operation: String,
+        left: Number | String,
+        right: Number | String
+    ): Number | String | null {
+
+        ## Convert string numbers to actual numbers
+        leftNum: Number
+        rightNum: Number
+
+        if left is String {
+            leftNum = Number.parseFloat(left)
+        } else {
+            leftNum = left
+        }
+
+        if right is String {
+            rightNum = Number.parseFloat(right)
+        } else {
+            rightNum = right
+        }
+
+        switch operation {
+            case "add" {
+                return leftNum + rightNum
+            }
+            case "subtract" {
+                return leftNum - rightNum
+            }
+            case "multiply" {
+                return leftNum * rightNum
+            }
+            case "divide" {
+                if rightNum != 0 {
+                    return leftNum / rightNum
+                } else {
+                    return "Error: Division by zero"
+                }
+            }
+            case default {
+                return null
+            }
+        }
+    }
+}

@@ -45,7 +45,9 @@ class JVMInlinedVariable extends JVMVariable implements InlinedVariable { // mig
     @Override
     public void load(CodeMaker to) {
         setCodeMaker(to);
-        code.forEach(c -> c.accept(to));
+        for (Consumer<CodeMaker> c : code) {
+            c.accept(to);
+        }
     }
 
     @Override

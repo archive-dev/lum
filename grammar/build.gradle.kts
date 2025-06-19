@@ -21,7 +21,7 @@ tasks.compileJava {
 }
 
 tasks.generateGrammarSource {
-    arguments.addAll(arrayOf("-package", "lum.core.parsing.antlr4"))
+    arguments.addAll(arrayOf("-package", "lum.antlr4"))
     arguments.add("-no-listener")
     arguments.add("-no-visitor")
     outputDirectory = File("src/main/java")

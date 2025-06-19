@@ -4,6 +4,7 @@ import lum.compiler.codegen.CodeMaker;
 import lum.compiler.codegen.Field;
 import lum.compiler.codegen.Variable;
 import lum.core.model.MethodModel;
+import lum.core.model.PrimitiveTypeModelImpl;
 import lum.core.model.TypeModel;
 
 import java.lang.classfile.CodeBuilder;
@@ -548,14 +549,14 @@ class JVMVariable implements Variable {
     @Override
     public Variable isInstance(Variable other) {
         JVMInlinedVariableBuilder v = new JVMInlinedVariableBuilder();
-        v.addCode(_ -> {
-            if (getType().isPrimitive()) {
-                load();
-                var cb = codeMaker().codeBuilder();
-                cb.instanceOf(other.getType().classDesc());
-            } else {
-                invokeOperator("is", other);
-            }
+        v.addCode(cm -> {
+            load(cm);
+            var cb = cm.codeBuilder();
+            TypeModel t;
+            if (!other.getType().isPrimitive())
+                t = other.getType();
+            else t = ((PrimitiveTypeModelImpl) other.getType()).boxed();
+            cb.instanceOf(t.classDesc());
         });
 
         return v.build();
@@ -666,7 +667,8 @@ class JVMVariable implements Variable {
             if (getType().isPrimitive()) {
                 cm.codeBuilder().with(ConvertInstruction.of(getType().typeKind(), type.typeKind()));
             } else {
-                cm.codeBuilder().checkcast(type.classDesc());
+                if (!type.isPrimitive())
+                    cm.codeBuilder().checkcast(type.classDesc());
             }
         })
                 .setType(type)
