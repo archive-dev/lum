@@ -1,29 +1,28 @@
 package lum.compiler.pipeline;
 
 import lum.compiler.phases.CompilationContext;
-import lum.compiler.phases.CompilationException;
 import lum.compiler.phases.CompilationResult;
 import lum.compiler.phases.CompilerStage;
 
 import java.util.List;
 
-@SuppressWarnings("rawtypes")
 public class Executor {
 
-    private final List<CompilerStage> stages;
+    private final List<CompilerStage<?, ?, ?>> stages;
 
     public Executor() {
         this.stages = PipelineConfiguration.getDefaultStages();
     }
 
-    public Executor(List<CompilerStage> stages) {
+    @SuppressWarnings("unused")
+    public Executor(List<CompilerStage<?, ?, ?>> stages) {
         this.stages = stages;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public CompilationContext execute(CompilationContext context) {
         CompilationResult<?> result = null;
-        for (var stage : stages) {
+        for (CompilerStage stage : stages) {
             try {
                 result = stage.execute(context, result);
                 if (!result.successful()) {

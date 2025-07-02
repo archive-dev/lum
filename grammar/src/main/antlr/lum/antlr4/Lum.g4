@@ -184,6 +184,8 @@ statement
     | forEachLoop # ForEachStmt
     | whileLoop # WhileStmt
     | doWhileLoop # DoWhileStmt
+    | BREAK IDENTIFIER # BreakStmt
+    | CONTINUE IDENTIFIER # ContinueStmt
     | return # ReturnStmt
     | variableDeclaration # VariableDeclarationStmt
     ;

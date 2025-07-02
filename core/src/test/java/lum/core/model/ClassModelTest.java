@@ -1,6 +1,6 @@
 package lum.core.model;
 
-import lum.core.impl.ClassModelFactory;
+import lum.core.impl.model.ClassModelFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ class ClassModelTest {
 
     @BeforeAll
     static void initClass() {
-        classModel = ClassModelFactory.of(TestClass.class).orElseThrow();
+        classModel = ClassModel.of(TestClass.class).orElseThrow();
     }
 
     @AfterAll
@@ -36,7 +36,7 @@ class ClassModelTest {
 
     @Test
     void test_primitive_class_model() {
-        ClassModel model = ClassModelFactory.of(int.class).orElseThrow();
+        ClassModel model = ClassModel.of(int.class).orElseThrow();
 
         assertEquals("int", model.name());
         assertEquals(0, model.members().length);
@@ -45,7 +45,7 @@ class ClassModelTest {
     @Test
     void test_simple_lum_class() {
         Path testPath = Paths.get(RESOURCES_PATH + "Test.lum");
-        ClassModel model = ClassModelFactory.ofFile(testPath).orElseThrow();
+        ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
         assertEquals("TestLum", model.name());
@@ -56,7 +56,7 @@ class ClassModelTest {
     @Test
     void test_interface_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "TestInterface.lum");
-        ClassModel model = ClassModelFactory.ofFile(testPath).orElseThrow();
+        ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
         assertEquals("TestInterfaceLum", model.name());
@@ -67,7 +67,7 @@ class ClassModelTest {
     @Test
     void test_generic_class_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "GenericClass.lum");
-        ClassModel model = ClassModelFactory.ofFile(testPath).orElseThrow();
+        ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
         assertEquals("GenericClassLum", model.name());
@@ -78,7 +78,7 @@ class ClassModelTest {
     @Test
     void test_class_with_imports_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "WithImports.lum");
-        ClassModel model = ClassModelFactory.ofFile(testPath).orElseThrow();
+        ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
         assertEquals("WithImportsLum", model.name());
@@ -89,7 +89,7 @@ class ClassModelTest {
     @Test
     void test_multiple_classes_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "MultipleClasses.lum");
-        ClassModel[] models = ClassModelFactory.classesFromFile(testPath).orElseThrow();
+        ClassModel[] models = ClassModel.ofFile(testPath).orElseThrow();
         
         assertNotNull(models);
         assertTrue(models.length > 0);
@@ -108,7 +108,7 @@ class ClassModelTest {
     @Test
     void test_valid_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "Valid.lum");
-        ClassModel model = ClassModelFactory.ofFile(testPath).orElseThrow();
+        ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
         assertEquals("ValidLum", model.name());
@@ -178,7 +178,7 @@ class ClassModelTest {
     void test_invalid_lum_file_handling() {
         Path invalidPath = Paths.get(RESOURCES_PATH + "InvalidImports.lum");
         // This should either return empty or handle gracefully
-        var result = ClassModelFactory.ofFile(invalidPath);
+        var result = ClassModel.fileClass(invalidPath);
         // The test passes if no exception is thrown
         assertNotNull(result);
     }
@@ -186,7 +186,7 @@ class ClassModelTest {
     @Test
     void test_duplicate_class_lum_file() {
         Path testPath = Paths.get(RESOURCES_PATH + "DuplicateClass.lum");
-        var result = ClassModelFactory.ofFile(testPath);
+        var result = ClassModel.fileClass(testPath);
         // Should handle duplicate classes gracefully
         assertNotNull(result);
     }
@@ -214,7 +214,7 @@ class ClassModelTest {
         Class<?>[] primitiveClasses = {boolean.class, byte.class, char.class, short.class, int.class, long.class, float.class, double.class};
         
         for (int i = 0; i < primitiveTypes.length; i++) {
-            ClassModel model = ClassModelFactory.of(primitiveClasses[i]).orElseThrow();
+            ClassModel model = ClassModel.of(primitiveClasses[i]).orElseThrow();
             assertEquals(primitiveTypes[i], model.name());
             assertEquals(0, model.members().length);
             assertTrue(model.isPrimitive());
@@ -223,7 +223,7 @@ class ClassModelTest {
 
     @Test
     void test_array_class_model() {
-        ClassModel model = ClassModelFactory.of(int[].class).orElseThrow();
+        ClassModel model = ClassModel.of(int[].class).orElseThrow();
         assertNotNull(model);
         // Array types should be handled by getting component type
         assertEquals("int", model.name());
@@ -231,7 +231,7 @@ class ClassModelTest {
 
     @Test
     void test_null_class_handling() {
-        var result = ClassModelFactory.of(null);
+        var result = ClassModel.of(null);
         assertTrue(result.isEmpty());
     }
 }

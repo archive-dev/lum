@@ -3,20 +3,26 @@ package lum.compiler.phases.generation;
 import lum.compiler.phases.CompilationException;
 import lum.compiler.phases.CompilationInfo;
 import lum.compiler.phases.CompilerStage;
-import lum.compiler.phases.parsing.ClassDefinitionsResult;
-import lum.core.model.ModelsParser;
+import lum.compiler.phases.Target;
+import lum.compiler.phases.parsing.ParsedClassesResult;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
-public class CodeGenerationStage implements CompilerStage<CompilationInfo, ClassDefinitionsResult, GeneratedClassesResult> {
+public class CodeGenerationStage implements CompilerStage<CompilationInfo, ParsedClassesResult, GeneratedClassesResult> {
+    private static final Map<Target, Supplier<ClassGenerator>> classGenerators = new HashMap<>();
+
+    private final Target compilationTarget;
+
+    public CodeGenerationStage(Target compilationTarget) {
+        this.compilationTarget = compilationTarget;
+    }
+
     @Override
-    public GeneratedClassesResult execute(CompilationInfo context, ClassDefinitionsResult result) throws CompilationException {
+    public GeneratedClassesResult execute(CompilationInfo context, ParsedClassesResult result) throws CompilationException {
         var classModels = result.intermediateResult();
-        var fileCM = ModelsParser.parseFileClassModel(result.ctx(), context.file().toString().substring(0, context.file().toString().lastIndexOf(".")));
-        if (fileCM != null)
-            classModels.add(fileCM);
-        var imports = ModelsParser.parseImports(result.ctx());
 
         HashMap<Path, byte[]> files = new HashMap<>();
 
@@ -24,13 +30,12 @@ public class CodeGenerationStage implements CompilerStage<CompilationInfo, Class
 
         for (var model : classModels) {
             try {
-                Path path = context.srcDir().resolve(model.pkg().replace(".", "/"));
-                path = context.srcDir().relativize(path.resolve(model.name() + ".class"));
-                byte[] file = ClassGenerator.generate(model, imports);
+                Path path = context.outputDirectory().orElse(Path.of("out")).resolve(model.pkg().replace(".", "/"));
+                byte[] file = classGenerators.get(compilationTarget).get().generate(model);
                 files.put(path, file);
             } catch (Exception e) {
                 error = e;
-                    break;
+                break;
             }
         }
         return new GeneratedClassesResult(files, error, error == null);

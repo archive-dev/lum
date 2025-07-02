@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.PathConverter;
 import lum.compiler.phases.CompilationInfo;
 import lum.compiler.pipeline.Executor;
-import lum.core.model.ModelConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,8 +51,6 @@ public class Compiler {
         Path defaultPath = Path.of("");
         if (srcDir.equals(defaultPath))
             srcDir = Files.isDirectory(file) ? file : Objects.requireNonNullElse(file.getParent(), defaultPath);
-
-        ModelConfig.workDir = srcDir;
 
         Executor executor = new Executor();
 
@@ -113,5 +110,9 @@ public class Compiler {
             logger.error("Error listing files recursively", e);
         }
         return files;
+    }
+
+    public Path srcDir() {
+        return srcDir;
     }
 }

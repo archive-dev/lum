@@ -1,5 +1,5 @@
 plugins {
-    id("java")
+    id("java-library")
 //    id("io.github.whoisamyy.lum.gradle")
 }
 
@@ -20,6 +20,8 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(24))
     }
+
+    modularity.inferModulePath = true
 
     withJavadocJar()
     withSourcesJar()

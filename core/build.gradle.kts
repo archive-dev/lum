@@ -1,5 +1,6 @@
 plugins {
     id("java-library")
+    id("org.javamodularity.moduleplugin") version "1.8.15"
 }
 
 group = "io.github.archivedev.lum"
@@ -30,6 +31,8 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(24))
     }
+
+    modularity.inferModulePath = true
 
     withJavadocJar()
     withSourcesJar()

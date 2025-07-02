@@ -7,6 +7,7 @@ import lum.core.model.*;
 import java.lang.reflect.AccessFlag;
 //import java.lang.reflect.Modifier;
 //import java.nio.file.Path;
+import java.nio.file.Path;
 import java.util.ArrayList;
 //import java.util.HashSet;
 import java.util.HashSet;
@@ -118,5 +119,25 @@ public final class Utils {
         members.addAll(List.of(methods));
 
         return members.toArray(java.lang.reflect.Member[]::new);
+    }
+
+    /**
+     * Subtracts path2 from path1, effectively returning the path that needs to be appended to path2
+     * to get path1.
+     *
+     * @param path1 The path from which to subtract.
+     * @param path2 The path to subtract.
+     * @return The resulting relative path.
+     * @throws IllegalArgumentException If path2 is not a prefix of path1 or if paths have different roots.
+     */
+    public static Path subtractPaths(Path path1, Path path2) {
+        Path normalizedPath1 = path1.normalize();
+        Path normalizedPath2 = path2.normalize();
+
+        if (!normalizedPath1.startsWith(normalizedPath2)) {
+            throw new IllegalArgumentException("Cannot subtract: " + path2 + " is not a prefix of " + path1);
+        }
+
+        return normalizedPath2.relativize(normalizedPath1);
     }
 }
