@@ -1,7 +1,5 @@
 package lum.core.model;
 
-import lum.core.impl.model.ClassModelFactory;
-import lum.core.impl.model.IntersectionClassModelImpl;
 import lum.core.impl.model.IntersectionTypeModelImpl;
 import lum.core.impl.model.UnionTypeModelImpl;
 import lum.core.util.Utils;
@@ -126,7 +124,7 @@ public interface TypeModel {
     /// @return returns an {@link Optional} of TypeModel or empty
     /// if clazz is null or there was an error while creating [TypeModel]
     static Optional<TypeModel> of(Class<?> clazz) {
-        return ClassModelFactory.typeModelOf(clazz);
+        return ModelContext.getProvider().createTypeModel(clazz);
     }
 
     /// Creates a [TypeModel] from given [Class]

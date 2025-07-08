@@ -48,7 +48,7 @@ class ClassModelTest {
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
-        assertEquals("TestLum", model.name());
+        assertEquals("TestLum", model.className());
         assertTrue(model.isPublic());
         assertTrue(model.isFinal());
     }
@@ -59,7 +59,7 @@ class ClassModelTest {
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
-        assertEquals("TestInterfaceLum", model.name());
+        assertEquals("TestInterfaceLum", model.className());
         assertTrue(model.isPublic());
         assertTrue(model.isFinal());
     }
@@ -70,7 +70,7 @@ class ClassModelTest {
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
-        assertEquals("GenericClassLum", model.name());
+        assertEquals("GenericClassLum", model.className());
         assertTrue(model.isPublic());
         assertTrue(model.isFinal());
     }
@@ -81,7 +81,7 @@ class ClassModelTest {
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
-        assertEquals("WithImportsLum", model.name());
+        assertEquals("WithImportsLum", model.className());
         assertTrue(model.isPublic());
         assertTrue(model.isFinal());
     }
@@ -111,7 +111,7 @@ class ClassModelTest {
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
-        assertEquals("ValidLum", model.name());
+        assertEquals("ValidLum", model.className());
         assertTrue(model.isPublic());
         assertTrue(model.isFinal());
     }

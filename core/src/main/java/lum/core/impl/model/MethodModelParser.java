@@ -7,7 +7,7 @@ import lum.core.util.Utils;
 import java.lang.reflect.AccessFlag;
 import java.util.*;
 
-final class MethodModelParser {
+public final class MethodModelParser {
     private MethodModelParser() {}
 
     private static final Map<Class<? extends LumParser.OperatorKeywordContext>, String> operatorNames = new HashMap<>();

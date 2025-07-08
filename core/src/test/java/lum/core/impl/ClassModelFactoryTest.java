@@ -1,6 +1,6 @@
 package lum.core.impl;
 
-import lum.core.impl.model.ClassModelFactory;
+import lum.core.impl.model.ModelFacade;
 import lum.core.impl.model.PrimitiveClassModelImpl;
 import lum.core.model.ClassModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,12 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,20 +19,12 @@ class ClassModelFactoryTest {
     @TempDir
     Path tempDir;
 
+    private ModelFacade facade;
+
     @BeforeEach
-    void setUp() throws Exception {
-        // Clear caches using reflection
-        Field classCacheField = ClassModelFactory.class.getDeclaredField("classCache");
-        classCacheField.setAccessible(true);
-        ((Map<?, ?>) classCacheField.get(null)).clear();
-
-        Field classCache2Field = ClassModelFactory.class.getDeclaredField("classCache2");
-        classCache2Field.setAccessible(true);
-        ((Map<?, ?>) classCache2Field.get(null)).clear();
-
-        Field processedClassModelsField = ClassModelFactory.class.getDeclaredField("processedClassModels");
-        processedClassModelsField.setAccessible(true);
-        ((Set<?>) processedClassModelsField.get(null)).clear();
+    void setUp() {
+        // Create a fresh facade for each test to ensure clean state
+        facade = new ModelFacade();
     }
 
     @Test

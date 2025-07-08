@@ -4,24 +4,26 @@ import lum.antlr4.LumLexer;
 import lum.antlr4.LumParser;
 import lum.core.model.ImportsModel;
 import lum.core.model.Member;
+import lum.core.util.Utils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-final class FileParser {
+public final class FileParser {
     private FileParser() {}
 
     private static final Map<Path, ImportsModel> importsCache = new HashMap<>();
     private static final Map<Path, Optional<Member[]>> membersCache = new HashMap<>();
     private static final Map<Path, LumParser.FileContext> contextsCache = new HashMap<>();
 
-    public static Optional<Member[]> parseFile(Path path) {
+    public static Optional<Member[]> parseFile(Path workDir, Path path) {
         if (membersCache.containsKey(path))
             return membersCache.get(path);
 
@@ -29,14 +31,19 @@ final class FileParser {
 
         ImportsModel imports = getImports(path);
         importsCache.put(path, imports);
-        ImportsParser.parseImports(imports, fileCtx.imports());
+        ImportsParser.parseImports(workDir, imports, fileCtx.imports());
 
-        var members = ClassModelParser.buildMemberModels(imports, fileCtx);
+        String pkg = "";
+        if (workDir != null)
+            pkg = Utils.subtractPaths(path.getParent(), workDir).toString()
+                    .replaceAll("\\%s".formatted(File.separator), ".");
+
+        var members = ClassModelParser.buildMemberModels(pkg, imports, fileCtx);
         membersCache.put(path, members);
         return members;
     }
 
-    static ImportsModel getImports(Path path) {
+    public static ImportsModel getImports(Path path) {
         return importsCache.containsKey(path) ? importsCache.get(path) : new ImportsModelImpl();
     }
 

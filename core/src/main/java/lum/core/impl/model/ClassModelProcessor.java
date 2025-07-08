@@ -2,13 +2,12 @@ package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
 import lum.core.model.ClassModel;
-import lum.core.model.MethodModel;
 import lum.core.util.Utils;
 import lum.lang.struct.Pair;
 
 import java.util.*;
 
-class ClassModelProcessor {
+public class ClassModelProcessor {
     private final TypeProcessor typeProcessor;
     private final GenericsProcessor genericsProcessor;
     private final ClassModelImpl model;

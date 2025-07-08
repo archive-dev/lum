@@ -1,3 +1,1 @@
-public class Outer {
-    public class InnerClass { }
-}
+class FirstClass { } class SecondClass { }

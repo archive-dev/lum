@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-final class TypeModelPool {
+public final class TypeModelPool {
     private TypeModelPool() {}
 
     private static final Map<ClassModel, Map<Integer, TypeModel>> nonGenericTypeModelPool = new HashMap<>();

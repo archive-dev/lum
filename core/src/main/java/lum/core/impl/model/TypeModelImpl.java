@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 import java.util.Optional;
 
-record TypeModelImpl(
+public record TypeModelImpl(
         ClassModel model,
         int arrayDimensions,
         Optional<TypeArgument[]> genericArguments

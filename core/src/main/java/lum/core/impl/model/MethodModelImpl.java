@@ -8,7 +8,7 @@ import java.lang.reflect.AccessFlag;
 import java.util.Arrays;
 import java.util.Optional;
 
-record MethodModelImpl(
+public record MethodModelImpl(
         Optional<ClassModel> owner,
         AttributeModel[] attributes,
         AccessFlag[] accessFlags,

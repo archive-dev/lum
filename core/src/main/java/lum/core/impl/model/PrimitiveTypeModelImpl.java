@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-record PrimitiveTypeModelImpl(
+public record PrimitiveTypeModelImpl(
         ClassModel model,
         int arrayDimensions
 ) implements TypeModel.PrimitiveTypeModel {

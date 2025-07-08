@@ -10,7 +10,7 @@ import lum.core.util.Utils;
 import java.lang.reflect.AccessFlag;
 import java.util.*;
 
-final class FieldModelParser {
+public final class FieldModelParser {
     private static final Set<AccessFlag> ACCESS_VISIBILITY_FLAGS = Set.of(
             AccessFlag.PUBLIC, AccessFlag.PRIVATE, AccessFlag.PROTECTED
     );

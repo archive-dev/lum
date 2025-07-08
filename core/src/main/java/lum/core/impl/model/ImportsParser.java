@@ -9,37 +9,33 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-final class ImportsParser {
+public final class ImportsParser {
     private ImportsParser() {}
 
-    public static void parseImports(ImportsModel imports, List<LumParser.ImportsContext> ctxs) {
+    public static void parseImports(Path workDir, ImportsModel imports, List<LumParser.ImportsContext> ctxs) {
         for (var ctx : ctxs) {
             switch (ctx) {
-                case LumParser.SingleImportContext single -> {
-                    addSingleImport(single, imports);
-                }
-                case LumParser.AsImportContext importAs -> {
-                    addImportAs(importAs.importAs(), imports);
-                }
-                case LumParser.FromImportContext importFrom -> {
-                    addImportFrom(importFrom.importFrom(), imports);
-                }
-                case LumParser.MultiImportContext importMulti -> {
-                    addImportMulti(importMulti.importMulti(), imports);
-                }
+                case LumParser.SingleImportContext single ->
+                        addSingleImport(workDir, single, imports);
+                case LumParser.AsImportContext importAs ->
+                        addImportAs(workDir, importAs.importAs(), imports);
+                case LumParser.FromImportContext importFrom ->
+                        addImportFrom(workDir, importFrom.importFrom(), imports);
+                case LumParser.MultiImportContext importMulti ->
+                        addImportMulti(workDir, importMulti.importMulti(), imports);
                 default -> throw new IllegalStateException("Unexpected value: " + ctx);
             }
         }
     }
 
-    private static void addImportMulti(LumParser.ImportMultiContext importMulti, ImportsModel imports) {
+    private static void addImportMulti(Path workDir, LumParser.ImportMultiContext importMulti, ImportsModel imports) {
         importMulti.importAny().stream()
                 .filter(ctx -> ctx instanceof LumParser.AsContext)
                 .map(ctx -> ((LumParser.AsContext) ctx).importAs())
                 .forEach(importAs -> {
                     var identifiers = importAs.importSingle().IDENTIFIER() ;
                     final String alias = importAs.IDENTIFIER().getText();
-                    for (var member : parseImport(identifiers).orElse(Utils.EMPTY_MEMBERS)) {
+                    for (var member : parseImport(workDir, identifiers).orElse(Utils.EMPTY_MEMBERS)) {
                         switch (member) {
                             case ClassModel model -> imports.classes().put(alias, model);
                             case MethodModel method -> imports.methods().put(alias, method);
@@ -55,7 +51,7 @@ final class ImportsParser {
                 .forEach(importSingle -> {
                     var identifiers = importSingle.IDENTIFIER();
                     final String alias = importSingle.IDENTIFIER().getLast().getText();
-                    for (var member : parseImport(identifiers).orElse(Utils.EMPTY_MEMBERS)) {
+                    for (var member : parseImport(workDir, identifiers).orElse(Utils.EMPTY_MEMBERS)) {
                         switch (member) {
                             case ClassModel model -> imports.classes().put(alias, model);
                             case MethodModel method -> imports.methods().put(alias, method);
@@ -66,7 +62,7 @@ final class ImportsParser {
                 });
     }
 
-    private static void addImportFrom(LumParser.ImportFromContext importFrom, ImportsModel imports) {
+    private static void addImportFrom(Path workDir, LumParser.ImportFromContext importFrom, ImportsModel imports) {
         importFrom.importAny().stream()
                 .filter(ctx -> ctx instanceof LumParser.AsContext)
                 .map(ctx -> ((LumParser.AsContext) ctx).importAs())
@@ -74,7 +70,7 @@ final class ImportsParser {
             var identifiers = importFrom.from().IDENTIFIER();
             identifiers.addAll(importAs.importSingle().IDENTIFIER());
             final String alias = importAs.IDENTIFIER().getText();
-            for (var member : parseImport(identifiers).orElse(Utils.EMPTY_MEMBERS)) {
+            for (var member : parseImport(workDir, identifiers).orElse(Utils.EMPTY_MEMBERS)) {
                 switch (member) {
                     case ClassModel model -> imports.classes().put(alias, model);
                     case MethodModel method -> imports.methods().put(alias, method);
@@ -91,7 +87,7 @@ final class ImportsParser {
                     var identifiers = importFrom.from().IDENTIFIER();
                     identifiers.addAll(importSingle.IDENTIFIER());
                     final String alias = importSingle.IDENTIFIER().getLast().getText();
-                    for (var member : parseImport(identifiers).orElse(Utils.EMPTY_MEMBERS)) {
+                    for (var member : parseImport(workDir, identifiers).orElse(Utils.EMPTY_MEMBERS)) {
                         switch (member) {
                             case ClassModel model -> imports.classes().put(alias, model);
                             case MethodModel method -> imports.methods().put(alias, method);
@@ -102,9 +98,9 @@ final class ImportsParser {
                 });
     }
 
-    private static void addImportAs(LumParser.ImportAsContext importAs, ImportsModel imports) {
+    private static void addImportAs(Path workDir, LumParser.ImportAsContext importAs, ImportsModel imports) {
         final String alias = importAs.IDENTIFIER().getText();
-        for (var member : parseSingleImport(importAs.importSingle()).orElse(Utils.EMPTY_MEMBERS)) {
+        for (var member : parseSingleImport(workDir, importAs.importSingle()).orElse(Utils.EMPTY_MEMBERS)) {
             switch (member) {
                 case ClassModel model -> imports.classes().put(alias, model);
                 case MethodModel method -> imports.methods().put(alias, method);
@@ -114,8 +110,8 @@ final class ImportsParser {
         }
     }
 
-    private static void addSingleImport(LumParser.SingleImportContext single, ImportsModel imports) {
-        for (var member : parseSingleImport(single.importSingle()).orElse(Utils.EMPTY_MEMBERS)) {
+    private static void addSingleImport(Path workDir, LumParser.SingleImportContext single, ImportsModel imports) {
+        for (var member : parseSingleImport(workDir, single.importSingle()).orElse(Utils.EMPTY_MEMBERS)) {
             switch (member) {
                 case ClassModel model -> imports.classes().put(model.className(), model);
                 case MethodModel method -> imports.methods().put(method.name(), method);
@@ -125,18 +121,18 @@ final class ImportsParser {
         }
     }
 
-    private static Optional<Member[]> parseSingleImport(LumParser.ImportSingleContext ctx) {
-        return parseImport(ctx.IDENTIFIER());
+    private static Optional<Member[]> parseSingleImport(Path workDir, LumParser.ImportSingleContext ctx) {
+        return parseImport(workDir, ctx.IDENTIFIER());
     }
 
-    private static Optional<Member[]> parseImport(List<TerminalNode> identifiers) {
-        return convertToMembers(importToPath(identifiers.stream().map(TerminalNode::getText).toList()));
+    private static Optional<Member[]> parseImport(Path workDir, List<TerminalNode> identifiers) {
+        return convertToMembers(workDir, importToPath(identifiers.stream().map(TerminalNode::getText).toList()));
     }
 
-    private static Optional<Member[]> convertToMembers(PathToClass path) {
+    private static Optional<Member[]> convertToMembers(Path workDir, PathToClass path) {
         Optional<Member[]> members;
         if (path.isFile())
-            members = FileParser.parseFile(path.pathToFile());
+            members = FileParser.parseFile(workDir, path.pathToFile());
         else {
             try {
                 members = ClassModel.of(Class.forName(path.javaClassName()))

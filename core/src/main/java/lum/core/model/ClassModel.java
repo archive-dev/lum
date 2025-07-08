@@ -1,6 +1,5 @@
 package lum.core.model;
 
-import lum.core.impl.model.ClassModelFactory;
 import lum.core.impl.model.IntersectionClassModelImpl;
 import lum.core.util.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +88,7 @@ public interface ClassModel extends Attributable, Member, Generic {
     /// @param clazz the {@link Class} to create a model for, may be null
     /// @return {@link Optional} containing the {@link ClassModel}, or empty if clazz is null
     static @NotNull Optional<ClassModel> of(Class<?> clazz) {
-        return ClassModelFactory.of(clazz);
+        return ModelContext.getProvider().createClassModel(clazz);
     }
 
     /// Creates a [ClassModel] containing static members (excluding other classes) of the .lum file.
@@ -99,11 +98,11 @@ public interface ClassModel extends Attributable, Member, Generic {
     /// if the file doesn't contain any member or there was an error
     /// while parsing the file.
     static @NotNull Optional<ClassModel> fileClass(Path path) {
-        return ClassModelFactory.ofFile(path);
+        return ModelContext.getProvider().createClassModelFromFile(path);
     }
 
     static @NotNull Optional<ClassModel> fileClass(Path workDir, Path path) {
-        return ClassModelFactory.ofFile(workDir, path);
+        return ModelContext.getProvider().createClassModelFromFile(workDir, path);
     }
 
     /// Creates an array of [ClassModel]s of classes
@@ -113,10 +112,10 @@ public interface ClassModel extends Attributable, Member, Generic {
     /// if the file doesn't contain any explicitly declared class
     /// or there was an error while parsing the file.
     static @NotNull Optional<ClassModel[]> ofFile(Path path) {
-        return ClassModelFactory.classesFromFile(path);
+        return ModelContext.getProvider().createClassModelsFromFile(path);
     }
 
     static @NotNull Optional<ClassModel[]> ofFile(Path workDir, Path path) {
-        return ClassModelFactory.classesFromFile(workDir, path);
+        return ModelContext.getProvider().createClassModelsFromFile(workDir, path);
     }
 }

@@ -1,5 +1,7 @@
-package lum.core.impl.model;
+package lum.core.impl.model.factory;
 
+import lum.core.impl.model.MethodModelImpl;
+import lum.core.impl.model.ParameterModelImpl;
 import lum.core.model.ClassModel;
 import lum.core.model.MethodModel;
 import lum.core.model.ParameterModel;
@@ -13,10 +15,15 @@ import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.Optional;
 
-final class MethodModelFactory {
-    private MethodModelFactory() {}
-
-    public static MethodModel of(Method method) {
+/**
+ * Factory for creating MethodModel instances from Java reflection objects.
+ */
+public class MethodModelFactory {
+    
+    /**
+     * Creates a MethodModel from a Java Method.
+     */
+    public MethodModel createFromMethod(Method method) {
         //noinspection OptionalGetWithoutIsPresent
         return new MethodModelImpl(
                 ClassModel.of(method.getDeclaringClass()),
@@ -24,31 +31,34 @@ final class MethodModelFactory {
                 method.accessFlags().toArray(AccessFlag[]::new),
                 method.getName(),
                 Optional.empty(),
-                processParameterModels(method.getParameters()),
+                createParameterModels(method.getParameters()),
                 ClassModel.of(method.getReturnType()).orElse(ClassModel.of(void.class).get()).asTypeModel(),
                 Utils.EMPTY_CLASS_MODELS,
                 Optional.empty(),
                 Utils.EMPTY_ATTRIBUTE_PARSERS
         );
     }
-
-    public static MethodModel of(Constructor<?> method) {
+    
+    /**
+     * Creates a MethodModel from a Java Constructor.
+     */
+    public MethodModel createFromConstructor(Constructor<?> constructor) {
         //noinspection OptionalGetWithoutIsPresent
         return new MethodModelImpl(
-                ClassModel.of(method.getDeclaringClass()),
+                ClassModel.of(constructor.getDeclaringClass()),
                 Utils.EMPTY_ATTRIBUTE_MODELS,
-                method.accessFlags().toArray(AccessFlag[]::new),
+                constructor.accessFlags().toArray(AccessFlag[]::new),
                 "<init>",
                 Optional.empty(),
-                processParameterModels(method.getParameters()),
+                createParameterModels(constructor.getParameters()),
                 ClassModel.of(void.class).get().asTypeModel(),
                 Utils.EMPTY_CLASS_MODELS,
                 Optional.empty(),
                 Utils.EMPTY_ATTRIBUTE_PARSERS
         );
     }
-
-    private static ParameterModel[] processParameterModels(Parameter... parameters) {
+    
+    private ParameterModel[] createParameterModels(Parameter... parameters) {
         return Arrays.stream(parameters)
                 .map(p -> new ParameterModelImpl(
                         Utils.EMPTY_ATTRIBUTE_MODELS,

@@ -2,7 +2,6 @@ package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
 import lum.core.model.*;
-import lum.core.util.Utils;
 import lum.lang.struct.Either;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -12,7 +11,7 @@ import java.lang.reflect.AccessFlag;
 import java.util.*;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-final class ClassModelImpl implements ClassModel {
+public final class ClassModelImpl implements ClassModel {
     private static final Map<ClassModel, Member[]> allMembers = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(ClassModelImpl.class);
     private final AttributeModel[] attributes;
@@ -51,7 +50,7 @@ final class ClassModelImpl implements ClassModel {
         this(attributes, accessFlags, name, typeParameters, superClass, interfaces, members, new Either.Right<>(ctx));
     }
 
-    private ClassModelImpl(
+    public ClassModelImpl(
             AttributeModel[] attributes,
             AccessFlag[] accessFlags,
             String name,

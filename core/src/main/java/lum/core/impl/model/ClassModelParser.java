@@ -3,12 +3,12 @@ package lum.core.impl.model;
 import lum.antlr4.LumParser;
 import lum.core.model.*;
 import lum.core.util.Utils;
-import lum.lang.struct.Pair;
 
 import java.lang.reflect.AccessFlag;
+
 import java.util.*;
 
-final class ClassModelParser {
+public final class ClassModelParser {
     private ClassModelParser() {}
 
     private static Map<ImportsModel, TypeProcessor> typeProcessorsCache = new HashMap<>();
@@ -17,7 +17,7 @@ final class ClassModelParser {
         return Optional.ofNullable(typeProcessorsCache.get(imports));
     }
 
-    public static Optional<Member[]> buildMemberModels(ImportsModel imports, LumParser.FileContext ctx) {
+    public static Optional<Member[]> buildMemberModels(String pkg, ImportsModel imports, LumParser.FileContext ctx) {
         if (ctx.declaration() == null) return Optional.empty();
         Set<Member> members = new HashSet<>();
         TypeProcessor typeProcessor = typeProcessorsCache.computeIfAbsent(imports, TypeProcessor::new);
@@ -26,7 +26,7 @@ final class ClassModelParser {
         // parse classes first and everything else second
         for (var decl : ctx.declaration()) {
             if (decl.typeDeclaration() != null)
-                members.add(buildClassModel(decl.typeDeclaration()));
+                members.add(buildClassModel(pkg, decl.typeDeclaration()));
             else if (decl.member() != null) {
                 members.addAll(MemberParser.parseMember(typeProcessor, decl.member()));
             }
@@ -35,32 +35,32 @@ final class ClassModelParser {
         return Optional.ofNullable(members.toArray(Member[]::new));
     }
 
-    private static ClassModel buildClassModel(LumParser.TypeDeclarationContext ctx) {
+    private static ClassModel buildClassModel(String pkg, LumParser.TypeDeclarationContext ctx) {
         AccessFlag[] accessFlags;
         switch (ctx) {
             case LumParser.ClassDeclarationContext clazz -> {
                 accessFlags = Utils.getAccessFlags(clazz.access(), clazz.modifier()).toArray(AccessFlag[]::new);
-                return buildGenericType(clazz.class_().genericTypeDeclaration(), accessFlags);
+                return buildGenericType(pkg, clazz.class_().genericTypeDeclaration(), accessFlags);
             }
             case LumParser.InterfaceDeclarationContext inter -> {
                 accessFlags = Utils.getAccessFlags(inter.access(), inter.modifier()).toArray(AccessFlag[]::new);
-                return buildGenericType(inter.interface_().genericTypeDeclaration(), accessFlags);
+                return buildGenericType(pkg, inter.interface_().genericTypeDeclaration(), accessFlags);
             }
             case LumParser.EnumDeclarationContext enum_ -> {
                 accessFlags = Utils.getAccessFlags(enum_.access(), enum_.modifier()).toArray(AccessFlag[]::new);
-                return buildNonGenericType(enum_.enum_().nonGenericTypeDeclaration(), accessFlags);
+                return buildNonGenericType(pkg, enum_.enum_().nonGenericTypeDeclaration(), accessFlags);
             }
             case LumParser.AnnotationDeclarationContext annotation -> {
                 accessFlags = Utils.getAccessFlags(annotation.access(), annotation.modifier()).toArray(AccessFlag[]::new);
-                return buildNonGenericType(annotation.annotation().nonGenericTypeDeclaration(), accessFlags);
+                return buildNonGenericType(pkg, annotation.annotation().nonGenericTypeDeclaration(), accessFlags);
             }
             default -> throw new IllegalStateException("Unexpected value: " + ctx);
         }
         // todo: divided building and processing
     }
 
-    private static ClassModel buildGenericType(LumParser.GenericTypeDeclarationContext ctx, AccessFlag[] accessFlags) {
-        String className = ctx.IDENTIFIER().getText();
+    private static ClassModel buildGenericType(String pkg, LumParser.GenericTypeDeclarationContext ctx, AccessFlag[] accessFlags) {
+        String className = pkg.isEmpty() ? ctx.IDENTIFIER().getText() : pkg + "." + ctx.IDENTIFIER().getText();
         ClassModel[] interfaces = buildInterfacesArray(ctx.inheritance());
 
         Optional<TypeParameter[]> typeParameters;
@@ -84,8 +84,8 @@ final class ClassModelParser {
         );
     }
 
-    private static ClassModel buildNonGenericType(LumParser.NonGenericTypeDeclarationContext ctx, AccessFlag[] accessFlags) {
-        String className = ctx.IDENTIFIER().getText();
+    private static ClassModel buildNonGenericType(String pkg, LumParser.NonGenericTypeDeclarationContext ctx, AccessFlag[] accessFlags) {
+        String className = pkg.isEmpty() ? ctx.IDENTIFIER().getText() : pkg + "." + ctx.IDENTIFIER().getText();
         ClassModel[] interfaces = buildInterfacesArray(ctx.inheritance());
 
         int memberCount = countDeclarations(ctx.declaration());
