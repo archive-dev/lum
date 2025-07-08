@@ -5,7 +5,7 @@ import lum.compiler.phases.CompilationResult;
 
 public class ClassWritingResult extends CompilationResult<Boolean> {
     public ClassWritingResult(Exception error, boolean successful) {
-        super(error, successful);
+        super(successful, error, successful);
     }
 
     @Override
