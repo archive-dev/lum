@@ -5,10 +5,7 @@ import lum.core.model.*;
 import lum.core.util.Utils;
 
 import java.lang.reflect.AccessFlag;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 final class MethodModelParser {
     private MethodModelParser() {}
@@ -58,16 +55,29 @@ final class MethodModelParser {
             genericsProcessor.processGenericParameters(typeParameters.get(), ctx.func().generic());
         }
 
-        return new MethodModelImpl(
+        TypeModel returnType = typeProcessor.getType(ctx.func().type()).orElse(TypeModel.VOID);
+        ParameterModel[] parameters = buildParameterModels(typeProcessor, ctx.func().parameterList());
+
+        AttributeModel[] attributes = Utils.EMPTY_ATTRIBUTE_MODELS;
+        if (ctx.func().codeBlock() != null)
+            attributes = new AttributeModel[1];
+
+        AttributeParser<?>[] attributeParsers = new AttributeParser[1];
+        MethodModelImpl model = new MethodModelImpl(
                 Optional.ofNullable(owner),
-                Utils.EMPTY_ATTRIBUTE_MODELS,
+                attributes,
                 flagsSet.toArray(AccessFlag[]::new),
                 methodName,
                 typeParameters,
-                buildParameterModels(typeProcessor, ctx.func().parameterList()),
-                typeProcessor.getType(ctx.func().type()),
-                Utils.EMPTY_CLASS_MODELS
+                parameters,
+                returnType,
+                Utils.EMPTY_CLASS_MODELS,
+                Optional.ofNullable(ctx.func().codeBlock()),
+                attributeParsers
         );
+        attributeParsers[0] = new CodeAttributeParser(model, typeProcessor);
+
+        return model;
     }
 
     static MethodModel buildMethodModel(ClassModel owner, TypeProcessor typeProcessor, LumParser.OperatorMemberContext ctx) {
@@ -89,16 +99,26 @@ final class MethodModelParser {
             genericsProcessor.processGenericParameters(typeParameters.get(), ctx.operator().generic());
         }
 
-        return new MethodModelImpl(
+        AttributeModel[] attributes = Utils.EMPTY_ATTRIBUTE_MODELS;
+        if (ctx.operator().codeBlock() != null)
+            attributes = new AttributeModel[1];
+
+        AttributeParser<?>[] attributeParsers = new AttributeParser[1];
+        MethodModelImpl model = new MethodModelImpl(
                 Optional.ofNullable(owner),
-                Utils.EMPTY_ATTRIBUTE_MODELS,
+                attributes,
                 flagsSet.toArray(AccessFlag[]::new),
                 methodName,
                 typeParameters,
                 buildParameterModels(typeProcessor, ctx.operator().parameterList()),
-                typeProcessor.getType(ctx.operator().type()),
-                Utils.EMPTY_CLASS_MODELS
+                typeProcessor.getType(ctx.operator().type()).orElseThrow(() -> new IllegalStateException("Type not found: " + ctx.operator().type().getText())),
+                Utils.EMPTY_CLASS_MODELS,
+                Optional.ofNullable(ctx.operator().codeBlock()),
+                attributeParsers
         );
+        attributeParsers[0] = new CodeAttributeParser(model, typeProcessor);
+
+        return model;
     }
 
     static MethodModel buildMethodModel(ClassModel owner, TypeProcessor typeProcessor, LumParser.ConstructorMemberContext ctx) {
@@ -120,16 +140,23 @@ final class MethodModelParser {
             genericsProcessor.processGenericParameters(typeParameters.get(), ctx.constructor().generic());
         }
 
-        return new MethodModelImpl(
+        AttributeModel[] attributes = new AttributeModel[1];
+        AttributeParser<?>[] attributeParsers = new AttributeParser[1];
+        MethodModelImpl model = new MethodModelImpl(
                 Optional.ofNullable(owner),
-                Utils.EMPTY_ATTRIBUTE_MODELS,
+                attributes,
                 flagsSet.toArray(AccessFlag[]::new),
                 methodName,
                 typeParameters,
                 buildParameterModels(typeProcessor, ctx.constructor().parameterList()),
                 TypeModel.of(void.class).orElseThrow(),
-                Utils.EMPTY_CLASS_MODELS
+                Utils.EMPTY_CLASS_MODELS,
+                Optional.ofNullable(ctx.constructor().codeBlock()),
+                attributeParsers
         );
+        attributeParsers[0] = new CodeAttributeParser(model, typeProcessor);
+
+        return model;
     }
 
     private static ParameterModel[] buildParameterModels(TypeProcessor typeProcessor, LumParser.ParameterListContext ctx) {
@@ -140,7 +167,7 @@ final class MethodModelParser {
         return new ParameterModelImpl(
                 Utils.EMPTY_ATTRIBUTE_MODELS,
                 ctx.IDENTIFIER().getText(),
-                typeProcessor.getType(ctx.type())
+                typeProcessor.getType(ctx.type()).orElseThrow(() -> new IllegalStateException("Type not found " + ctx.type().getText()))
         );
     }
 }

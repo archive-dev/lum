@@ -20,6 +20,18 @@ public record ImportsModelImpl(
           new HashMap<>(),
           new HashMap<>()
         );
+
+        classes.put("str", ClassModel.STRING);
+        classes.put("int", ClassModel.INT);
+        classes.put("long", ClassModel.LONG);
+        classes.put("float", ClassModel.FLOAT);
+        classes.put("double", ClassModel.DOUBLE);
+        classes.put("byte", ClassModel.BYTE);
+        classes.put("short", ClassModel.SHORT);
+        classes.put("char", ClassModel.CHAR);
+        classes.put("obj", ClassModel.OBJECT);
+        classes.put("bool", ClassModel.BOOLEAN);
+        classes.put("void", ClassModel.VOID);
     }
 
     @Override

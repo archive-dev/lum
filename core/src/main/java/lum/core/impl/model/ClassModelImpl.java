@@ -2,6 +2,7 @@ package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
 import lum.core.model.*;
+import lum.core.util.Utils;
 import lum.lang.struct.Either;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -101,12 +102,44 @@ final class ClassModelImpl implements ClassModel {
 
     @Override
     public Optional<MethodModel> getMethod(String name, TypeModel... parameterTypes) {
-        return Optional.empty();
+        return Arrays.stream(allMembers())
+                .filter(Objects::nonNull)
+                .filter(m -> m instanceof MethodModel)
+                .filter(m -> m.name().equals(name))
+                .map(m -> ((MethodModel) m))
+                .filter(method ->
+                        areSubtypesOf(
+                                Arrays.stream(method.parameters())
+                                            .map(ParameterModel::type)
+                                            .toArray(TypeModel[]::new),
+                                parameterTypes
+                        )
+                ).findFirst();
+    }
+
+    private static boolean areSubtypesOf(TypeModel[] types, TypeModel[] subtypes) {
+        if (types.length != subtypes.length) return false;
+
+        for (int i = 0; i < types.length; i++) {
+            var type = types[i];
+            var subtype = subtypes[i];
+
+            if (subtype.arrayDimensions() != type.arrayDimensions())
+                return false;
+            if (!subtype.model().isSubclassOf(type.model()))
+                return false;
+        }
+
+        return true;
     }
 
     @Override
     public Optional<FieldModel> getField(String name) {
-        return Optional.empty();
+        return Arrays.stream(allMembers())
+                .filter(m -> m instanceof FieldModel)
+                .filter(m -> m.name().equals(name))
+                .map(m -> ((FieldModel) m))
+                .findFirst();
     }
 
     @Override
@@ -270,8 +303,7 @@ final class ClassModelImpl implements ClassModel {
                 Objects.equals(this.name, that.name) &&
                 Objects.equals(this.typeParameters, that.typeParameters) &&
                 Objects.equals(this.superClass, that.superClass) &&
-                Arrays.equals(this.interfaces, that.interfaces) &&
-                Arrays.equals(this.members, that.members);
+                Arrays.equals(this.interfaces, that.interfaces);
     }
 
     @Override

@@ -5,7 +5,7 @@ import lum.core.model.*;
 import java.lang.constant.ClassDesc;
 import java.util.*;
 
-final class UnionTypeModelImpl implements TypeModel.UnionTypeModel {
+public final class UnionTypeModelImpl implements TypeModel.UnionTypeModel {
     private final TypeModel[] types;
     private final int arrayDimensions;
 

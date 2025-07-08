@@ -52,11 +52,13 @@ public final class ClassModelFactory {
     }
 
     public static Optional<ClassModel> ofFile(Path path) {
-        return ofFile(Path.of(""), path);
+        Path workDir = Path.of("workdir");
+        return ofFile(workDir, workDir.resolve(path));
     }
 
     public static Optional<ClassModel[]> classesFromFile(Path path) {
-        return classesFromFile(Path.of(""), path);
+        Path workDir = Path.of("workdir");
+        return classesFromFile(workDir, workDir.resolve(path));
     }
 
     public static Optional<ClassModel[]> classesFromFile(Path workDir, Path path) {
@@ -130,10 +132,9 @@ public final class ClassModelFactory {
     }
 
     private static void processInterfaces(ClassModel model, Class<?> clazz) {
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
         ClassModel[] interfaces = Arrays.stream(clazz.getInterfaces())
                 .map(ClassModelFactory::of)
-                .map(Optional::get)
+                .map(Optional::orElseThrow)
                 .toArray(ClassModel[]::new);
 
         System.arraycopy(interfaces, 0, model.interfaces(), 0, interfaces.length);

@@ -174,7 +174,7 @@ operatorKeyword
 
 codeBlock
     : (LBRACE ENDLINE* ((expression | statement) ENDLINE*)* RBRACE)
-    | (ARROW_RIGHT (expression | statement))
+    | (ARROW_RIGHT ENDLINE* (expression | statement))
     ;
 
 statement
@@ -267,43 +267,43 @@ assignmentExpression
     ;
 
 logicalOrExpression // or, ||
-    : logicalAndExpression (OR logicalAndExpression)*
+    : logicalAndExpression (OR logicalAndExpression)?
     ;
 
 logicalAndExpression // and, &&
-    : bitwiseOrExpression (AND bitwiseOrExpression)*
+    : bitwiseOrExpression (AND bitwiseOrExpression)?
     ;
 
 bitwiseOrExpression // |
-    : bitwiseXorExpression (BITOR bitwiseXorExpression)*
+    : bitwiseXorExpression (BITOR bitwiseXorExpression)?
     ;
 
 bitwiseXorExpression // ^, xor
-    : bitwiseAndExpression (XOR bitwiseAndExpression)*
+    : bitwiseAndExpression (XOR bitwiseAndExpression)?
     ;
 
 bitwiseAndExpression // &
-    : equalityExpression (BITAND equalityExpression)*
+    : equalityExpression (BITAND equalityExpression)?
     ;
 
 equalityExpression // ==, !=
-    : relationalExpression ( op=(EQUAL_EQUAL | NOT_EQUAL) relationalExpression )*
+    : relationalExpression ( op=(EQUAL_EQUAL | NOT_EQUAL) relationalExpression )?
     ;
 
 relationalExpression // <, >, <=, >=, is, in
-    : shiftExpression ( op=(GT | LT | GE | LE | IS | IN) shiftExpression )*
+    : shiftExpression ( op=(GT | LT | GE | LE | IS | IN) shiftExpression )?
     ;
 
 shiftExpression // <<, >>
-    : additiveExpression ( op=(SHL | SHR) additiveExpression )*
+    : additiveExpression ( op=(SHL | SHR) additiveExpression )?
     ;
 
 additiveExpression // +, -
-    : multiplicativeExpression ( op=(ADD | SUB) multiplicativeExpression )*
+    : multiplicativeExpression ( op=(ADD | SUB) multiplicativeExpression )?
     ;
 
 multiplicativeExpression // *, /, //, %
-    : unaryExpression ( op=(MUL | DIV | IDIV | MOD) unaryExpression )*
+    : unaryExpression ( op=(MUL | DIV | IDIV | MOD) unaryExpression )?
     ;
 
 unaryExpression
@@ -315,7 +315,7 @@ unaryExpression
 
 postfixExpression
     : primaryExpression                                      # Primary
-    | postfixExpression DOT IDENTIFIER                       # MemberAccess      // Member access: .member
+    | postfixExpression DOT (IDENTIFIER| NEW)                # MemberAccess      // Member access: .member
     | postfixExpression call                                 # CallExpression    // Member access: .member
     | postfixExpression DOT generic? IDENTIFIER              # GenericFuncAccess // Qualified generic method access: .<T>method - if syntax supported
     | postfixExpression DOT generic? NEW                     # GenericConstructorAccess
@@ -339,7 +339,7 @@ primaryExpression
     ;
 
 dictInitializer
-    : LBRACK (kvPair (COMMA (kvPair))* )? COMMA? RBRACK // e.g. [a = 1, b = 3]
+    : LBRACK (kvPair (COMMA (kvPair))* )? COMMA? RBRACK // e.g. [a = 1, b = 3] [,]
     ;
 
 kvPair

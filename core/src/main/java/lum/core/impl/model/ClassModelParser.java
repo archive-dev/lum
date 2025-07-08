@@ -3,6 +3,7 @@ package lum.core.impl.model;
 import lum.antlr4.LumParser;
 import lum.core.model.*;
 import lum.core.util.Utils;
+import lum.lang.struct.Pair;
 
 import java.lang.reflect.AccessFlag;
 import java.util.*;

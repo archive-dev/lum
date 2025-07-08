@@ -1,6 +1,8 @@
 package lum.core.util;
 
 import lum.antlr4.LumParser;
+import lum.core.impl.model.AttributeParser;
+import lum.core.ir.CodeElement;
 import lum.core.model.*;
 //import lum.core.parsing.antlr4.LumParser;
 
@@ -25,6 +27,8 @@ public final class Utils {
     public static final AccessFlag[] DEFAULT_ACCESS_FLAGS = {AccessFlag.PUBLIC, AccessFlag.FINAL};
     public static final TypeParameter[] EMPTY_TYPE_PARAMETERS = new TypeParameter[0];
     public static final TypeArgument[] EMPTY_TYPE_ARGUMENTS = new TypeArgument[0];
+    public static final CodeElement.ExpressionElement[] EMPTY_EXPRESSION_ELEMENTS = new CodeElement.ExpressionElement[0];
+    public static final AttributeParser<?>[] EMPTY_ATTRIBUTE_PARSERS = new AttributeParser[0];
 
     private Utils() {}
 /*
@@ -103,8 +107,24 @@ public final class Utils {
         return accessFlags;
     }
 
+    public static int count(String what, String in) {
+        int c = 0;
+
+        while (true) {
+            var replaced = in.replaceFirst(what, "");
+            if (in.equals(replaced))
+                break;
+            else {
+                c++;
+                in = replaced;
+            }
+        }
+
+        return c;
+    }
+
     /// "someString" -> "SomeString"
-    public static String toTitled(String str) {
+    public static String capitalize(String str) {
         return String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1);
     }
 

@@ -8,14 +8,14 @@ import java.util.*;
 /**
  * Represents an intersection of multiple class models, typically used in bounded type parameters
  * like {@code <T extends Class & Interface1 & Interface2>}.
- * The first class model of intersection is considered the primary type (usually a class),
+ * The first-class model of intersection is considered the primary type (usually a class),
  * and the rest are typically interfaces.
  */
-final class IntersectionClassModel implements ClassModel {
+public final class IntersectionClassModelImpl implements ClassModel.IntersectionClassModel {
     private final ClassModel[] classModels;
     private final String name;
 
-    public IntersectionClassModel(ClassModel... classModels) {
+    public IntersectionClassModelImpl(ClassModel... classModels) {
         if (classModels == null || classModels.length == 0) {
             throw new IllegalArgumentException("Intersection class must have at least one class model");
         }
@@ -88,9 +88,7 @@ final class IntersectionClassModel implements ClassModel {
             allInterfaces.addAll(Arrays.asList(classModel.interfaces()));
         }
         // Also add non-primary class models as they are typically interfaces
-        for (int i = 1; i < classModels.length; i++) {
-            allInterfaces.add(classModels[i]);
-        }
+        allInterfaces.addAll(Arrays.asList(classModels).subList(1, classModels.length));
         return allInterfaces.toArray(new ClassModel[0]);
     }
 
@@ -193,7 +191,7 @@ final class IntersectionClassModel implements ClassModel {
     @Override
     public String toPrettyString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("IntersectionClassModel:\n");
+        sb.append("IntersectionClassModelImpl:\n");
         sb.append("  Constituent Types:\n");
         for (int i = 0; i < classModels.length; i++) {
             sb.append("    ").append(i + 1).append(". ").append(classModels[i].name()).append("\n");
@@ -211,7 +209,7 @@ final class IntersectionClassModel implements ClassModel {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof IntersectionClassModel other)) return false;
+        if (!(obj instanceof IntersectionClassModelImpl other)) return false;
         return Arrays.equals(classModels, other.classModels);
     }
 
@@ -222,7 +220,7 @@ final class IntersectionClassModel implements ClassModel {
 
     @Override
     public String toString() {
-        return "IntersectionClassModel{" +
+        return "IntersectionClassModelImpl{" +
                 "name='" + name + '\'' +
                 ", classModels=" + Arrays.toString(classModels) +
                 '}';

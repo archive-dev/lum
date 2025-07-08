@@ -1,14 +1,18 @@
 package lum.core.ir;
 
 import lum.core.impl.ir.CodeElementImpl;
+import lum.core.model.FieldModel;
+import lum.core.model.Member;
 import lum.core.model.MethodModel;
 import lum.core.model.TypeModel;
+import lum.core.util.Utils;
 import lum.lang.struct.Either;
 import lum.lang.struct.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.ConstantDescs;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,15 +24,24 @@ public interface CodeElement {
     }
 
     interface CodeBlock extends CodeElement {
+        Optional<String> name();
         MethodModel ownerMethod();
         List<CodeElement> elements();
         
         static CodeBlock of(CodeBlock parent, MethodModel ownerMethod, List<CodeElement> elements) {
-            return new CodeElementImpl.CodeBlockImpl(Optional.ofNullable(parent), ownerMethod, elements);
+            return new CodeElementImpl.CodeBlockImpl(Optional.empty(), Optional.ofNullable(parent), ownerMethod, elements);
         }
         
         static CodeBlock of(MethodModel ownerMethod, List<CodeElement> elements) {
-            return new CodeElementImpl.CodeBlockImpl(Optional.empty(), ownerMethod, elements);
+            return new CodeElementImpl.CodeBlockImpl(Optional.empty(), Optional.empty(), ownerMethod, elements);
+        }
+
+        static CodeBlock of(CodeBlock parent, String name, MethodModel ownerMethod, List<CodeElement> elements) {
+            return new CodeElementImpl.CodeBlockImpl(Optional.ofNullable(name), Optional.ofNullable(parent), ownerMethod, elements);
+        }
+
+        static CodeBlock of(String name, MethodModel ownerMethod, List<CodeElement> elements) {
+            return new CodeElementImpl.CodeBlockImpl(Optional.ofNullable(name), Optional.empty(), ownerMethod, elements);
         }
     }
 
@@ -80,24 +93,48 @@ public interface CodeElement {
     }
 
     interface IdentifierExpression extends ExpressionElement {
-        Either<Integer, TypeModel> identifier();
+        Either<Either<String, TypeModel>, Member> identifier();
         
-        static IdentifierExpression of(CodeBlock parent, TypeModel type, Either<Integer, TypeModel> identifier) {
-            return new CodeElementImpl.IdentifierExpressionImpl(Optional.ofNullable(parent), type, identifier);
+        static IdentifierExpression of(TypeModel type, String identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.empty(), type, Either.left(Either.left(identifier)));
         }
         
-        static IdentifierExpression of(TypeModel type, Either<Integer, TypeModel> identifier) {
-            return new CodeElementImpl.IdentifierExpressionImpl(Optional.empty(), type, identifier);
+        static IdentifierExpression of(TypeModel type, FieldModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.empty(), type, Either.right(identifier));
+        }
+
+        static IdentifierExpression of(TypeModel type, MethodModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.empty(), type, Either.right(identifier));
+        }
+
+        static IdentifierExpression of(TypeModel type, TypeModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.empty(), type, Either.left(Either.right(identifier)));
+        }
+        
+        static IdentifierExpression of(CodeBlock parent, TypeModel type, String identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.ofNullable(parent), type, Either.left(Either.left(identifier)));
+        }
+        
+        static IdentifierExpression of(CodeBlock parent, TypeModel type, FieldModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.ofNullable(parent), type, Either.right(identifier));
+        }
+
+        static IdentifierExpression of(CodeBlock parent, TypeModel type, MethodModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.ofNullable(parent), type, Either.right(identifier));
+        }
+
+        static IdentifierExpression of(CodeBlock parent, TypeModel type, TypeModel identifier) {
+            return new CodeElementImpl.IdentifierExpressionImpl(Optional.ofNullable(parent), type, Either.left(Either.right(identifier)));
         }
     }
 
     interface SuperAccessExpression extends IdentifierExpression {
-        static SuperAccessExpression of(CodeBlock parent, TypeModel type, Either<Integer, TypeModel> identifier) {
-            return new CodeElementImpl.SuperAccessExpressionImpl(Optional.ofNullable(parent), type, identifier);
+        static SuperAccessExpression of(CodeBlock parent, TypeModel type) {
+            return new CodeElementImpl.SuperAccessExpressionImpl(Optional.ofNullable(parent), type, Either.left(Either.left("super")));
         }
         
-        static SuperAccessExpression of(TypeModel type, Either<Integer, TypeModel> identifier) {
-            return new CodeElementImpl.SuperAccessExpressionImpl(Optional.empty(), type, identifier);
+        static SuperAccessExpression of(TypeModel type) {
+            return new CodeElementImpl.SuperAccessExpressionImpl(Optional.empty(), type, Either.left(Either.left("super")));
         }
     }
 
@@ -110,12 +147,12 @@ public interface CodeElement {
             return 1;
         }
         
-        static TrueExpr of(CodeBlock parent, TypeModel type) {
-            return new CodeElementImpl.TrueExprImpl(Optional.ofNullable(parent), type);
+        static TrueExpr of(CodeBlock parent) {
+            return new CodeElementImpl.TrueExprImpl(Optional.ofNullable(parent), TypeModel.of(boolean.class).orElseThrow());
         }
-        
-        static TrueExpr of(TypeModel type) {
-            return new CodeElementImpl.TrueExprImpl(Optional.empty(), type);
+
+        static TrueExpr of() {
+            return new CodeElementImpl.TrueExprImpl(Optional.empty(), TypeModel.of(boolean.class).orElseThrow());
         }
     }
     interface FalseExpr extends LiteralExpression<Integer> {
@@ -124,12 +161,12 @@ public interface CodeElement {
             return 0;
         }
         
-        static FalseExpr of(CodeBlock parent, TypeModel type) {
-            return new CodeElementImpl.FalseExprImpl(Optional.ofNullable(parent), type);
+        static FalseExpr of(CodeBlock parent) {
+            return new CodeElementImpl.FalseExprImpl(Optional.ofNullable(parent), TypeModel.of(boolean.class).orElseThrow());
         }
         
-        static FalseExpr of(TypeModel type) {
-            return new CodeElementImpl.FalseExprImpl(Optional.empty(), type);
+        static FalseExpr of() {
+            return new CodeElementImpl.FalseExprImpl(Optional.empty(), TypeModel.of(boolean.class).orElseThrow());
         }
     }
     interface NullExpr extends LiteralExpression<ConstantDesc> {
@@ -141,18 +178,24 @@ public interface CodeElement {
         static NullExpr of(CodeBlock parent, TypeModel type) {
             return new CodeElementImpl.NullExprImpl(Optional.ofNullable(parent), type);
         }
-        
+        static NullExpr of(CodeBlock parent) {
+            return new CodeElementImpl.NullExprImpl(Optional.ofNullable(parent), TypeModel.of(Object.class).orElseThrow());
+        }
+
+        static NullExpr of() {
+            return new CodeElementImpl.NullExprImpl(Optional.empty(), TypeModel.of(Object.class).orElseThrow());
+        }
         static NullExpr of(TypeModel type) {
             return new CodeElementImpl.NullExprImpl(Optional.empty(), type);
         }
     }
     interface StringExpr extends LiteralExpression<String> {
-        static StringExpr of(CodeBlock parent, TypeModel type, String value) {
-            return new CodeElementImpl.StringExprImpl(Optional.ofNullable(parent), type, value);
+        static StringExpr of(CodeBlock parent, String value) {
+            return new CodeElementImpl.StringExprImpl(Optional.ofNullable(parent), TypeModel.of(String.class).orElseThrow(), value);
         }
         
-        static StringExpr of(TypeModel type, String value) {
-            return new CodeElementImpl.StringExprImpl(Optional.empty(), type, value);
+        static StringExpr of(String value) {
+            return new CodeElementImpl.StringExprImpl(Optional.empty(), TypeModel.of(String.class).orElseThrow(), value);
         }
     }
     interface NumberExpr<T extends Number & ConstantDesc> extends LiteralExpression<T> {
@@ -166,26 +209,83 @@ public interface CodeElement {
     }
 
     interface AssignmentExpression extends ExpressionElement {
-        Either<VariableDeclarationStatement, Either<AssignmentExpression, ArrayAccessExpression>> variable();
+        Either<Either<VariableDeclarationStatement, AssignmentExpression>, ArrayAccessExpression> variable();
         ExpressionElement value();
-        
-        static AssignmentExpression of(CodeBlock parent, TypeModel type,
-                Either<VariableDeclarationStatement, Either<AssignmentExpression, ArrayAccessExpression>> variable, 
+
+        static AssignmentExpression of(CodeBlock parent,
+                VariableDeclarationStatement variable,
                 ExpressionElement value) {
-            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), type, variable, value);
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), value.type(), Either.left(Either.left(variable)), value);
         }
-        
+
+        static AssignmentExpression of(CodeBlock parent, TypeModel type,
+                                       VariableDeclarationStatement variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), type, Either.left(Either.left(variable)), value);
+        }
+
         static AssignmentExpression of(TypeModel type,
-                Either<VariableDeclarationStatement, Either<AssignmentExpression, ArrayAccessExpression>> variable, 
+                                      VariableDeclarationStatement variable,
+                                      ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), type, Either.left(Either.left(variable)), value);
+        }
+
+        static AssignmentExpression of(VariableDeclarationStatement variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), value.type(), Either.left(Either.left(variable)), value);
+        }
+
+        static AssignmentExpression of(CodeBlock parent,
+                AssignmentExpression variable,
                 ExpressionElement value) {
-            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), type, variable, value);
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), value.type(), Either.left(Either.right(variable)), value);
+        }
+
+        static AssignmentExpression of(CodeBlock parent, TypeModel type,
+                                       AssignmentExpression variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), type, Either.left(Either.right(variable)), value);
+        }
+
+        static AssignmentExpression of(TypeModel type,
+                                      AssignmentExpression variable,
+                                      ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), type, Either.left(Either.right(variable)), value);
+        }
+
+        static AssignmentExpression of(AssignmentExpression variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), value.type(), Either.left(Either.right(variable)), value);
+        }
+
+        static AssignmentExpression of(CodeBlock parent,
+                ArrayAccessExpression variable,
+                ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), value.type(), Either.right(variable), value);
+        }
+
+        static AssignmentExpression of(CodeBlock parent, TypeModel type,
+                                       ArrayAccessExpression variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.ofNullable(parent), type, Either.right(variable), value);
+        }
+
+        static AssignmentExpression of(TypeModel type,
+                                      ArrayAccessExpression variable,
+                                      ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), type, Either.right(variable), value);
+        }
+
+        static AssignmentExpression of(ArrayAccessExpression variable,
+                                       ExpressionElement value) {
+            return new CodeElementImpl.AssignmentExpressionImpl(Optional.empty(), value.type(), Either.right(variable), value);
         }
     }
     interface BinaryExpression extends ExpressionElement {
         ExpressionElement left();
         Operator.BinaryOperator operator();
         ExpressionElement right();
-        
+
         static BinaryExpression of(CodeBlock parent, TypeModel type, ExpressionElement left,
                 Operator.BinaryOperator operator, ExpressionElement right) {
             return new CodeElementImpl.BinaryExpressionImpl(Optional.ofNullable(parent), type, left, operator, right);
@@ -194,6 +294,16 @@ public interface CodeElement {
         static BinaryExpression of(TypeModel type, ExpressionElement left,
                 Operator.BinaryOperator operator, ExpressionElement right) {
             return new CodeElementImpl.BinaryExpressionImpl(Optional.empty(), type, left, operator, right);
+        }
+
+        static BinaryExpression of(CodeBlock parent, ExpressionElement left,
+                Operator.BinaryOperator operator, ExpressionElement right) {
+            return new CodeElementImpl.BinaryExpressionImpl(Optional.ofNullable(parent), left.type(), left, operator, right);
+        }
+
+        static BinaryExpression of(ExpressionElement left,
+                Operator.BinaryOperator operator, ExpressionElement right) {
+            return new CodeElementImpl.BinaryExpressionImpl(Optional.empty(), left.type(), left, operator, right);
         }
     }
     interface UnaryPrefixExpression extends ExpressionElement {
@@ -204,10 +314,19 @@ public interface CodeElement {
                 Operator.UnaryOperator operator, ExpressionElement expression) {
             return new CodeElementImpl.UnaryPrefixExpressionImpl(Optional.ofNullable(parent), type, operator, expression);
         }
+
+        static UnaryPrefixExpression of(CodeBlock parent,
+                Operator.UnaryOperator operator, ExpressionElement expression) {
+            return new CodeElementImpl.UnaryPrefixExpressionImpl(Optional.ofNullable(parent), expression.type(), operator, expression);
+        }
         
         static UnaryPrefixExpression of(TypeModel type,
                 Operator.UnaryOperator operator, ExpressionElement expression) {
             return new CodeElementImpl.UnaryPrefixExpressionImpl(Optional.empty(), type, operator, expression);
+        }
+
+        static UnaryPrefixExpression of(Operator.UnaryOperator operator, ExpressionElement expression) {
+            return new CodeElementImpl.UnaryPrefixExpressionImpl(Optional.empty(), expression.type(), operator, expression);
         }
     }
     interface UnaryPostfixExpression extends ExpressionElement {
@@ -223,39 +342,48 @@ public interface CodeElement {
                 ExpressionElement expression, Operator.UnaryOperator operator) {
             return new CodeElementImpl.UnaryPostfixExpressionImpl(Optional.empty(), type, expression, operator);
         }
+
+        static UnaryPostfixExpression of(CodeBlock parent,
+                ExpressionElement expression, Operator.UnaryOperator operator) {
+            return new CodeElementImpl.UnaryPostfixExpressionImpl(Optional.ofNullable(parent), expression.type(), expression, operator);
+        }
+
+        static UnaryPostfixExpression of(ExpressionElement expression, Operator.UnaryOperator operator) {
+            return new CodeElementImpl.UnaryPostfixExpressionImpl(Optional.empty(), expression.type(), expression, operator);
+        }
     }
     interface CastExpression extends ExpressionElement {
         TypeModel castType();
         ExpressionElement expression();
         
-        static CastExpression of(CodeBlock parent, TypeModel type, TypeModel castType, ExpressionElement expression) {
-            return new CodeElementImpl.CastExpressionImpl(Optional.ofNullable(parent), type, castType, expression);
+        static CastExpression of(CodeBlock parent, TypeModel castType, ExpressionElement expression) {
+            return new CodeElementImpl.CastExpressionImpl(Optional.ofNullable(parent), castType, castType, expression);
         }
         
-        static CastExpression of(TypeModel type, TypeModel castType, ExpressionElement expression) {
-            return new CodeElementImpl.CastExpressionImpl(Optional.empty(), type, castType, expression);
+        static CastExpression of(TypeModel castType, ExpressionElement expression) {
+            return new CodeElementImpl.CastExpressionImpl(Optional.empty(), castType, castType, expression);
         }
     }
 
     interface MemberAccessExpression extends ExpressionElement {
         Optional<ExpressionElement> expression();
-        String memberName();
+        Member member();
         
         static MemberAccessExpression of(CodeBlock parent, TypeModel type,
-                ExpressionElement expression, String memberName) {
-            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.ofNullable(parent), type, Optional.ofNullable(expression), memberName);
+                ExpressionElement expression, Member member) {
+            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.ofNullable(parent), type, Optional.ofNullable(expression), member);
         }
         
-        static MemberAccessExpression of(CodeBlock parent, TypeModel type, String memberName) {
-            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.ofNullable(parent), type, Optional.empty(), memberName);
+        static MemberAccessExpression of(CodeBlock parent, TypeModel type, Member member) {
+            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.ofNullable(parent), type, Optional.empty(), member);
         }
         
-        static MemberAccessExpression of(TypeModel type, ExpressionElement expression, String memberName) {
-            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.empty(), type, Optional.of(expression), memberName);
+        static MemberAccessExpression of(TypeModel type, ExpressionElement expression, Member member) {
+            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.empty(), type, Optional.of(expression), member);
         }
         
-        static MemberAccessExpression of(TypeModel type, String memberName) {
-            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.empty(), type, Optional.empty(), memberName);
+        static MemberAccessExpression of(TypeModel type, Member member) {
+            return new CodeElementImpl.MemberAccessExpressionImpl(Optional.empty(), type, Optional.empty(), member);
         }
     }
 
@@ -296,6 +424,39 @@ public interface CodeElement {
         static CallExpression of(TypeModel type, @NotNull MethodModel method) {
             return new CodeElementImpl.CallExpressionImpl(Optional.empty(), type, Optional.empty(), method, Optional.empty());
         }
+        
+        static CallExpression of(CodeBlock parent, ExpressionElement caller,
+                @NotNull MethodModel method, ExpressionElement[] arguments) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.ofNullable(parent), method.returnType(), Optional.ofNullable(caller), method, Optional.ofNullable(arguments));
+        }
+        
+        static CallExpression of(CodeBlock parent, @NotNull MethodModel method, ExpressionElement[] arguments) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.ofNullable(parent), method.returnType(), Optional.empty(), method, Optional.ofNullable(arguments));
+        }
+        
+        static CallExpression of(CodeBlock parent, ExpressionElement caller, @NotNull MethodModel method) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.ofNullable(parent), method.returnType(), Optional.of(caller), method, Optional.empty());
+        }
+        
+        static CallExpression of(CodeBlock parent, @NotNull MethodModel method) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.ofNullable(parent), method.returnType(), Optional.empty(), method, Optional.empty());
+        }
+        
+        static CallExpression of(ExpressionElement caller, @NotNull MethodModel method, ExpressionElement[] arguments) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.empty(), method.returnType(), Optional.of(caller), method, Optional.ofNullable(arguments));
+        }
+        
+        static CallExpression of(@NotNull MethodModel method, ExpressionElement[] arguments) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.empty(), method.returnType(), Optional.empty(), method, Optional.ofNullable(arguments));
+        }
+        
+        static CallExpression of(ExpressionElement caller, @NotNull MethodModel method) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.empty(), method.returnType(), Optional.of(caller), method, Optional.empty());
+        }
+        
+        static CallExpression of(@NotNull MethodModel method) {
+            return new CodeElementImpl.CallExpressionImpl(Optional.empty(), method.returnType(), Optional.empty(), method, Optional.empty());
+        }
     }
 
     interface NewExpression extends CallExpression {
@@ -304,21 +465,49 @@ public interface CodeElement {
             return Optional.empty();
         }
         
-        static NewExpression of(CodeBlock parent, TypeModel type, @NotNull MethodModel method,
-                ExpressionElement[] arguments) {
-            return new CodeElementImpl.NewExpressionImpl(Optional.ofNullable(parent), type, method, Optional.ofNullable(arguments));
+        static NewExpression of(CodeBlock parent, TypeModel type, ExpressionElement[] arguments) {
+            return new CodeElementImpl.NewExpressionImpl(
+                    Optional.ofNullable(parent),
+                    type,
+                    type.model().getMethod(
+                            "<init>",
+                            Arrays.stream(arguments != null ? arguments : Utils.EMPTY_EXPRESSION_ELEMENTS)
+                                    .map(ExpressionElement::type)
+                                    .toArray(TypeModel[]::new)
+                    ).orElseThrow(),
+                    Optional.ofNullable(arguments)
+            );
         }
         
-        static NewExpression of(CodeBlock parent, TypeModel type, @NotNull MethodModel method) {
-            return new CodeElementImpl.NewExpressionImpl(Optional.ofNullable(parent), type, method, Optional.empty());
+        static NewExpression of(CodeBlock parent, TypeModel type) {
+            return new CodeElementImpl.NewExpressionImpl(Optional.ofNullable(parent),
+                    type,
+                    type.model().getMethod("<init>").orElseThrow(),
+                    Optional.empty()
+            );
         }
         
-        static NewExpression of(TypeModel type, @NotNull MethodModel method, ExpressionElement[] arguments) {
-            return new CodeElementImpl.NewExpressionImpl(Optional.empty(), type, method, Optional.ofNullable(arguments));
+        static NewExpression of(TypeModel type, ExpressionElement[] arguments) {
+            return new CodeElementImpl.NewExpressionImpl(
+                    Optional.empty(),
+                    type,
+                    type.model().getMethod(
+                            "<init>",
+                            Arrays.stream(arguments != null ? arguments : Utils.EMPTY_EXPRESSION_ELEMENTS)
+                                    .map(ExpressionElement::type)
+                                    .toArray(TypeModel[]::new)
+                    ).orElseThrow(),
+                    Optional.ofNullable(arguments)
+            );
         }
         
-        static NewExpression of(TypeModel type, @NotNull MethodModel method) {
-            return new CodeElementImpl.NewExpressionImpl(Optional.empty(), type, method, Optional.empty());
+        static NewExpression of(TypeModel type) {
+            return new CodeElementImpl.NewExpressionImpl(
+                    Optional.empty(),
+                    type,
+                    type.model().getMethod("<init>").orElseThrow(),
+                    Optional.empty()
+            );
         }
     }
 
@@ -333,18 +522,35 @@ public interface CodeElement {
         static ArrayAccessExpression of(TypeModel type, ExpressionElement expression, ExpressionElement index) {
             return new CodeElementImpl.ArrayAccessExpressionImpl(Optional.empty(), type, expression, index);
         }
+
+        static ArrayAccessExpression of(CodeBlock parent, ExpressionElement expression, ExpressionElement index) {
+            return new CodeElementImpl.ArrayAccessExpressionImpl(Optional.ofNullable(parent), expression.type().asComponent(), expression, index);
+        }
+
+        static ArrayAccessExpression of(ExpressionElement expression, ExpressionElement index) {
+            return new CodeElementImpl.ArrayAccessExpressionImpl(Optional.empty(), expression.type().asComponent(), expression, index);
+        }
     }
 
     interface StatementElement extends CodeElement {}
     interface VariableDeclarationStatement extends StatementElement, TypedCodeElement {
         String name();
+        Optional<ExpressionElement> value();
         
         static VariableDeclarationStatement of(CodeBlock parent, TypeModel type, String name) {
-            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.ofNullable(parent), type, name);
+            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.ofNullable(parent), type, name, Optional.empty());
         }
         
         static VariableDeclarationStatement of(TypeModel type, String name) {
-            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.empty(), type, name);
+            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.empty(), type, name, Optional.empty());
+        }
+
+        static VariableDeclarationStatement of(CodeBlock parent, TypeModel type, String name, ExpressionElement value) {
+            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.ofNullable(parent), type, name, Optional.ofNullable(value));
+        }
+
+        static VariableDeclarationStatement of(TypeModel type, String name, ExpressionElement value) {
+            return new CodeElementImpl.VariableDeclarationStatementImpl(Optional.empty(), type, name, Optional.ofNullable(value));
         }
     }
     interface ControlStatement extends StatementElement {}
@@ -491,19 +697,29 @@ public interface CodeElement {
     }
 
     interface ForLoopElement extends LoopElement {
-        AssignmentExpression variable();
+        Either<VariableDeclarationStatement, AssignmentExpression> variable();
         ExpressionElement condition();
-        Either<StatementElement, ExpressionElement> incrementor();
+        ExpressionElement incrementor();
         CodeBlock block();
         
         static ForLoopElement of(CodeBlock parent, AssignmentExpression variable, ExpressionElement condition,
-                Either<StatementElement, ExpressionElement> incrementor, CodeBlock block) {
-            return new CodeElementImpl.ForLoopElementImpl(Optional.ofNullable(parent), variable, condition, incrementor, block);
+                ExpressionElement incrementor, CodeBlock block) {
+            return new CodeElementImpl.ForLoopElementImpl(Optional.ofNullable(parent), Either.right(variable), condition, incrementor, block);
         }
         
         static ForLoopElement of(AssignmentExpression variable, ExpressionElement condition,
-                Either<StatementElement, ExpressionElement> incrementor, CodeBlock block) {
-            return new CodeElementImpl.ForLoopElementImpl(Optional.empty(), variable, condition, incrementor, block);
+                ExpressionElement incrementor, CodeBlock block) {
+            return new CodeElementImpl.ForLoopElementImpl(Optional.empty(), Either.right(variable), condition, incrementor, block);
+        }
+
+        static ForLoopElement of(CodeBlock parent, VariableDeclarationStatement variable, ExpressionElement condition,
+                ExpressionElement incrementor, CodeBlock block) {
+            return new CodeElementImpl.ForLoopElementImpl(Optional.ofNullable(parent), Either.left(variable), condition, incrementor, block);
+        }
+
+        static ForLoopElement of(VariableDeclarationStatement variable, ExpressionElement condition,
+                ExpressionElement incrementor, CodeBlock block) {
+            return new CodeElementImpl.ForLoopElementImpl(Optional.empty(), Either.left(variable), condition, incrementor, block);
         }
     }
 

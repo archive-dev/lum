@@ -1,6 +1,7 @@
 package lum.core.model;
 
 import lum.core.impl.model.ClassModelFactory;
+import lum.core.impl.model.IntersectionClassModelImpl;
 import lum.core.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,6 +10,18 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public interface ClassModel extends Attributable, Member, Generic {
+    ClassModel INT = ClassModel.of(int.class).orElseThrow();
+    ClassModel LONG = ClassModel.of(long.class).orElseThrow();
+    ClassModel FLOAT = ClassModel.of(float.class).orElseThrow();
+    ClassModel DOUBLE = ClassModel.of(double.class).orElseThrow();
+    ClassModel BYTE = ClassModel.of(byte.class).orElseThrow();
+    ClassModel SHORT = ClassModel.of(short.class).orElseThrow();
+    ClassModel CHAR = ClassModel.of(char.class).orElseThrow();
+    ClassModel STRING = ClassModel.of(String.class).orElseThrow();
+    ClassModel OBJECT = ClassModel.of(Object.class).orElseThrow();
+    ClassModel BOOLEAN = ClassModel.of(boolean.class).orElseThrow();
+    ClassModel VOID = ClassModel.of(void.class).orElseThrow();
+
     //    String name(); // includes package
     default String className() {
         return Arrays.asList(name().split("\\.")).getLast();
@@ -22,8 +35,8 @@ public interface ClassModel extends Attributable, Member, Generic {
     Member[] members();
 
     Member[] allMembers();
+    
     Optional<MethodModel> getMethod(String name, TypeModel... parameterTypes);
-
     default Optional<MethodModel> getMethod(String name) {
         return getMethod(name, Utils.EMPTY_TYPE_MODELS);
     }
@@ -56,6 +69,20 @@ public interface ClassModel extends Attributable, Member, Generic {
     }
 
     boolean isInterface();
+
+    interface IntersectionClassModel extends ClassModel {
+        ClassModel[] getClassModels();
+        ClassModel getPrimaryClassModel();
+        boolean isSatisfiedBy(ClassModel classModel);
+
+        static IntersectionClassModel of(ClassModel[] models) {
+            return new IntersectionClassModelImpl(models);
+        }
+
+        static IntersectionClassModel of(Class<?>[] classes) {
+            return new IntersectionClassModelImpl(Arrays.stream(classes).map(ClassModel::of).map(Optional::orElseThrow).toArray(ClassModel[]::new));
+        }
+    }
 
     /// Creates a [ClassModel] from the given [Class], handling array types by extracting the component type.
     ///

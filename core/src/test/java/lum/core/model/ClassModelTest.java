@@ -1,18 +1,18 @@
 package lum.core.model;
 
-import lum.core.impl.model.ClassModelFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ClassModelTest {
     static ClassModel classModel;
-    private static final String RESOURCES_PATH = "src/test/resources/";
+    private static final Path RESOURCES_PATH = Path.of("src/test/resources/");
 
     @BeforeAll
     static void initClass() {
@@ -44,7 +44,7 @@ class ClassModelTest {
 
     @Test
     void test_simple_lum_class() {
-        Path testPath = Paths.get(RESOURCES_PATH + "Test.lum");
+        Path testPath = RESOURCES_PATH.resolve("Test.lum");
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
@@ -55,7 +55,7 @@ class ClassModelTest {
 
     @Test
     void test_interface_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "TestInterface.lum");
+        Path testPath = RESOURCES_PATH.resolve("TestInterface.lum");
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
@@ -66,7 +66,7 @@ class ClassModelTest {
 
     @Test
     void test_generic_class_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "GenericClass.lum");
+        Path testPath = RESOURCES_PATH.resolve("GenericClass.lum");
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
@@ -77,7 +77,7 @@ class ClassModelTest {
 
     @Test
     void test_class_with_imports_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "WithImports.lum");
+        Path testPath = RESOURCES_PATH.resolve("WithImports.lum");
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
@@ -88,7 +88,7 @@ class ClassModelTest {
 
     @Test
     void test_multiple_classes_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "MultipleClasses.lum");
+        Path testPath = RESOURCES_PATH.resolve("MultipleClasses.lum");
         ClassModel[] models = ClassModel.ofFile(testPath).orElseThrow();
         
         assertNotNull(models);
@@ -107,7 +107,7 @@ class ClassModelTest {
 
     @Test
     void test_valid_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "Valid.lum");
+        Path testPath = RESOURCES_PATH.resolve("Valid.lum");
         ClassModel model = ClassModel.fileClass(testPath).orElseThrow();
         
         assertNotNull(model);
@@ -140,11 +140,9 @@ class ClassModelTest {
         // Check that we have different types of members
         boolean hasMethod = false;
         boolean hasField = false;
-        boolean hasConstructor = false;
-        
+
         for (Member member : members) {
             if (member instanceof MethodModel) {
-                MethodModel method = (MethodModel) member;
                 hasMethod = true;
             } else if (member instanceof FieldModel) {
                 hasField = true;
@@ -176,7 +174,7 @@ class ClassModelTest {
 
     @Test
     void test_invalid_lum_file_handling() {
-        Path invalidPath = Paths.get(RESOURCES_PATH + "InvalidImports.lum");
+        Path invalidPath = RESOURCES_PATH.resolve("InvalidImports.lum");
         // This should either return empty or handle gracefully
         var result = ClassModel.fileClass(invalidPath);
         // The test passes if no exception is thrown
@@ -185,7 +183,7 @@ class ClassModelTest {
 
     @Test
     void test_duplicate_class_lum_file() {
-        Path testPath = Paths.get(RESOURCES_PATH + "DuplicateClass.lum");
+        Path testPath = RESOURCES_PATH.resolve("DuplicateClass.lum");
         var result = ClassModel.fileClass(testPath);
         // Should handle duplicate classes gracefully
         assertNotNull(result);
@@ -233,5 +231,22 @@ class ClassModelTest {
     void test_null_class_handling() {
         var result = ClassModel.of(null);
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void test_intersection_class_model() {
+        var intersection = ClassModel.IntersectionClassModel.of(new Class[]{Runnable.class, Future.class});
+        assertTrue(intersection.isSatisfiedBy(ClassModel.of(RunnableFuture.class).orElseThrow()));
+        TypeModel typeModel = intersection.asTypeModel();
+        assertInstanceOf(TypeModel.IntersectionTypeModel.class, typeModel);
+        assertTrue(intersection.getMethod("get").isPresent());
+        assertTrue(intersection.getMethod("run").isPresent());
+    }
+
+    @Test
+    void test_union_type_model() {
+        var union = TypeModel.UnionTypeModel.of(new TypeModel[]{TypeModel.INT, TypeModel.STRING});
+        assertEquals(TypeModel.OBJECT, union.lubTypeModel());
+        assertEquals(2, union.getTypes().length);
     }
 }

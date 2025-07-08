@@ -1,6 +1,8 @@
 package lum.core.impl.model;
 
+import lum.core.model.ClassModel;
 import lum.core.model.FieldModel;
+import lum.core.model.TypeModel;
 import lum.core.util.Utils;
 
 import java.lang.reflect.AccessFlag;
@@ -15,7 +17,7 @@ final class FieldModelFactory {
                 Utils.EMPTY_ATTRIBUTE_MODELS,
                 field.accessFlags().toArray(AccessFlag[]::new),
                 field.getName(),
-                null
+                TypeModel.of(field.getType()).orElseThrow()
         );
     }
 }

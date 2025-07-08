@@ -1,5 +1,6 @@
 package lum.core.impl.model;
 
+import lum.antlr4.LumParser;
 import lum.core.model.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,9 @@ record MethodModelImpl(
         Optional<TypeParameter[]> typeParameters,
         ParameterModel[] parameters,
         TypeModel returnType,
-        ClassModel[] exceptions
+        ClassModel[] exceptions,
+        Optional<LumParser.CodeBlockContext> codeBlock,
+        AttributeParser<?>[] attributeParsers
 ) implements MethodModel {
     @Override
     public @NotNull String toString() {

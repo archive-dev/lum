@@ -1,0 +1,10 @@
+import java.lang.System
+import java.util.stream.IntStream
+
+public class WithCode {
+    public static func main(args: str[]) {
+        System.out.println("Hello world!")
+        for i in IntStream.range(1, 11) =>
+            System.out.println(i)
+    }
+}

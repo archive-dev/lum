@@ -7,7 +7,7 @@ import lum.core.model.TypeModel;
 import java.lang.constant.ClassDesc;
 import java.util.*;
 
-final class IntersectionTypeModelImpl implements TypeModel.IntersectionTypeModel {
+public final class IntersectionTypeModelImpl implements TypeModel.IntersectionTypeModel {
     private final TypeModel[] types;
     private final int arrayDimensions;
 
@@ -38,7 +38,7 @@ final class IntersectionTypeModelImpl implements TypeModel.IntersectionTypeModel
         // For intersection types, we return the first type as the primary type
         // This is typically the class type in bounded type parameters like <T extends Class & Interface>
         // Filters out array types since TypeModel::model always returns ClassModel of a component of an array type
-        return new IntersectionClassModel(Arrays.stream(getTypes()).filter(m -> !m.isArray()).map(TypeModel::model).toArray(ClassModel[]::new));
+        return new IntersectionClassModelImpl(Arrays.stream(getTypes()).filter(m -> !m.isArray()).map(TypeModel::model).toArray(ClassModel[]::new));
     }
 
     @Override

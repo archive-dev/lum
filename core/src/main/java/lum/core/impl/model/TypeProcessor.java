@@ -2,6 +2,7 @@ package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
 import lum.core.model.*;
+import lum.core.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,84 +10,119 @@ import java.util.Collections;
 import java.util.Optional;
 
 // one per member (beacuse of generics processor)
-class TypeProcessor {
+public final class TypeProcessor {
     private static final Logger log = LoggerFactory.getLogger(TypeProcessor.class);
+    private final Member member;
     private final ImportsModel imports;
     final GenericsProcessor genericsProcessor;
 
-    public TypeProcessor(TypeProcessor parent, GenericsProcessor genericsProcessor) {
+    public TypeProcessor(Member member, TypeProcessor parent, GenericsProcessor genericsProcessor) {
+        this.member = member;
         this.imports = parent.imports;
         this.genericsProcessor = genericsProcessor;
     }
 
-    public TypeProcessor(TypeProcessor parent) {
+    public TypeProcessor(Member member, TypeProcessor parent) {
+        this.member = member;
         this.imports = parent.imports;
         this.genericsProcessor = parent.genericsProcessor;
     }
 
-    public TypeProcessor(ImportsModel imports, GenericsProcessor genericsProcessor) {
+    public TypeProcessor(Member member, ImportsModel imports, GenericsProcessor genericsProcessor) {
+        this.member = member;
         this.imports = imports;
         this.genericsProcessor = genericsProcessor;
     }
 
-    public TypeProcessor(ImportsModel imports) {
+    public TypeProcessor(Member member, ImportsModel imports) {
+        this.member = member;
         this.imports = imports;
         this.genericsProcessor = null;
     }
 
-    public TypeModel getType(LumParser.TypeContext type) {
-        switch (type) {
-            case LumParser.PlainTypeContext plain -> {
-                Optional<ClassModel> classModel = imports.getModel(plain.IDENTIFIER().getText());
-                if (classModel.isEmpty()) {
-                    if (genericsProcessor == null)
-                        //noinspection DataFlowIssue
-                        return classModel.map(ClassModel::asTypeModel).orElseThrow();
-                    classModel = genericsProcessor.getTypeParameter(plain.IDENTIFIER().getText()).map(TypeParameter::bound).map(TypeModel::model);
-                }
-                Optional<TypeParameter[]> typeParameters = classModel.map(ClassModel::typeParameters).orElseThrow();
-                if (typeParameters.isEmpty())
-                    return classModel.map(ClassModel::asTypeModel).orElseThrow();
-                if (plain.generic() == null) {
-                    log.warn("Provided type contains type parameters, but no type arguments were provided");
-                    return classModel.map(ClassModel::asTypeModel).orElseThrow();
-                }
-                if (genericsProcessor == null)
-                    return classModel.map(ClassModel::asTypeModel).orElseThrow();
-                return classModel
-                        .map(m ->
-                                m.asTypeModel(
-                                        0,
-                                        genericsProcessor
-                                                .processGenericArguments(typeParameters.get(), plain.generic())
-                                                .orElseThrow())
-                        ).orElseThrow();
-            }
-            case LumParser.ArrayTypeContext array -> {
-                var t = getType(array.type());
-                return t.asArray(
-                        Optional.ofNullable(array.ARRAY_OP()).orElse(Collections.emptyList()).size() +
-                                Optional.ofNullable(array.LBRACK()).orElse(Collections.emptyList()).size()
-                );
-            }
-            case LumParser.NullableTypeContext nullable -> {
-                return ClassModel.of(Optional.class).orElseThrow().asTypeModel(getType(nullable.type()));
-            }
-            case LumParser.UnionTypeContext union -> {
-                return new UnionTypeModelImpl(union.type().stream().map(this::getType).toArray(TypeModel[]::new));
-            }
-            case LumParser.IntersectionTypeContext intersection -> {
-                return new IntersectionTypeModelImpl(intersection.type().stream().map(this::getType).toArray(TypeModel[]::new));
-            }
-            case null, default -> {
-
-            }
-        }
-
-        return null;
+    public TypeProcessor(ImportsModel imports) {
+        this(null, imports);
     }
 
-    public ClassModel getModel(LumParser.TypeContext type) {
-        return getType(type).model();
+
+    public TypeProcessor(TypeProcessor parent, GenericsProcessor genericsProcessor) {
+        this(null, parent, genericsProcessor);
+    }
+
+    public TypeProcessor(TypeProcessor parent) {
+        this(null, parent);
+    }
+
+    public TypeProcessor(ImportsModel imports, GenericsProcessor genericsProcessor) {
+        this(null, imports, genericsProcessor);
+    }
+
+    public Optional<TypeModel> getType(String typeAlias) {
+        typeAlias = typeAlias.replaceAll("]", "");
+
+        int arrayDimensions = Utils.count("\\[", typeAlias);
+        typeAlias = typeAlias.replaceAll("\\[", "");
+
+        if (genericsProcessor != null) {
+            var generic = genericsProcessor.getTypeParameter(typeAlias).map(TypeParameter::bound).map(t -> t.asArray(arrayDimensions));
+            if (generic.isPresent())
+                return generic;
+        }
+
+        return imports.getType(typeAlias).map(t -> t.asArray(arrayDimensions));
+    }
+
+    public Optional<TypeModel> getType(LumParser.TypeContext type) {
+        switch (type) {
+            case LumParser.PlainTypeContext plain -> {
+                Optional<TypeModel> typeModel = imports.getType(plain.IDENTIFIER().getText());
+                if (typeModel.isEmpty()) {
+                    if (genericsProcessor == null)
+                        throw new IllegalStateException("Type not found: " + type.getText());
+                    typeModel = genericsProcessor.getTypeParameter(
+                                plain.IDENTIFIER().getText()
+                            ).map(tp -> tp.asGenericTypeModel(this.member));
+                }
+                Optional<TypeParameter[]> typeParameters = typeModel
+                        .map(TypeModel::model)
+                        .map(ClassModel::typeParameters).orElseThrow();
+                if (typeParameters.isEmpty())
+                    return typeModel;
+                if (plain.generic() == null) {
+                    log.warn("Provided type contains type parameters, but no type arguments were provided");
+                    return typeModel;
+                }
+                if (genericsProcessor == null)
+                    return typeModel;
+                return typeModel.map(tm -> tm.withTypeArguments(
+                        genericsProcessor.processGenericArguments(
+                                typeParameters.get(),
+                                plain.generic()).orElseThrow()
+                ));
+            }
+            case LumParser.ArrayTypeContext array -> {
+                Optional<TypeModel> t = getType(array.type());
+                return t.map(typeModel -> typeModel.asArray(
+                        Optional.ofNullable(array.ARRAY_OP()).orElse(Collections.emptyList()).size() +
+                                Optional.ofNullable(array.LBRACK()).orElse(Collections.emptyList()).size()
+                ));
+            }
+            case LumParser.NullableTypeContext nullable -> {
+                return ClassModel.of(Optional.class).map(optional -> optional.asTypeModel(getType(nullable.type()).orElseThrow()));
+            }
+            case LumParser.UnionTypeContext union -> {
+                return Optional.of(new UnionTypeModelImpl(union.type().stream().map(this::getType).map(Optional::orElseThrow).toArray(TypeModel[]::new)));
+            }
+            case LumParser.IntersectionTypeContext intersection -> {
+                return Optional.of(new IntersectionTypeModelImpl(intersection.type().stream().map(this::getType).map(Optional::orElseThrow).toArray(TypeModel[]::new)));
+            }
+            case null, default -> {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public Optional<ClassModel> getModel(LumParser.TypeContext type) {
+        return getType(type).map(TypeModel::model);
     }
 }

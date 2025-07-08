@@ -2,6 +2,8 @@ package lum.core.impl.ir;
 
 import lum.core.ir.CodeElement;
 import lum.core.ir.Operator;
+import lum.core.model.FieldModel;
+import lum.core.model.Member;
 import lum.core.model.MethodModel;
 import lum.core.model.TypeModel;
 import lum.lang.struct.Either;
@@ -16,6 +18,7 @@ public final class CodeElementImpl {
 
     // Basic CodeBlock implementation
     public record CodeBlockImpl(
+            Optional<String> name,
             Optional<CodeElement.CodeBlock> parent,
             MethodModel ownerMethod,
             List<CodeElement> elements
@@ -45,13 +48,13 @@ public final class CodeElementImpl {
     public record IdentifierExpressionImpl(
             Optional<CodeElement.CodeBlock> parent,
             TypeModel type,
-            Either<Integer, TypeModel> identifier
+            Either<Either<String, TypeModel>, Member> identifier
     ) implements CodeElement.IdentifierExpression {}
 
     public record SuperAccessExpressionImpl(
             Optional<CodeElement.CodeBlock> parent,
             TypeModel type,
-            Either<Integer, TypeModel> identifier
+            Either<Either<String, TypeModel>, Member> identifier
     ) implements CodeElement.SuperAccessExpression {}
 
     // Literal expressions
@@ -86,7 +89,7 @@ public final class CodeElementImpl {
     public record AssignmentExpressionImpl(
             Optional<CodeElement.CodeBlock> parent,
             TypeModel type,
-            Either<CodeElement.VariableDeclarationStatement, Either<CodeElement.AssignmentExpression, CodeElement.ArrayAccessExpression>> variable,
+            Either<Either<CodeElement.VariableDeclarationStatement, CodeElement.AssignmentExpression>, CodeElement.ArrayAccessExpression> variable,
             CodeElement.ExpressionElement value
     ) implements CodeElement.AssignmentExpression {}
 
@@ -123,7 +126,7 @@ public final class CodeElementImpl {
             Optional<CodeElement.CodeBlock> parent,
             TypeModel type,
             Optional<CodeElement.ExpressionElement> expression,
-            String memberName
+            Member member
     ) implements CodeElement.MemberAccessExpression {}
 
     public record CallExpressionImpl(
@@ -152,7 +155,8 @@ public final class CodeElementImpl {
     public record VariableDeclarationStatementImpl(
             Optional<CodeElement.CodeBlock> parent,
             TypeModel type,
-            String name
+            String name,
+            Optional<CodeElement.ExpressionElement> value
     ) implements CodeElement.VariableDeclarationStatement {}
 
     public record IfStatementImpl(
@@ -200,10 +204,10 @@ public final class CodeElementImpl {
 
     public record ForLoopElementImpl(
             Optional<CodeElement.CodeBlock> parent,
-            CodeElement.AssignmentExpression variable,
-            CodeElement.ExpressionElement condition,
-            Either<CodeElement.StatementElement, CodeElement.ExpressionElement> incrementor,
-            CodeElement.CodeBlock block
+            Either<VariableDeclarationStatement, AssignmentExpression> variable,
+            ExpressionElement condition,
+            ExpressionElement incrementor,
+            CodeBlock block
     ) implements CodeElement.ForLoopElement {}
 
     public record ForEachLoopElementImpl(

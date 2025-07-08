@@ -2,13 +2,11 @@ package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
 import lum.core.model.ClassModel;
+import lum.core.model.MethodModel;
 import lum.core.util.Utils;
 import lum.lang.struct.Pair;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 class ClassModelProcessor {
     private final TypeProcessor typeProcessor;
@@ -47,7 +45,17 @@ class ClassModelProcessor {
     }
 
     private void processClassModelMembers(List<LumParser.DeclarationContext> ctxs) {
-        new MemberProcessor(typeProcessor).processMembers(model, ctxs).toArray(model.members());
+        var members = new MemberProcessor(typeProcessor).processMembers(model, ctxs).toArray(model.members());
+        Arrays.stream(members)
+                .filter(m -> m instanceof MethodModelImpl)
+                .map(m -> ((MethodModelImpl) m))
+                .forEach(
+                        method -> {
+                            for (AttributeParser<?> parser : method.attributeParsers()) {
+                                parser.parseAttribute();
+                            }
+                        }
+                );
     }
 
     private void processGenericTypeDeclaration(LumParser.GenericTypeDeclarationContext ctx) {
@@ -70,17 +78,17 @@ class ClassModelProcessor {
     private Pair<Optional<ClassModel>, Optional<ClassModel[]>> processInheritance(LumParser.InheritanceContext ctx) {
         if (ctx == null)
             return new Pair<>(Optional.empty(), Optional.empty());
-        ClassModel a = null;
+        Optional<ClassModel> a = Optional.empty();
         if (ctx.extends_() != null)
             a = typeProcessor.getModel(ctx.extends_().type());
         if (ctx.implements_() == null)
-            return new Pair<>(Optional.ofNullable(a), Optional.empty());
+            return new Pair<>(a, Optional.empty());
 
         Set<ClassModel> interfaces = new HashSet<>();
         for (var id : ctx.implements_().type()) {
-            interfaces.add(typeProcessor.getModel(id));
+            interfaces.add(typeProcessor.getModel(id).orElseThrow());
         }
 
-        return new Pair<>(Optional.ofNullable(a), Optional.of(interfaces.toArray(ClassModel[]::new)));
+        return new Pair<>(a, Optional.of(interfaces.toArray(ClassModel[]::new)));
     }
 }

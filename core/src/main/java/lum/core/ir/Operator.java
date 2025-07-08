@@ -18,6 +18,7 @@ public sealed interface Operator {
         GE("greaterEquals"),
         LE("lessEquals"),
         EQ("equals"),
+        NEQ("notEquals"),
         IS_INSTANCE("isInstance"),
         IN("contains"),
         AT("at");

@@ -3,6 +3,8 @@ package lum.core.impl.model;
 import lum.antlr4.LumParser;
 import lum.core.model.ClassModel;
 import lum.core.model.Member;
+import lum.core.model.MethodModel;
+import lum.lang.struct.Pair;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,12 +1,9 @@
 package lum.core.model;
 
-import java.lang.classfile.Instruction;
-import java.util.List;
+import lum.core.ir.CodeElement;
 
 public interface AttributeModel {
     interface CodeAttribute extends AttributeModel {
-        List<Instruction> instructions();
-
-        void addInstruction(Instruction instruction);
+        CodeElement.CodeBlock codeBlock();
     }
 }

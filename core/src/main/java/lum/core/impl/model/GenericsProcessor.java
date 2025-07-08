@@ -1,8 +1,7 @@
 package lum.core.impl.model;
 
 import lum.antlr4.LumParser;
-import lum.core.model.TypeArgument;
-import lum.core.model.TypeParameter;
+import lum.core.model.*;
 import lum.lang.struct.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.classfile.Signature;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 // one per generic member
@@ -18,9 +18,12 @@ class GenericsProcessor {
     private static final Logger log = LoggerFactory.getLogger(GenericsProcessor.class);
     private final TypeProcessor typeProcessor;
 
-    private final HashMap<String, TypeParameter> genericBounds = new HashMap<>();
+
+    private final MethodModel methodModel;
+    private final Map<String, TypeParameter> genericBounds = new HashMap<>();
 
     public GenericsProcessor(TypeProcessor typeProcessor) {
+        this.methodModel = null;
         this.typeProcessor = typeProcessor;
         if (typeProcessor.genericsProcessor != null)
             this.genericBounds.putAll(typeProcessor.genericsProcessor.genericBounds);
@@ -30,9 +33,9 @@ class GenericsProcessor {
         ArrayList<TypeParameter> params = new ArrayList<>();
         if (ctx != null) {
             for (var bound : ctx.genericBound()) {
-                var pair = processGenericBound(bound);
-                genericBounds.put(pair.a(), pair.b());
-                params.add(pair.b());
+                TypeParameter param = processGenericBound(bound);
+                genericBounds.put(param.name(), param);
+                params.add(param);
             }
         }
 
@@ -43,36 +46,33 @@ class GenericsProcessor {
         ArrayList<TypeParameter> params = new ArrayList<>();
         if (ctx != null) {
             for (var bound : ctx.genericBound()) {
-                var pair = processGenericBound(bound);
-                genericBounds.put(pair.a(), pair.b());
-                params.add(pair.b());
+                TypeParameter param = processGenericBound(bound);
+                genericBounds.put(param.name(), param);
+                params.add(param);
             }
         }
 
         return params.toArray(to);
     }
 
-    private Pair<String, TypeParameter> processGenericBound(LumParser.GenericBoundContext ctx) {
+    private TypeParameter processGenericBound(LumParser.GenericBoundContext ctx) {
         String typeAlias;
         if (ctx.lhs instanceof LumParser.PlainTypeContext plainType && plainType.generic() == null)
             typeAlias = plainType.getText();
         else throw new IllegalStateException("Incorrect name for generic type: %s".formatted(ctx.lhs.getText()));
 
         if (ctx.rhs == null)
-            return new Pair<>(
-                    typeAlias,
-                    new TypeParameterImpl(
+            return new TypeParameterImpl(
+                            typeAlias,
                             ClassModel.of(Object.class).orElseThrow().asTypeModel(),
                             Signature.TypeArg.Bounded.WildcardIndicator.EXTENDS
-                    )
             );
         else
-            return new Pair<>(
-                    typeAlias,
-                    new TypeParameterImpl(
-                            typeProcessor.getType(ctx.rhs),
+            return new TypeParameterImpl(
+                            typeAlias,
+                            typeProcessor.getType(ctx.rhs).orElseThrow(() -> new IllegalStateException("Type not found: " + ctx.rhs.getText())),
                             Signature.TypeArg.Bounded.WildcardIndicator.EXTENDS
-                    ));
+            );
     }
 
     public Optional<TypeArgument[]> processGenericArguments(TypeParameter @NotNull [] parameters, LumParser.GenericContext ctx) {
@@ -116,7 +116,7 @@ class GenericsProcessor {
 
             return new TypeArgumentImpl(
                     parameter,
-                    typeProcessor.getType(ctx.rhs)
+                    typeProcessor.getType(ctx.rhs).orElseThrow(() -> new IllegalStateException("Type not found: " + ctx.rhs.getText()))
             );
         }
 
@@ -125,7 +125,7 @@ class GenericsProcessor {
 
         return new TypeArgumentImpl(
                 parameter,
-                typeProcessor.getType(ctx.lhs)
+                typeProcessor.getType(ctx.lhs).orElseThrow(() -> new IllegalStateException("Type not found: " + ctx.rhs.getText()))
         );
     }
 
