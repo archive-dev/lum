@@ -19,7 +19,8 @@ dependencies {
     implementation("org.slf4j:log4j-over-slf4j:2.0.17")
     implementation("org.jetbrains:annotations:24.0.0")
 
-    implementation("org.jcommander:jcommander:2.0")
+    implementation("info.picocli:picocli:4.7.7")
+    annotationProcessor("info.picocli:picocli-codegen:4.7.7")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -34,6 +35,10 @@ java {
 
     withJavadocJar()
     withSourcesJar()
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
 }
 
 tasks.javadoc {

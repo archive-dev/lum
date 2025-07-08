@@ -1,8 +1,5 @@
 package lum.compiler;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.converters.PathConverter;
 import lum.compiler.phases.CompilationInfo;
 import lum.compiler.pipeline.Executor;
 
@@ -13,23 +10,26 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
-public class Compiler {
+@CommandLine.Command(name = "lumc")
+public class Compiler implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
-    @Parameter(names = {"-o", "--output"}, description = "Output directory", converter = PathConverter.class)
+    @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory")
     private Path outputDir = Path.of("");
 
-    @Parameter(description = "Input file", converter = PathConverter.class)
-    private Path file;
-
-    @Parameter(names = "-src", description = "Sources directory", converter = PathConverter.class)
+    @CommandLine.Option(names = "-src", description = "Sources directory")
     private Path srcDir = Path.of("");
+
+    @CommandLine.Parameters(description = "Input file")
+    private Path file;
 
     public Compiler() {}
 
@@ -63,7 +63,6 @@ public class Compiler {
 
             if (!res.errors().isEmpty()) {
                 res.printErrors();
-                System.exit(1);
                 return 1;
             }
         } else {
@@ -78,7 +77,6 @@ public class Compiler {
 
                 if (!res.errors().isEmpty()) {
                     res.printErrors();
-                    System.exit(1);
                     return 1;
                 }
             }
@@ -87,16 +85,8 @@ public class Compiler {
     }
 
     public static void main(String[] args) {
-        Compiler compilerArgs = new Compiler();
-
-        JCommander.newBuilder()
-                .addObject(compilerArgs)
-                .build()
-                .parse(args);
-
-        logger.info("Compiling...");
-
-        compilerArgs.compile();
+        int exitCode = new CommandLine(new Compiler()).execute(args);
+        System.exit(exitCode);
     }
 
     private List<File> listFilesRecursive(File directory) {
@@ -114,5 +104,15 @@ public class Compiler {
 
     public Path srcDir() {
         return srcDir;
+    }
+
+    /**
+     * Computes a result, or throws an exception if unable to do so.
+     *
+     * @return computed result
+     */
+    @Override
+    public Integer call() {
+        return compile(outputDir, file, srcDir);
     }
 }
