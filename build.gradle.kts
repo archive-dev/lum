@@ -40,7 +40,7 @@ subprojects {
 
     apply<JavaPlugin>()
 
-    tasks.withType<JavaCompile>() {
+    tasks.withType<JavaCompile> {
         options.compilerArgs.add("--enable-preview")
     }
 }

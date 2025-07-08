@@ -1,0 +1,51 @@
+package examples.basic
+
+import java.util.List
+import java.io.Serializable
+
+@Entity(table = "users")
+public class User(BaseEntity, Serializable, Comparable) {
+    private name: String
+    private age: Number
+    public static count: Number = 0
+
+    init(name: String, age: Number) {
+        this.name = name
+        this.age = age
+        User.count++
+    }
+
+    public func getName(): String {
+        return this.name
+    }
+
+    public func setName(newName: String) {
+        this.name = newName
+    }
+
+    public func getAge(): Number => this.age
+
+    public func isAdult(): Boolean {
+        return this.age >= 18
+    }
+
+    public static func getCount(): Number => User.count
+
+    public func toString(): String {
+        return "User(name=" + this.name + ", age=" + this.age + ")"
+    }
+
+    ## Property with getter and setter
+    public email: String
+        get {
+            return this.email
+        }
+        set(value: String) {
+            this.email = value.toLowerCase()
+        }
+
+    ## Operator overloading
+    public operator ==(other: User): Boolean {
+        return this.name == other.name and this.age == other.age
+    }
+}

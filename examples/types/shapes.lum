@@ -1,0 +1,65 @@
+package examples.types
+
+import java.awt.Graphics
+
+## Interface declaration
+public interface Drawable {
+    func draw(g: Graphics): void
+    func getArea(): Number
+    func getPerimeter(): Number
+}
+
+## Enum declaration
+public enum Color {
+    RED,
+    GREEN,
+    BLUE,
+    YELLOW,
+    BLACK,
+    WHITE
+}
+
+public enum Status {
+    PENDING = 0,
+    PROCESSING = 1,
+    COMPLETED = 2,
+    FAILED = -1
+}
+
+## Abstract class implementing interface
+public abstract class Shape(Drawable) {
+    protected color: Color
+
+    init(color: Color) {
+        this.color = color
+    }
+
+    public func getColor(): Color => this.color
+
+    ## Abstract method
+    public abstract func getArea(): Number
+}
+
+## Concrete implementation using Python-like inheritance
+public class Rectangle(Shape) {
+    private width: Number
+    private height: Number
+
+    init(width: Number, height: Number, color: Color) {
+        super(color)
+        this.width = width
+        this.height = height
+    }
+
+    public func draw(g: Graphics) {
+        print("Drawing rectangle with color " + this.color)
+    }
+
+    public func getArea(): Number {
+        return this.width * this.height
+    }
+
+    public func getPerimeter(): Number {
+        return 2 * (this.width + this.height)
+    }
+}

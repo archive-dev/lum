@@ -1,0 +1,183 @@
+package examples.advanced
+
+import java.util.Arrays
+import java.lang.Math
+
+## Improved Matrix implementation using one-dimensional array
+public class Matrix {
+    private data: Array[Number]
+    private rows: Number
+    private cols: Number
+
+    init(rows: Number, cols: Number) {
+        this.rows = rows
+        this.cols = cols
+        this.data = Array.new(rows * cols)
+        ## Initialize with zeros
+        for i: Number = 0, i < this.data.length, i++ {
+            this.data[i] = 0
+        }
+    }
+
+    ## Constructor with initial data
+    init(rows: Number, cols: Number, initialData: Array[Number]) {
+        this.rows = rows
+        this.cols = cols
+        this.data = Arrays.copyOf(initialData, rows * cols)
+    }
+
+    ## Get element at row, col
+    public func get(row: Number, col: Number): Number {
+        if row < 0 or row >= this.rows or col < 0 or col >= this.cols {
+            throw IndexOutOfBoundsException.new("Invalid matrix indices")
+        }
+        return this.data[row * this.cols + col]
+    }
+
+    ## Set element at row, col
+    public func set(row: Number, col: Number, value: Number) {
+        if row < 0 or row >= this.rows or col < 0 or col >= this.cols {
+            throw IndexOutOfBoundsException.new("Invalid matrix indices")
+        }
+        this.data[row * this.cols + col] = value
+    }
+
+    ## Operator overloading for matrix access
+    public operator [](row: Number): MatrixRow {
+        return MatrixRow.new(this, row)
+    }
+
+    ## Matrix addition
+    public operator +(other: Matrix): Matrix {
+        if this.rows != other.rows or this.cols != other.cols {
+            throw IllegalArgumentException.new("Matrix dimensions must match for addition")
+        }
+
+        result := Matrix.new(this.rows, this.cols)
+        for i: Number = 0, i < this.data.length, i++ {
+            result.data[i] = this.data[i] + other.data[i]
+        }
+        return result
+    }
+
+    ## Matrix multiplication
+    public operator *(other: Matrix): Matrix {
+        if this.cols != other.rows {
+            throw IllegalArgumentException.new("Invalid dimensions for matrix multiplication")
+        }
+
+        result := Matrix.new(this.rows, other.cols)
+        for i: Number = 0, i < this.rows, i++ {
+            for j: Number = 0, j < other.cols, j++ {
+                sum := 0
+                for k: Number = 0, k < this.cols, k++ {
+                    sum += this.get(i, k) * other.get(k, j)
+                }
+                result.set(i, j, sum)
+            }
+        }
+        return result
+    }
+
+    ## Scalar multiplication
+    public func multiply(scalar: Number): Matrix {
+        result := Matrix.new(this.rows, this.cols)
+        for i: Number = 0, i < this.data.length, i++ {
+            result.data[i] = this.data[i] * scalar
+        }
+        return result
+    }
+
+    ## Transpose
+    public func transpose(): Matrix {
+        result := Matrix.new(this.cols, this.rows)
+        for i: Number = 0, i < this.rows, i++ {
+            for j: Number = 0, j < this.cols, j++ {
+                result.set(j, i, this.get(i, j))
+            }
+        }
+        return result
+    }
+
+    ## Determinant (for square matrices)
+    public func determinant(): Number {
+        if this.rows != this.cols {
+            throw IllegalArgumentException.new("Determinant only defined for square matrices")
+        }
+
+        if this.rows == 1 {
+            return this.get(0, 0)
+        }
+
+        if this.rows == 2 {
+            return this.get(0, 0) * this.get(1, 1) - this.get(0, 1) * this.get(1, 0)
+        }
+
+        ## For larger matrices, use cofactor expansion
+        det := 0
+        for j: Number = 0, j < this.cols, j++ {
+            cofactor := this.getCofactor(0, j)
+            det += Math.pow(-1, j) * this.get(0, j) * cofactor.determinant()
+        }
+        return det
+    }
+
+    ## Get cofactor matrix
+    private func getCofactor(excludeRow: Number, excludeCol: Number): Matrix {
+        result := Matrix.new(this.rows - 1, this.cols - 1)
+        resultRow := 0
+
+        for i: Number = 0, i < this.rows, i++ {
+            if i == excludeRow {
+                continue
+            }
+            resultCol := 0
+            for j: Number = 0, j < this.cols, j++ {
+                if j == excludeCol {
+                    continue
+                }
+                result.set(resultRow, resultCol, this.get(i, j))
+                resultCol++
+            }
+            resultRow++
+        }
+        return result
+    }
+
+    public func getRows(): Number => this.rows
+    public func getCols(): Number => this.cols
+
+    public func toString(): String {
+        result := "Matrix(" + this.rows + "x" + this.cols + "):\n"
+        for i: Number = 0, i < this.rows, i++ {
+            result += "["
+            for j: Number = 0, j < this.cols, j++ {
+                result += this.get(i, j)
+                if j < this.cols - 1 {
+                    result += ", "
+                }
+            }
+            result += "]\n"
+        }
+        return result
+    }
+}
+
+## Helper class for matrix row access
+public class MatrixRow {
+    private matrix: Matrix
+    private row: Number
+
+    init(matrix: Matrix, row: Number) {
+        this.matrix = matrix
+        this.row = row
+    }
+
+    public operator [](col: Number): Number {
+        return this.matrix.get(this.row, col)
+    }
+
+    public operator []=(col: Number, value: Number) {
+        this.matrix.set(this.row, col, value)
+    }
+}

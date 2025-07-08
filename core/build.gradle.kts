@@ -1,5 +1,6 @@
 plugins {
     id("java-library")
+    id("org.javamodularity.moduleplugin") version "1.8.15"
 }
 
 group = "io.github.archivedev.lum"
@@ -15,6 +16,11 @@ dependencies {
 //    apiElements(project(":grammar"))
     api(project(":grammar"))
 
+    // logging
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.24.3")
+    implementation("org.slf4j:log4j-over-slf4j:2.0.17")
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
@@ -25,6 +31,8 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(24))
     }
+
+    modularity.inferModulePath = true
 
     withJavadocJar()
     withSourcesJar()

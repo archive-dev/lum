@@ -1,43 +1,61 @@
 package lum.core.model;
 
 import java.lang.reflect.AccessFlag;
-import java.util.Set;
 
 public interface Accessible {
-    Set<AccessFlag> accessFlags();
-    default int intAccessFlags() {
-        return accessFlags().stream().reduce(0, (iFlag, flag) -> iFlag | flag.mask(), (f,f2) -> f | f2);
-    }
+    AccessFlag[] accessFlags();
 
     default boolean isStatic() {
-        return accessFlags().contains(AccessFlag.STATIC);
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.STATIC)
+                return true;
+        }
+        return false;
     }
 
     default boolean isPrivate() {
-        return accessFlags().contains(AccessFlag.PRIVATE);
-    }
-
-    default boolean isProtected() {
-        return accessFlags().contains(AccessFlag.PROTECTED);
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.PRIVATE)
+                return true;
+        }
+        return false;
     }
 
     default boolean isPublic() {
-        return accessFlags().contains(AccessFlag.PUBLIC);
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.PUBLIC)
+                return true;
+        }
+        return false;
     }
 
-    default boolean isFinal() {
-        return accessFlags().contains(AccessFlag.FINAL);
+    default boolean isProtected() {
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.PROTECTED)
+                return true;
+        }
+        return false;
     }
 
     default boolean isAbstract() {
-        return accessFlags().contains(AccessFlag.ABSTRACT);
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.ABSTRACT)
+                return true;
+        }
+        return false;
     }
 
-    default boolean isVolatile() {
-        return accessFlags().contains(AccessFlag.VOLATILE);
-    }
-
-    default boolean isTransient() {
-        return accessFlags().contains(AccessFlag.TRANSIENT);
+    default boolean isFinal() {
+        for (var flag :
+                accessFlags()) {
+            if (flag == AccessFlag.FINAL)
+                return true;
+        }
+        return false;
     }
 }

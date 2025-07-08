@@ -1,21 +1,21 @@
 package lum.core.model;
 
+import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.Arrays;
 
-public interface MethodModel extends Accessible, Parametrized, Member {
-    String name();
-
-    TypeModel returnType();
-
+public interface MethodModel extends Attributable, Member, Generic {
     ParameterModel[] parameters();
-
-    TypeModel[] exceptions();
+    TypeModel returnType();
+    ClassModel[] exceptions();
 
     default MethodTypeDesc methodTypeDesc() {
         return MethodTypeDesc.of(
                 returnType().classDesc(),
-                Arrays.stream(parameters()).map(ParameterModel::type).map(TypeModel::classDesc).toList()
+                Arrays.stream(parameters())
+                        .map(ParameterModel::type)
+                        .map(TypeModel::classDesc)
+                        .toArray(ClassDesc[]::new)
         );
     }
 }

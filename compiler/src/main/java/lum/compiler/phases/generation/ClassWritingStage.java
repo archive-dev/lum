@@ -13,7 +13,8 @@ import java.util.Objects;
 public class ClassWritingStage implements CompilerStage<CompilationInfo, GeneratedClassesResult, ClassWritingResult> {
     @Override
     public ClassWritingResult execute(CompilationInfo context, GeneratedClassesResult result) throws CompilationException {
-        Path outDir = context.outputDirectory().normalize();
+        Path defaultPath = Path.of("");
+        Path outDir = context.outputDirectory().orElse(defaultPath).normalize();
         outDir.toFile().mkdirs();
         Exception error = null;
 
@@ -21,7 +22,7 @@ public class ClassWritingStage implements CompilerStage<CompilationInfo, Generat
             Path path = outDir.resolve(entry.getKey());
             byte[] bytes = entry.getValue();
             try {
-                Objects.requireNonNullElse(path.getParent(), Path.of("")).toFile().mkdirs();
+                Objects.requireNonNullElse(path.getParent(), defaultPath).toFile().mkdirs();
                 Files.write(path, bytes);
             } catch (IOException e) {
                 error = e;

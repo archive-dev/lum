@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class CompilationInfo extends CompilationContext {
     private final Path file;
@@ -35,8 +36,8 @@ public final class CompilationInfo extends CompilationContext {
         return file;
     }
 
-    public Path outputDirectory() {
-        return outputDirectory;
+    public Optional<Path> outputDirectory() {
+        return Optional.ofNullable(outputDirectory);
     }
 
     public Path srcDir() {
